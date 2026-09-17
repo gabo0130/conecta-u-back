@@ -67,6 +67,8 @@ Los casos de uso dependen de interfaces (`UserRepository`, `CollaboratorReposito
 
 Documentación interactiva completa (con "Authorize" para probar endpoints protegidos): `http://localhost:3001/docs`. Ver también [AUTH_TESTING.md](AUTH_TESTING.md).
 
+Para probar cada endpoint individualmente contra local o contra el ambiente deployado, importa la colección de [`postman/`](postman/) (incluye ambientes separados y guarda tokens automáticamente al hacer login).
+
 ## Requisitos previos
 
 - Node.js 20 o superior recomendado

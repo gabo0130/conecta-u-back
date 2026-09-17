@@ -1,0 +1,713 @@
+{
+  "info": {
+    "_postman_id": "a1e6b2c0-1234-4a1a-9c1a-conectaubackend",
+    "name": "Conecta U - Backend API",
+    "description": "Colección para probar todos los endpoints del backend de Conecta U (Iteración 1 · RF1-RF9) individualmente.\n\n## Cómo usarla\n1. Selecciona el ambiente **Conecta U - Local** o **Conecta U - Deployed** (arriba a la derecha).\n2. Corre **Auth > Register - Colaborador** y **Auth > Register - Líder** una vez (o cambia los emails en el ambiente si ya existen).\n3. Corre **Auth > Login - Colaborador** (o Líder) — guarda automáticamente `accessToken`, `refreshToken` y `userId` en el ambiente activo. El resto de las carpetas usan ese token vía Bearer Auth heredado de la colección.\n4. Para probar `Profiles` necesitas estar logueado como COLABORADOR; para `Projects`, como LIDER; para `Users`/`Access`, como ADMIN.\n\n## Nota sobre el rol ADMIN\n`POST /auth/register` acepta `role: \"ADMIN\"` sin ninguna restricción adicional — cualquiera puede autoregistrarse como administrador hoy. Se incluye una request para probarlo, pero **esto es un hueco de seguridad real, no una feature**: antes de exponer este backend fuera de pruebas, `ADMIN` no debería ser un rol autoasignable desde un endpoint público.\n\n## Login Colaborador vs Líder\nAmbas requests de login escriben sobre las mismas variables (`accessToken`, `refreshToken`, `userId`). Corre la que corresponda al rol que vas a probar justo antes de esa carpeta.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }]
+  },
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Register - Colaborador (RF1)",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fullName\": \"Ana Colaboradora\",\n  \"email\": \"{{colaboradorEmail}}\",\n  \"password\": \"{{colaboradorPassword}}\",\n  \"role\": \"COLABORADOR\",\n  \"program\": \"{{programValue}}\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/register",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "register"]
+            },
+            "description": "Crea un usuario COLABORADOR. En la misma transacción se crea su fila `Collaborator` (perfil técnico vacío). 201 si todo va bien, 409 si el email ya existe, 422 si algún campo no pasa las validaciones (password < 8 caracteres, etc.)."
+          },
+          "response": []
+        },
+        {
+          "name": "Register - Líder (RF1)",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fullName\": \"Judith Líder\",\n  \"email\": \"{{liderEmail}}\",\n  \"password\": \"{{liderPassword}}\",\n  \"role\": \"LIDER\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/register",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "register"]
+            },
+            "description": "Crea un usuario LIDER. No se crea fila de `Collaborator` (solo aplica a COLABORADOR)."
+          },
+          "response": []
+        },
+        {
+          "name": "Register - Admin (⚠️ ver descripción de la colección)",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fullName\": \"Admin de Prueba\",\n  \"email\": \"{{adminEmail}}\",\n  \"password\": \"{{adminPassword}}\",\n  \"role\": \"ADMIN\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/register",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "register"]
+            },
+            "description": "⚠️ El endpoint acepta role=ADMIN sin restricción. Útil para tener una cuenta admin con la que probar Users/Access, pero es un hueco de seguridad si este backend deja de ser solo para pruebas."
+          },
+          "response": []
+        },
+        {
+          "name": "Login - Colaborador (RF2)",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{colaboradorEmail}}\",\n  \"password\": \"{{colaboradorPassword}}\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "login"]
+            },
+            "description": "Guarda accessToken/refreshToken/userId en el ambiente activo. Corre esta request antes de probar la carpeta Profiles."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Login responde 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "if (pm.response.code === 200) {",
+                  "  const data = pm.response.json();",
+                  "  pm.environment.set('accessToken', data.access_token);",
+                  "  pm.environment.set('refreshToken', data.refresh_token);",
+                  "  pm.environment.set('userId', data.user.id);",
+                  "  pm.test('Trae access_token, refresh_token y user', function () {",
+                  "    pm.expect(data.access_token).to.be.a('string');",
+                  "    pm.expect(data.refresh_token).to.be.a('string');",
+                  "    pm.expect(data.user).to.have.property('id');",
+                  "  });",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login - Líder (RF2)",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{liderEmail}}\",\n  \"password\": \"{{liderPassword}}\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "login"]
+            },
+            "description": "Guarda accessToken/refreshToken/userId en el ambiente activo. Corre esta request antes de probar la carpeta Projects."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Login responde 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "if (pm.response.code === 200) {",
+                  "  const data = pm.response.json();",
+                  "  pm.environment.set('accessToken', data.access_token);",
+                  "  pm.environment.set('refreshToken', data.refresh_token);",
+                  "  pm.environment.set('userId', data.user.id);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login - Admin",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{adminEmail}}\",\n  \"password\": \"{{adminPassword}}\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "login"]
+            },
+            "description": "Corre esta request antes de probar las carpetas Users y Access."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Login responde 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "if (pm.response.code === 200) {",
+                  "  const data = pm.response.json();",
+                  "  pm.environment.set('accessToken', data.access_token);",
+                  "  pm.environment.set('refreshToken', data.refresh_token);",
+                  "  pm.environment.set('userId', data.user.id);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Refresh Token",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refresh_token\": \"{{refreshToken}}\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/refresh",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "refresh"]
+            },
+            "description": "Usa refreshToken para pedir un access_token nuevo sin volver a mandar credenciales."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Refresh responde 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "if (pm.response.code === 200) {",
+                  "  pm.environment.set('accessToken', pm.response.json().access_token);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/auth/logout",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "logout"]
+            },
+            "description": "Requiere JWT válido. No invalida el token del lado del servidor (es stateless); solo confirma la operación."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Me",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/auth/me",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "me"]
+            },
+            "description": "Perfil del usuario autenticado (según el accessToken activo), incluyendo su menú por rol."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Users (Admin)",
+      "description": "Requiere estar logueado como ADMIN (corre Auth > Login - Admin primero).",
+      "item": [
+        {
+          "name": "List Users",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/users",
+              "host": ["{{baseUrl}}"],
+              "path": ["users"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get User By Id",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/users/{{targetUserId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["users", "{{targetUserId}}"]
+            },
+            "description": "Usa el id guardado por 'Create User' o pega uno de 'List Users' en la variable targetUserId."
+          },
+          "response": []
+        },
+        {
+          "name": "Create User",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fullName\": \"Usuario Creado por Admin\",\n  \"email\": \"creado.por.admin@ufps.edu.co\",\n  \"password\": \"Secret123*\",\n  \"role\": \"COLABORADOR\",\n  \"program\": \"{{programValue}}\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/users",
+              "host": ["{{baseUrl}}"],
+              "path": ["users"]
+            },
+            "description": "Mismo caso de uso que /auth/register, pero detrás de auth de ADMIN en lugar de ser público."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Create User responde 201', function () {",
+                  "  pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "if (pm.response.code === 201) {",
+                  "  pm.environment.set('targetUserId', pm.response.json().id);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Update User",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fullName\": \"Usuario Actualizado por Admin\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/users/{{targetUserId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["users", "{{targetUserId}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete User",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/users/{{targetUserId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["users", "{{targetUserId}}"]
+            },
+            "description": "204 sin body si se borró. Corre esto al final, después de las otras requests de Users."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Access (Admin)",
+      "description": "Requiere estar logueado como ADMIN (Roles) o cualquier rol autenticado (Menu).",
+      "item": [
+        {
+          "name": "List Roles Catalog",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/roles",
+              "host": ["{{baseUrl}}"],
+              "path": ["roles"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Menu By Role",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/menu/{{menuRole}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["menu", "{{menuRole}}"]
+            },
+            "description": "menuRole debe ser LIDER, COLABORADOR o ADMIN."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Profiles (Colaborador)",
+      "description": "RF3-RF6. Requiere estar logueado como COLABORADOR (corre Auth > Login - Colaborador primero). Todas las rutas operan sobre el perfil del usuario autenticado (/me), no aceptan un id de otro colaborador.",
+      "item": [
+        {
+          "name": "Get My Profile (RF3)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/profiles/me",
+              "host": ["{{baseUrl}}"],
+              "path": ["profiles", "me"]
+            },
+            "description": "Devuelve datos generales + skills + experiencia + disponibilidad."
+          },
+          "response": []
+        },
+        {
+          "name": "Update My Profile (RF3)",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"headline\": \"Desarrolladora Frontend\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/profiles/me",
+              "host": ["{{baseUrl}}"],
+              "path": ["profiles", "me"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "List My Skills (RF4)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/profiles/me/skills",
+              "host": ["{{baseUrl}}"],
+              "path": ["profiles", "me", "skills"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create Skill (RF4)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"React\",\n  \"type\": \"CONOCIMIENTO\",\n  \"level\": \"medio\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/profiles/me/skills",
+              "host": ["{{baseUrl}}"],
+              "path": ["profiles", "me", "skills"]
+            },
+            "description": "type debe ser CONOCIMIENTO o COMPETENCIA."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Create Skill responde 201', function () {",
+                  "  pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "if (pm.response.code === 201) {",
+                  "  pm.environment.set('skillId', pm.response.json().id);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Update Skill (RF4)",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"React\",\n  \"type\": \"COMPETENCIA\",\n  \"level\": \"alto\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/profiles/me/skills/{{skillId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["profiles", "me", "skills", "{{skillId}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Skill (RF4)",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/profiles/me/skills/{{skillId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["profiles", "me", "skills", "{{skillId}}"]
+            },
+            "description": "204 sin body. Corre esto al final, después de Update Skill."
+          },
+          "response": []
+        },
+        {
+          "name": "Create Experience (RF5)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Desarrolladora Frontend\",\n  \"organization\": \"Semillero de Software\",\n  \"period\": \"2024 - actual\",\n  \"description\": \"React, Next.js. Módulos de gestión y dashboards.\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/profiles/me/experience",
+              "host": ["{{baseUrl}}"],
+              "path": ["profiles", "me", "experience"]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Create Experience responde 201', function () {",
+                  "  pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "if (pm.response.code === 201) {",
+                  "  pm.environment.set('experienceId', pm.response.json().id);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Update Experience (RF5)",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Desarrolladora Frontend Senior\",\n  \"organization\": \"Semillero de Software\",\n  \"period\": \"2024 - actual\",\n  \"description\": \"Actualizado desde Postman.\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/profiles/me/experience/{{experienceId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["profiles", "me", "experience", "{{experienceId}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Experience (RF5)",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/profiles/me/experience/{{experienceId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["profiles", "me", "experience", "{{experienceId}}"]
+            },
+            "description": "204 sin body. Corre esto al final, después de Update Experience."
+          },
+          "response": []
+        },
+        {
+          "name": "Update Availability (RF6)",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"availabilityStatus\": \"PARCIAL\",\n  \"weeklyHours\": \"5-10\",\n  \"modality\": \"Remoto\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/profiles/me/availability",
+              "host": ["{{baseUrl}}"],
+              "path": ["profiles", "me", "availability"]
+            },
+            "description": "availabilityStatus debe ser DISPONIBLE, PARCIAL o NO_DISPONIBLE."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Projects (Líder)",
+      "description": "RF7-RF9. Requiere estar logueado como LIDER (corre Auth > Login - Líder primero). El líder solo ve/edita sus propios proyectos (leaderId = usuario autenticado).",
+      "item": [
+        {
+          "name": "Create Project (RF7+RF8)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"SISGELAB - Sistema de gestión de laboratorios\",\n  \"summary\": \"Plataforma para gestionar el uso, reserva y mantenimiento de los laboratorios del programa.\",\n  \"objectives\": \"Digitalizar la reserva de laboratorios y llevar el inventario de equipos.\",\n  \"knownSkills\": [\"React\", \"NestJS\", \"PostgreSQL\"],\n  \"semillero\": \"Semillero de Software\",\n  \"program\": \"{{programValue}}\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/projects",
+              "host": ["{{baseUrl}}"],
+              "path": ["projects"]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Create Project responde 201', function () {",
+                  "  pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "if (pm.response.code === 201) {",
+                  "  pm.environment.set('projectId', pm.response.json().id);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "List My Projects (RF9)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/projects",
+              "host": ["{{baseUrl}}"],
+              "path": ["projects"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Project By Id (RF9)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/projects/{{projectId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["projects", "{{projectId}}"]
+            },
+            "description": "403 si el proyecto existe pero no es del líder autenticado; 404 si no existe."
+          },
+          "response": []
+        },
+        {
+          "name": "Update Project (RF9)",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"SISGELAB v2 - Sistema de gestión de laboratorios\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/projects/{{projectId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["projects", "{{projectId}}"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Health",
+      "item": [
+        {
+          "name": "Health Check",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/health",
+              "host": ["{{baseUrl}}"],
+              "path": ["health"]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}
