@@ -83,6 +83,8 @@
       "presentation/guards/**/*.ts",
       "infrastructure/security/**/*.ts",
       "shared/exceptions/**/*.ts",
+      "shared/logging/**/*.ts",
+      "!shared/logging/*.module.ts",
       "domain/entities/roles-catalog.ts",
       "!**/*.spec.ts"
     ],

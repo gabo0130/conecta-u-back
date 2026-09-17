@@ -14,6 +14,7 @@ No implementa IA ni matchmaking (RF10–RF18) — esos módulos quedan como esqu
 - Registro y gestión de proyectos por el líder (plantilla con resumen, objetivos, habilidades conocidas, semillero/programa).
 - Catálogo de menús por rol, para que el frontend arme su navegación a partir de la respuesta de login.
 - Filtro global de excepciones (`{ statusCode, message }`), validación automática de DTOs y documentación interactiva en Swagger (`/docs`).
+- Logging estructurado con `traceId` por petición (ver [`src/shared/logging/README.md`](src/shared/logging/README.md)).
 - Esqueletos vacíos de `AiModule` y `MatchmakingModule` (Iteración 2), sin lógica.
 
 ## Arquitectura
@@ -33,7 +34,7 @@ src/
   presentation/              # Capa HTTP: controladores, guards, módulos
     controllers/
     guards/
-  shared/                    # Utilidades transversales (excepciones, tokens DI)
+  shared/                    # Utilidades transversales (excepciones, tokens DI, logging)
   migrations/                 # Migraciones de TypeORM
 ```
 

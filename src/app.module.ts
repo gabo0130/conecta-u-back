@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import type { TypeOrmModuleOptions } from '@nestjs/typeorm';
 import { TypeOrmModule } from '@nestjs/typeorm';
@@ -9,6 +9,8 @@ import { MatchmakingModule } from './presentation/matchmaking.module';
 import { ProfilesModule } from './presentation/profiles.module';
 import { ProjectsModule } from './presentation/projects.module';
 import { UsersModule } from './presentation/users.module';
+import { LoggingModule } from './shared/logging/logging.module';
+import { TraceIdMiddleware } from './shared/logging/trace-id.middleware';
 
 @Module({
   controllers: [HealthController],
@@ -34,6 +36,7 @@ import { UsersModule } from './presentation/users.module';
         };
       },
     }),
+    LoggingModule,
     AuthModule,
     UsersModule,
     ProfilesModule,
@@ -42,4 +45,8 @@ import { UsersModule } from './presentation/users.module';
     MatchmakingModule,
   ],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer): void {
+    consumer.apply(TraceIdMiddleware).forRoutes('*');
+  }
+}
