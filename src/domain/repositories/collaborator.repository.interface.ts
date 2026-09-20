@@ -3,6 +3,7 @@ import { CollaboratorEntity } from '../entities/collaborator.entity';
 
 export interface UpdateCollaboratorRepositoryDto {
   headline?: string | null;
+  studyGroup?: string | null;
   availabilityStatus?: AvailabilityStatus;
   weeklyHours?: string | null;
   modality?: string | null;

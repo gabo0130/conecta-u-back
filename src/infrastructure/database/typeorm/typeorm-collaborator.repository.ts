@@ -42,6 +42,7 @@ export class TypeOrmCollaboratorRepository implements CollaboratorRepository {
 
     const merged = this.repository.merge(collaborator, {
       ...(data.headline !== undefined ? { headline: data.headline } : {}),
+      ...(data.studyGroup !== undefined ? { studyGroup: data.studyGroup } : {}),
       ...(data.availabilityStatus !== undefined
         ? { availabilityStatus: data.availabilityStatus }
         : {}),
@@ -83,6 +84,7 @@ export class TypeOrmCollaboratorRepository implements CollaboratorRepository {
             experience.description,
           ),
       ),
+      collaborator.studyGroup,
     );
   }
 }

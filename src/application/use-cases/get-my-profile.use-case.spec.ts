@@ -46,6 +46,7 @@ describe('GetMyProfileUseCase', () => {
         'Remoto',
         [new SkillEntity('s1', '1', 'React', 'CONOCIMIENTO', null)],
         [new ExperienceEntity('e1', '1', 'Dev', null, null, null)],
+        'Grupo A',
       ),
     );
 
@@ -57,6 +58,7 @@ describe('GetMyProfileUseCase', () => {
       email: 'ana@example.com',
       program: 'sistemas',
       headline: 'Frontend dev',
+      studyGroup: 'Grupo A',
       availabilityStatus: 'DISPONIBLE',
       weeklyHours: '10-15',
       modality: 'Remoto',

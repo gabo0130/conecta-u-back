@@ -11,5 +11,6 @@ export class CollaboratorEntity {
     public readonly modality: string | null,
     public readonly skills: SkillEntity[] = [],
     public readonly experiences: ExperienceEntity[] = [],
+    public readonly studyGroup: string | null = null,
   ) {}
 }

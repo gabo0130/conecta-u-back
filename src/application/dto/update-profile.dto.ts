@@ -5,4 +5,9 @@ export class UpdateProfileDto {
   @IsString()
   @MaxLength(160)
   headline?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(120)
+  studyGroup?: string;
 }

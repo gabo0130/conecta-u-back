@@ -33,6 +33,7 @@ export class GetMyProfileUseCase {
       email: user.email,
       program: user.program,
       headline: collaborator.headline,
+      studyGroup: collaborator.studyGroup,
       availabilityStatus: collaborator.availabilityStatus,
       weeklyHours: collaborator.weeklyHours,
       modality: collaborator.modality,

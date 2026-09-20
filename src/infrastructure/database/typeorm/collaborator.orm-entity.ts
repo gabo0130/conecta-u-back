@@ -27,6 +27,9 @@ export class CollaboratorOrmEntity {
   @Column({ type: 'varchar', length: 160, nullable: true })
   headline: string | null;
 
+  @Column({ type: 'varchar', length: 120, nullable: true })
+  studyGroup: string | null;
+
   @Column({
     type: 'enum',
     enum: [...AVAILABILITY_STATUSES],

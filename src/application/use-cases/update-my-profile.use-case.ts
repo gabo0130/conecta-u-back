@@ -13,6 +13,7 @@ export class UpdateMyProfileUseCase {
   async execute(userId: string, data: UpdateProfileDto) {
     const updated = await this.collaboratorRepository.update(userId, {
       ...(data.headline !== undefined ? { headline: data.headline } : {}),
+      ...(data.studyGroup !== undefined ? { studyGroup: data.studyGroup } : {}),
     });
 
     if (!updated) {
@@ -23,6 +24,7 @@ export class UpdateMyProfileUseCase {
 
     return {
       headline: updated.headline,
+      studyGroup: updated.studyGroup,
       availabilityStatus: updated.availabilityStatus,
       weeklyHours: updated.weeklyHours,
       modality: updated.modality,

@@ -29,6 +29,19 @@ describe('UpdateMyProfileUseCase', () => {
     expect(result.headline).toBe('New headline');
   });
 
+  it('updates the study group', async () => {
+    collaboratorRepository.update.mockResolvedValue(
+      new CollaboratorEntity('1', null, 'DISPONIBLE', null, null, [], [], 'G1'),
+    );
+
+    const result = await useCase.execute('1', { studyGroup: 'G1' });
+
+    expect(collaboratorRepository.update).toHaveBeenCalledWith('1', {
+      studyGroup: 'G1',
+    });
+    expect(result.studyGroup).toBe('G1');
+  });
+
   it('throws NotFoundException when collaborator is missing', async () => {
     collaboratorRepository.update.mockResolvedValue(null);
 
