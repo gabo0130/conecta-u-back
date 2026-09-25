@@ -5,7 +5,7 @@ import { SkillEntity } from '../../../domain/entities/skill.entity';
 import {
   CreateSkillRepositoryDto,
   SkillRepository,
-  UpdateSkillRepositoryDto,
+  SkillSearchFilter,
 } from '../../../domain/repositories/skill.repository.interface';
 import { SkillOrmEntity } from './skill.orm-entity';
 
@@ -21,54 +21,68 @@ export class TypeOrmSkillRepository implements SkillRepository {
     return skill ? this.toDomain(skill) : null;
   }
 
-  async findByCollaboratorId(collaboratorId: string): Promise<SkillEntity[]> {
-    const skills = await this.repository.find({ where: { collaboratorId } });
+  async findByNormalizedNameOrSynonym(
+    normalized: string,
+  ): Promise<SkillEntity | null> {
+    const byName = await this.repository.findOne({
+      where: { normalizedName: normalized },
+    });
+    if (byName) {
+      return this.toDomain(byName);
+    }
+
+    const bySynonym = await this.repository
+      .createQueryBuilder('skill')
+      .where(':normalized = ANY(skill.synonyms)', { normalized })
+      .getOne();
+
+    return bySynonym ? this.toDomain(bySynonym) : null;
+  }
+
+  async search(filter: SkillSearchFilter): Promise<SkillEntity[]> {
+    const query = this.repository.createQueryBuilder('skill');
+
+    if (filter.query) {
+      const like = `%${filter.query.toLowerCase()}%`;
+      query.andWhere(
+        '(skill.normalizedName LIKE :like OR EXISTS (SELECT 1 FROM unnest(skill.synonyms) s WHERE s LIKE :like))',
+        { like },
+      );
+    }
+
+    if (filter.type) {
+      query.andWhere('skill.type = :type', { type: filter.type });
+    }
+
+    query.orderBy('skill.name', 'ASC');
+
+    const skills = await query.getMany();
     return skills.map((skill) => this.toDomain(skill));
   }
 
   async create(data: CreateSkillRepositoryDto): Promise<SkillEntity> {
     const skill = this.repository.create({
-      collaboratorId: data.collaboratorId,
       name: data.name,
+      normalizedName: data.normalizedName,
       type: data.type,
-      level: data.level ?? null,
+      category: data.category ?? 'OTRA',
+      synonyms: data.synonyms ?? [],
+      status: data.status ?? 'ACTIVA',
     });
 
     const saved = await this.repository.save(skill);
     return this.toDomain(saved);
   }
 
-  async update(
-    id: string,
-    data: UpdateSkillRepositoryDto,
-  ): Promise<SkillEntity | null> {
-    const skill = await this.repository.findOne({ where: { id } });
-    if (!skill) {
-      return null;
-    }
-
-    const merged = this.repository.merge(skill, {
-      ...(data.name !== undefined ? { name: data.name } : {}),
-      ...(data.type !== undefined ? { type: data.type } : {}),
-      ...(data.level !== undefined ? { level: data.level } : {}),
-    });
-
-    const saved = await this.repository.save(merged);
-    return this.toDomain(saved);
-  }
-
-  async delete(id: string): Promise<boolean> {
-    const result = await this.repository.delete(id);
-    return (result.affected ?? 0) > 0;
-  }
-
   private toDomain(skill: SkillOrmEntity): SkillEntity {
     return new SkillEntity(
       skill.id,
-      skill.collaboratorId,
       skill.name,
+      skill.normalizedName,
       skill.type as SkillEntity['type'],
-      skill.level,
+      skill.category as SkillEntity['category'],
+      skill.synonyms,
+      skill.status as SkillEntity['status'],
     );
   }
 }

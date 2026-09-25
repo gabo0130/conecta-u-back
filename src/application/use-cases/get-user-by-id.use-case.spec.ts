@@ -20,7 +20,7 @@ describe('GetUserByIdUseCase', () => {
       fullName: 'Luz',
       email: 'luz@example.com',
       role: 'LIDER',
-      program: null,
+      active: true,
     });
   });
 

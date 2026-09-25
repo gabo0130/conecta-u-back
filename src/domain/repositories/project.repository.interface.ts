@@ -1,13 +1,21 @@
 import type { ProjectStatus } from '../entities/project-status.type';
 import { ProjectEntity } from '../entities/project.entity';
 
+export interface DeliverableInput {
+  name: string;
+  scope: string;
+}
+
 export interface CreateProjectRepositoryDto {
   title: string;
   summary: string;
   objectives: string;
-  knownSkills?: string[] | null;
-  semillero?: string | null;
-  program?: string | null;
+  typeId: string;
+  categoryId: string;
+  programId?: string | null;
+  typeData?: Record<string, unknown>;
+  knownSkillIds?: string[];
+  deliverables: DeliverableInput[];
   leaderId: string;
 }
 
@@ -15,9 +23,12 @@ export interface UpdateProjectRepositoryDto {
   title?: string;
   summary?: string;
   objectives?: string;
-  knownSkills?: string[] | null;
-  semillero?: string | null;
-  program?: string | null;
+  typeId?: string;
+  categoryId?: string;
+  programId?: string | null;
+  typeData?: Record<string, unknown>;
+  knownSkillIds?: string[];
+  deliverables?: DeliverableInput[];
   status?: ProjectStatus;
 }
 

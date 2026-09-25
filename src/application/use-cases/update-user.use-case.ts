@@ -35,7 +35,7 @@ export class UpdateUserUseCase {
         : {}),
       ...(normalizedEmail !== undefined ? { email: normalizedEmail } : {}),
       ...(data.role !== undefined ? { role: data.role } : {}),
-      ...(data.program !== undefined ? { program: data.program } : {}),
+      ...(data.active !== undefined ? { active: data.active } : {}),
     });
 
     if (!updated) {
@@ -47,7 +47,7 @@ export class UpdateUserUseCase {
       fullName: updated.fullName,
       email: updated.email,
       role: updated.role,
-      program: updated.program,
+      active: updated.active,
     };
   }
 }

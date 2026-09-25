@@ -1,37 +1,28 @@
-import {
-  Column,
-  Entity,
-  JoinColumn,
-  ManyToOne,
-  PrimaryGeneratedColumn,
-} from 'typeorm';
+import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
+import { SKILL_CATEGORIES } from '../../../domain/entities/skill-category.type';
+import { SKILL_STATUSES } from '../../../domain/entities/skill-status.type';
 import { SKILL_TYPES } from '../../../domain/entities/skill-type.type';
-import { CollaboratorOrmEntity } from './collaborator.orm-entity';
 
 @Entity({ name: 'skills' })
 export class SkillOrmEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @ManyToOne(
-    () => CollaboratorOrmEntity,
-    (collaborator) => collaborator.skills,
-    {
-      onDelete: 'CASCADE',
-    },
-  )
-  @JoinColumn({ name: 'collaboratorId' })
-  collaborator: CollaboratorOrmEntity;
-
-  @Column('uuid')
-  collaboratorId: string;
-
-  @Column({ type: 'varchar', length: 80, nullable: false })
+  @Column({ type: 'varchar', length: 80 })
   name: string;
 
-  @Column({ type: 'enum', enum: [...SKILL_TYPES], default: 'CONOCIMIENTO' })
+  @Column({ type: 'varchar', length: 80, unique: true })
+  normalizedName: string;
+
+  @Column({ type: 'enum', enum: [...SKILL_TYPES] })
   type: string;
 
-  @Column({ type: 'varchar', length: 20, nullable: true })
-  level: string | null;
+  @Column({ type: 'enum', enum: [...SKILL_CATEGORIES], default: 'OTRA' })
+  category: string;
+
+  @Column({ type: 'text', array: true, default: () => "'{}'" })
+  synonyms: string[];
+
+  @Column({ type: 'enum', enum: [...SKILL_STATUSES], default: 'ACTIVA' })
+  status: string;
 }

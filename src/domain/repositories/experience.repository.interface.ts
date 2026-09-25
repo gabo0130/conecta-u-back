@@ -1,18 +1,32 @@
+import type { ExperienceType } from '../entities/experience-type.type';
 import { ExperienceEntity } from '../entities/experience.entity';
+import type { Level } from '../entities/level.type';
 
 export interface CreateExperienceRepositoryDto {
   collaboratorId: string;
-  title: string;
-  organization?: string | null;
-  period?: string | null;
+  type: ExperienceType;
+  role: string;
+  organization: string;
+  startDate: string;
+  endDate?: string | null;
+  current?: boolean;
+  weeklyHours: number;
+  level: Level;
   description?: string | null;
+  skillIds?: string[];
 }
 
 export interface UpdateExperienceRepositoryDto {
-  title?: string;
-  organization?: string | null;
-  period?: string | null;
+  type?: ExperienceType;
+  role?: string;
+  organization?: string;
+  startDate?: string;
+  endDate?: string | null;
+  current?: boolean;
+  weeklyHours?: number;
+  level?: Level;
   description?: string | null;
+  skillIds?: string[];
 }
 
 export interface ExperienceRepository {

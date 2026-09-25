@@ -17,7 +17,7 @@ export class ListUsersUseCase {
         fullName: user.fullName,
         email: user.email,
         role: user.role,
-        program: user.program,
+        active: user.active,
       })),
     };
   }

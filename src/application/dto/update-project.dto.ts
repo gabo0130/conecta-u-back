@@ -1,4 +1,14 @@
-import { IsArray, IsOptional, IsString, Length } from 'class-validator';
+import { Type } from 'class-transformer';
+import {
+  IsArray,
+  IsObject,
+  IsOptional,
+  IsString,
+  IsUUID,
+  Length,
+  ValidateNested,
+} from 'class-validator';
+import { DeliverableDto } from './create-project.dto';
 
 export class UpdateProjectDto {
   @IsOptional()
@@ -15,15 +25,29 @@ export class UpdateProjectDto {
   objectives?: string;
 
   @IsOptional()
+  @IsUUID()
+  typeId?: string;
+
+  @IsOptional()
+  @IsUUID()
+  categoryId?: string;
+
+  @IsOptional()
+  @IsUUID()
+  programId?: string;
+
+  @IsOptional()
+  @IsObject()
+  typeData?: Record<string, unknown>;
+
+  @IsOptional()
   @IsArray()
-  @IsString({ each: true })
-  knownSkills?: string[];
+  @IsUUID('4', { each: true })
+  knownSkillIds?: string[];
 
   @IsOptional()
-  @IsString()
-  semillero?: string;
-
-  @IsOptional()
-  @IsString()
-  program?: string;
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => DeliverableDto)
+  deliverables?: DeliverableDto[];
 }

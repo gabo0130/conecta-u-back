@@ -1,26 +1,27 @@
+import type { SkillCategory } from '../entities/skill-category.type';
+import type { SkillStatus } from '../entities/skill-status.type';
 import type { SkillType } from '../entities/skill-type.type';
 import { SkillEntity } from '../entities/skill.entity';
 
 export interface CreateSkillRepositoryDto {
-  collaboratorId: string;
   name: string;
+  normalizedName: string;
   type: SkillType;
-  level?: string | null;
+  category?: SkillCategory;
+  synonyms?: string[];
+  status?: SkillStatus;
 }
 
-export interface UpdateSkillRepositoryDto {
-  name?: string;
+export interface SkillSearchFilter {
+  query?: string;
   type?: SkillType;
-  level?: string | null;
 }
 
 export interface SkillRepository {
   findById(id: string): Promise<SkillEntity | null>;
-  findByCollaboratorId(collaboratorId: string): Promise<SkillEntity[]>;
-  create(data: CreateSkillRepositoryDto): Promise<SkillEntity>;
-  update(
-    id: string,
-    data: UpdateSkillRepositoryDto,
+  findByNormalizedNameOrSynonym(
+    normalized: string,
   ): Promise<SkillEntity | null>;
-  delete(id: string): Promise<boolean>;
+  search(filter: SkillSearchFilter): Promise<SkillEntity[]>;
+  create(data: CreateSkillRepositoryDto): Promise<SkillEntity>;
 }

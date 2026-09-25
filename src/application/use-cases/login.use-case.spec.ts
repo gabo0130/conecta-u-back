@@ -35,7 +35,6 @@ describe('LoginUseCase', () => {
     'juan@example.com',
     'hashed-password',
     'COLABORADOR',
-    'sistemas',
   );
 
   beforeEach(() => {
@@ -74,7 +73,6 @@ describe('LoginUseCase', () => {
         fullName: 'Juan',
         email: 'juan@example.com',
         role: 'COLABORADOR',
-        program: 'sistemas',
         menu: [
           {
             id: 'dashboard',
@@ -109,6 +107,23 @@ describe('LoginUseCase', () => {
 
     await expect(
       useCase.execute({ email: 'juan@example.com', password: 'bad-pass' }),
+    ).rejects.toBeInstanceOf(UnauthorizedException);
+  });
+
+  it('throws UnauthorizedException when the user is inactive', async () => {
+    const inactiveUser = new UserEntity(
+      '1',
+      'Juan',
+      'juan@example.com',
+      'hashed-password',
+      'COLABORADOR',
+      false,
+    );
+    userRepository.findByEmailWithPassword.mockResolvedValue(inactiveUser);
+    passwordHasher.compare.mockResolvedValue(true);
+
+    await expect(
+      useCase.execute({ email: 'juan@example.com', password: 'Secret123*' }),
     ).rejects.toBeInstanceOf(UnauthorizedException);
   });
 });

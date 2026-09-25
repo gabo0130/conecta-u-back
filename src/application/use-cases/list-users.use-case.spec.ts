@@ -24,14 +24,14 @@ describe('ListUsersUseCase', () => {
           fullName: 'A',
           email: 'a@example.com',
           role: 'ADMIN',
-          program: null,
+          active: true,
         },
         {
           id: '2',
           fullName: 'B',
           email: 'b@example.com',
           role: 'COLABORADOR',
-          program: null,
+          active: true,
         },
       ],
     });

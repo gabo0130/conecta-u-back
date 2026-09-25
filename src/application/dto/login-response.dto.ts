@@ -10,7 +10,6 @@ export interface LoginResponseDto {
     fullName: string;
     email: string;
     role: UserRole;
-    program: string | null;
     menu: MenuItem[];
   };
 }

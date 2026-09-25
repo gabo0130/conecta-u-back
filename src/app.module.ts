@@ -4,9 +4,11 @@ import type { TypeOrmModuleOptions } from '@nestjs/typeorm';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AiModule } from './presentation/ai.module';
 import { AuthModule } from './presentation/auth.module';
+import { CatalogsModule } from './presentation/catalogs.module';
+import { CollaboratorsModule } from './presentation/collaborators.module';
 import { HealthController } from './presentation/controllers/health.controller';
+import { ImportModule } from './presentation/import.module';
 import { MatchmakingModule } from './presentation/matchmaking.module';
-import { ProfilesModule } from './presentation/profiles.module';
 import { ProjectsModule } from './presentation/projects.module';
 import { UsersModule } from './presentation/users.module';
 import { LoggingModule } from './shared/logging/logging.module';
@@ -39,8 +41,10 @@ import { TraceIdMiddleware } from './shared/logging/trace-id.middleware';
     LoggingModule,
     AuthModule,
     UsersModule,
-    ProfilesModule,
+    CatalogsModule,
+    CollaboratorsModule,
     ProjectsModule,
+    ImportModule,
     AiModule,
     MatchmakingModule,
   ],

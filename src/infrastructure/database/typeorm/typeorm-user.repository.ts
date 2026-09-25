@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { InjectDataSource, InjectRepository } from '@nestjs/typeorm';
-import { DataSource, Repository } from 'typeorm';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
 import {
   USER_ROLES,
   type UserRole,
@@ -11,7 +11,6 @@ import {
   type CreateUserRepositoryDto,
   type UpdateUserRepositoryDto,
 } from '../../../domain/repositories/user.repository.interface';
-import { CollaboratorOrmEntity } from './collaborator.orm-entity';
 import { UserOrmEntity } from './user.orm-entity';
 
 @Injectable()
@@ -19,8 +18,6 @@ export class TypeOrmUserRepository implements UserRepository {
   constructor(
     @InjectRepository(UserOrmEntity)
     private readonly repository: Repository<UserOrmEntity>,
-    @InjectDataSource()
-    private readonly dataSource: DataSource,
   ) {}
 
   async findByEmail(email: string): Promise<UserEntity | null> {
@@ -37,7 +34,7 @@ export class TypeOrmUserRepository implements UserRepository {
         email: true,
         passwordHash: true,
         role: true,
-        program: true,
+        active: true,
       },
     });
     return user ? this.toDomain(user) : null;
@@ -54,31 +51,15 @@ export class TypeOrmUserRepository implements UserRepository {
   }
 
   async create(data: CreateUserRepositoryDto): Promise<UserEntity> {
-    return this.dataSource.transaction(async (manager) => {
-      const userRepository = manager.getRepository(UserOrmEntity);
-      const collaboratorRepository = manager.getRepository(
-        CollaboratorOrmEntity,
-      );
-
-      const user = userRepository.create({
-        fullName: data.fullName,
-        email: data.email,
-        passwordHash: data.passwordHash,
-        role: data.role,
-        program: data.program ?? null,
-      });
-
-      const savedUser = await userRepository.save(user);
-
-      if (data.role === 'COLABORADOR') {
-        const collaborator = collaboratorRepository.create({
-          userId: savedUser.id,
-        });
-        await collaboratorRepository.save(collaborator);
-      }
-
-      return this.toDomain(savedUser);
+    const user = this.repository.create({
+      fullName: data.fullName,
+      email: data.email,
+      passwordHash: data.passwordHash,
+      role: data.role,
     });
+
+    const saved = await this.repository.save(user);
+    return this.toDomain(saved);
   }
 
   async update(
@@ -94,7 +75,7 @@ export class TypeOrmUserRepository implements UserRepository {
       ...(data.fullName !== undefined ? { fullName: data.fullName } : {}),
       ...(data.email !== undefined ? { email: data.email } : {}),
       ...(data.role !== undefined ? { role: data.role } : {}),
-      ...(data.program !== undefined ? { program: data.program } : {}),
+      ...(data.active !== undefined ? { active: data.active } : {}),
     });
 
     const saved = await this.repository.save(merged);
@@ -117,7 +98,7 @@ export class TypeOrmUserRepository implements UserRepository {
       user.email,
       user.passwordHash ?? '',
       role,
-      user.program,
+      user.active,
     );
   }
 }

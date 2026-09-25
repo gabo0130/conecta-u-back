@@ -16,14 +16,7 @@ describe('GetMeUseCase', () => {
 
   it('returns current user', async () => {
     userRepository.findById.mockResolvedValue(
-      new UserEntity(
-        '1',
-        'Juan',
-        'juan@example.com',
-        'hashed',
-        'COLABORADOR',
-        'sistemas',
-      ),
+      new UserEntity('1', 'Juan', 'juan@example.com', 'hashed', 'COLABORADOR'),
     );
 
     const result = await useCase.execute('1');
@@ -33,7 +26,6 @@ describe('GetMeUseCase', () => {
       fullName: 'Juan',
       email: 'juan@example.com',
       role: 'COLABORADOR',
-      program: 'sistemas',
       menu: [
         {
           id: 'dashboard',

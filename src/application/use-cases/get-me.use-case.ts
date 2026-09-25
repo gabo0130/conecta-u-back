@@ -22,7 +22,6 @@ export class GetMeUseCase {
       fullName: user.fullName,
       email: user.email,
       role: user.role,
-      program: user.program,
       menu: getMenuByRole(user.role),
     };
   }

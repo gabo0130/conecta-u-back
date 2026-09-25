@@ -2,7 +2,7 @@
   "info": {
     "_postman_id": "a1e6b2c0-1234-4a1a-9c1a-conectaubackend",
     "name": "Conecta U - Backend API",
-    "description": "Colección para probar todos los endpoints del backend de Conecta U (Iteración 1 · RF1-RF9) individualmente.\n\n## Cómo usarla\n1. Selecciona el ambiente **Conecta U - Local** o **Conecta U - Deployed** (arriba a la derecha).\n2. Corre **Auth > Register - Colaborador** y **Auth > Register - Líder** una vez (o cambia los emails en el ambiente si ya existen).\n3. Corre **Auth > Login - Colaborador** (o Líder) — guarda automáticamente `accessToken`, `refreshToken` y `userId` en el ambiente activo. El resto de las carpetas usan ese token vía Bearer Auth heredado de la colección.\n4. Para probar `Profiles` necesitas estar logueado como COLABORADOR; para `Projects`, como LIDER; para `Users`/`Access`, como ADMIN.\n\n## Nota sobre el rol ADMIN\n`POST /auth/register` acepta `role: \"ADMIN\"` sin ninguna restricción adicional — cualquiera puede autoregistrarse como administrador hoy. Se incluye una request para probarlo, pero **esto es un hueco de seguridad real, no una feature**: antes de exponer este backend fuera de pruebas, `ADMIN` no debería ser un rol autoasignable desde un endpoint público.\n\n## Login Colaborador vs Líder\nAmbas requests de login escriben sobre las mismas variables (`accessToken`, `refreshToken`, `userId`). Corre la que corresponda al rol que vas a probar justo antes de esa carpeta.",
+    "description": "Colección para probar todos los endpoints del backend de Conecta U (Iteración 1 · RF1-RF11, RF23-RF24) individualmente.\n\n## Cómo usarla\n1. Corre `npm run migration:run` y `npm run seed` en el backend antes de usar esta colección — los logins y los `programId`/`skillId` de ejemplo dependen de los datos del seed.\n2. Selecciona el ambiente **Conecta U - Local** o **Conecta U - Deployed** (arriba a la derecha).\n3. Corre **Catalogs > List Programs**, **List Project Types** y **List Project Categories** una vez — guardan `programId`, `projectTypeId` y `projectCategoryId` en el ambiente (los usan Auth y Projects).\n4. Corre **Auth > Login - Colaborador** (o Líder, o Líder sin perfil, o Admin) — guarda automáticamente `accessToken`, `refreshToken` y `userId`. El resto de las carpetas usan ese token vía Bearer Auth heredado de la colección. Las cuentas de Login ya existen gracias al seed (`carlos.contreras@conectau.test`, `laura.mendez@conectau.test`, `mario.quintero@conectau.test`, `admin@conectau.test`, todas con contraseña `Test1234!`).\n5. **Auth > Register - Colaborador / Register - Líder** crean cuentas *nuevas* (usan `newColaboradorEmail`/`newLiderEmail`, distintas de las del seed, para no chocar con un 409 en corridas repetidas).\n6. Para **Collaborators** necesitas estar logueado como `COLABORADOR` o `LIDER`; para **Projects**, como `LIDER`; para **Users**/**Access > List Roles**/**Import**, como `ADMIN`.\n\n## Nota de seguridad (ya corregida)\n`POST /auth/register` solo acepta `role: \"LIDER\"` o `\"COLABORADOR\"` — `ADMIN` no es autoasignable desde el endpoint público (antes sí lo era; ver `notes/estado-desarrollo.md`). Las cuentas ADMIN se crean por seed (`ADMIN_EMAIL`/`ADMIN_PASSWORD`) o por otro ADMIN vía `POST /users`.\n\n## Colaborador ≠ Usuario\n`Collaborator` tiene id propio y `userId` opcional. Un LIDER puede crear su propio perfil técnico con **Collaborators > Create My Profile (LIDER)**; usa `liderSinPerfilEmail` (Mario Quintero en el seed, que no tiene perfil) para probarlo sin chocar con un 409.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "auth": {
@@ -10,6 +10,173 @@
     "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }]
   },
   "item": [
+    {
+      "name": "Catalogs",
+      "description": "RF1, RF3, RF4, RF5, RF7-RF9. Programs es público; Skills requiere JWT; Project Types/Categories requieren LIDER. Corre estas requests primero — capturan programId/skillId/projectTypeId/projectCategoryId para el resto de la colección.",
+      "item": [
+        {
+          "name": "List Programs",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/catalogs/programs",
+              "host": ["{{baseUrl}}"],
+              "path": ["catalogs", "programs"]
+            },
+            "description": "Público — lo usa el formulario de registro. Guarda el id del primer programa en programId."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('List Programs responde 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "if (pm.response.code === 200) {",
+                  "  const data = pm.response.json();",
+                  "  if (data.programs && data.programs.length > 0) {",
+                  "    pm.environment.set('programId', data.programs[0].id);",
+                  "  }",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Search Skills",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/catalogs/skills?q=react",
+              "host": ["{{baseUrl}}"],
+              "path": ["catalogs", "skills"],
+              "query": [{ "key": "q", "value": "react" }, { "key": "type", "value": "CONOCIMIENTO", "disabled": true }]
+            },
+            "description": "Requiere JWT. Busca por nombre normalizado o sinónimo. Guarda el id del primer resultado en skillId."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Search Skills responde 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "if (pm.response.code === 200) {",
+                  "  const data = pm.response.json();",
+                  "  if (data.skills && data.skills.length > 0) {",
+                  "    pm.environment.set('skillId', data.skills[0].id);",
+                  "  }",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Propose Skill",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Svelte\",\n  \"type\": \"CONOCIMIENTO\",\n  \"category\": \"FRAMEWORK\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/catalogs/skills",
+              "host": ["{{baseUrl}}"],
+              "path": ["catalogs", "skills"]
+            },
+            "description": "Requiere JWT. Si el nombre normalizado ya existe en el catálogo devuelve esa habilidad; si no, crea una nueva con status PENDIENTE."
+          },
+          "response": []
+        },
+        {
+          "name": "List Project Types",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/catalogs/project-types",
+              "host": ["{{baseUrl}}"],
+              "path": ["catalogs", "project-types"]
+            },
+            "description": "Requiere LIDER. Guarda el id del tipo CURSO (o el primero) en projectTypeId — revisa templateFields para saber qué mandar en typeData al crear un proyecto."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('List Project Types responde 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "if (pm.response.code === 200) {",
+                  "  const data = pm.response.json();",
+                  "  const types = data.projectTypes || [];",
+                  "  const curso = types.find(function (t) { return t.code === 'CURSO'; });",
+                  "  if (curso) {",
+                  "    pm.environment.set('projectTypeId', curso.id);",
+                  "  } else if (types.length > 0) {",
+                  "    pm.environment.set('projectTypeId', types[0].id);",
+                  "  }",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "List Project Categories",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/catalogs/project-categories",
+              "host": ["{{baseUrl}}"],
+              "path": ["catalogs", "project-categories"]
+            },
+            "description": "Requiere LIDER. Guarda el id de la primera categoría en projectCategoryId."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('List Project Categories responde 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "if (pm.response.code === 200) {",
+                  "  const data = pm.response.json();",
+                  "  if (data.projectCategories && data.projectCategories.length > 0) {",
+                  "    pm.environment.set('projectCategoryId', data.projectCategories[0].id);",
+                  "  }",
+                  "}"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
     {
       "name": "Auth",
       "item": [
@@ -21,7 +188,7 @@
             "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"fullName\": \"Ana Colaboradora\",\n  \"email\": \"{{colaboradorEmail}}\",\n  \"password\": \"{{colaboradorPassword}}\",\n  \"role\": \"COLABORADOR\",\n  \"program\": \"{{programValue}}\"\n}",
+              "raw": "{\n  \"fullName\": \"Ana Colaboradora\",\n  \"email\": \"{{newColaboradorEmail}}\",\n  \"password\": \"{{newColaboradorPassword}}\",\n  \"role\": \"COLABORADOR\",\n  \"collaborator\": {\n    \"firstName\": \"Ana\",\n    \"lastName\": \"Colaboradora\",\n    \"personType\": \"ESTUDIANTE\",\n    \"programId\": \"{{programId}}\"\n  }\n}",
               "options": { "raw": { "language": "json" } }
             },
             "url": {
@@ -29,7 +196,7 @@
               "host": ["{{baseUrl}}"],
               "path": ["auth", "register"]
             },
-            "description": "Crea un usuario COLABORADOR. En la misma transacción se crea su fila `Collaborator` (perfil técnico vacío). 201 si todo va bien, 409 si el email ya existe, 422 si algún campo no pasa las validaciones (password < 8 caracteres, etc.)."
+            "description": "Corre Catalogs > List Programs antes (necesita programId). Crea el usuario y, dentro de la misma operación, vincula o crea su Collaborator por email. 201 si todo va bien, 409 si el email ya existe (como usuario o como colaborador ya vinculado), 422 si algún campo no pasa las validaciones."
           },
           "response": []
         },
@@ -41,7 +208,7 @@
             "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"fullName\": \"Judith Líder\",\n  \"email\": \"{{liderEmail}}\",\n  \"password\": \"{{liderPassword}}\",\n  \"role\": \"LIDER\"\n}",
+              "raw": "{\n  \"fullName\": \"Judith Líder\",\n  \"email\": \"{{newLiderEmail}}\",\n  \"password\": \"{{newLiderPassword}}\",\n  \"role\": \"LIDER\"\n}",
               "options": { "raw": { "language": "json" } }
             },
             "url": {
@@ -49,27 +216,7 @@
               "host": ["{{baseUrl}}"],
               "path": ["auth", "register"]
             },
-            "description": "Crea un usuario LIDER. No se crea fila de `Collaborator` (solo aplica a COLABORADOR)."
-          },
-          "response": []
-        },
-        {
-          "name": "Register - Admin (⚠️ ver descripción de la colección)",
-          "request": {
-            "auth": { "type": "noauth" },
-            "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"fullName\": \"Admin de Prueba\",\n  \"email\": \"{{adminEmail}}\",\n  \"password\": \"{{adminPassword}}\",\n  \"role\": \"ADMIN\"\n}",
-              "options": { "raw": { "language": "json" } }
-            },
-            "url": {
-              "raw": "{{baseUrl}}/auth/register",
-              "host": ["{{baseUrl}}"],
-              "path": ["auth", "register"]
-            },
-            "description": "⚠️ El endpoint acepta role=ADMIN sin restricción. Útil para tener una cuenta admin con la que probar Users/Access, pero es un hueco de seguridad si este backend deja de ser solo para pruebas."
+            "description": "Crea un usuario LIDER, sin perfil de colaborador (el bloque collaborator es obligatorio solo si role=COLABORADOR). El líder puede crear su perfil técnico después con Collaborators > Create My Profile (LIDER)."
           },
           "response": []
         },
@@ -89,7 +236,7 @@
               "host": ["{{baseUrl}}"],
               "path": ["auth", "login"]
             },
-            "description": "Guarda accessToken/refreshToken/userId en el ambiente activo. Corre esta request antes de probar la carpeta Profiles."
+            "description": "Usa una cuenta creada por el seed (Carlos Contreras, con perfil y skills ya cargados). Guarda accessToken/refreshToken/userId en el ambiente activo. Corre esta request antes de probar Collaborators."
           },
           "response": [],
           "event": [
@@ -134,7 +281,47 @@
               "host": ["{{baseUrl}}"],
               "path": ["auth", "login"]
             },
-            "description": "Guarda accessToken/refreshToken/userId en el ambiente activo. Corre esta request antes de probar la carpeta Projects."
+            "description": "Usa Laura Méndez (seed) — LIDER que ya tiene su propio perfil técnico. Guarda accessToken/refreshToken/userId. Corre esta request antes de probar Projects."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Login responde 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "if (pm.response.code === 200) {",
+                  "  const data = pm.response.json();",
+                  "  pm.environment.set('accessToken', data.access_token);",
+                  "  pm.environment.set('refreshToken', data.refresh_token);",
+                  "  pm.environment.set('userId', data.user.id);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login - Líder sin perfil",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{liderSinPerfilEmail}}\",\n  \"password\": \"{{liderSinPerfilPassword}}\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "login"]
+            },
+            "description": "Usa Mario Quintero (seed) — LIDER sin perfil de colaborador todavía. Úsalo para probar Collaborators > Create My Profile (LIDER) sin chocar con un 409."
           },
           "response": [],
           "event": [
@@ -174,7 +361,7 @@
               "host": ["{{baseUrl}}"],
               "path": ["auth", "login"]
             },
-            "description": "Corre esta request antes de probar las carpetas Users y Access."
+            "description": "Usa la cuenta admin creada por el seed (ADMIN_EMAIL/ADMIN_PASSWORD, o admin@conectau.test / Test1234! por defecto). Corre esta request antes de probar Users, Access o Import."
           },
           "response": [],
           "event": [
@@ -266,6 +453,365 @@
       ]
     },
     {
+      "name": "Collaborators (Colaborador/Líder)",
+      "description": "RF3-RF6. Requiere estar logueado como COLABORADOR o LIDER (corre Auth > Login - Colaborador, Login - Líder o Login - Líder sin perfil primero). Todas las rutas operan sobre el perfil del usuario autenticado (/me).",
+      "item": [
+        {
+          "name": "Create My Profile (LIDER) (RF3)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"Mario\",\n  \"lastName\": \"Quintero\",\n  \"personType\": \"DOCENTE\",\n  \"programId\": \"{{programId}}\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/collaborators/me",
+              "host": ["{{baseUrl}}"],
+              "path": ["collaborators", "me"]
+            },
+            "description": "Solo para un LIDER que todavía no tiene perfil técnico (corre Login - Líder sin perfil antes). 409 si ya tienes uno, o si el correo ya está vinculado a otra cuenta."
+          },
+          "response": []
+        },
+        {
+          "name": "Get My Profile (RF3)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/collaborators/me",
+              "host": ["{{baseUrl}}"],
+              "path": ["collaborators", "me"]
+            },
+            "description": "Devuelve datos generales + skills (con nivel/meses/último uso) + experiencia (con durationMonths calculado) + disponibilidad."
+          },
+          "response": []
+        },
+        {
+          "name": "Update My Profile (RF3)",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"summary\": \"Estudiante de últimos semestres, enfocado en frontend.\",\n  \"researchGroup\": \"Semillero de Software · Grupo A\",\n  \"profileUrl\": \"https://github.com/ana\",\n  \"dataConsent\": true\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/collaborators/me",
+              "host": ["{{baseUrl}}"],
+              "path": ["collaborators", "me"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "List My Skills (RF4)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/collaborators/me/skills",
+              "host": ["{{baseUrl}}"],
+              "path": ["collaborators", "me", "skills"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Add Skill (RF4)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"skillId\": \"{{skillId}}\",\n  \"level\": \"INTERMEDIO\",\n  \"experienceMonths\": 12,\n  \"lastUsedYear\": 2026\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/collaborators/me/skills",
+              "host": ["{{baseUrl}}"],
+              "path": ["collaborators", "me", "skills"]
+            },
+            "description": "Corre Catalogs > Search Skills antes (necesita skillId del catálogo). level debe ser BASICO, INTERMEDIO, AVANZADO o EXPERTO."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Add Skill responde 201', function () {",
+                  "  pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "if (pm.response.code === 201) {",
+                  "  pm.environment.set('collaboratorSkillId', pm.response.json().id);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Update Skill (RF4)",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"skillId\": \"{{skillId}}\",\n  \"level\": \"AVANZADO\",\n  \"experienceMonths\": 18,\n  \"lastUsedYear\": 2026\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/collaborators/me/skills/{{collaboratorSkillId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["collaborators", "me", "skills", "{{collaboratorSkillId}}"]
+            },
+            "description": "collaboratorSkillId es el id de la entrada del perfil (lo guarda Add Skill), no el id del catálogo."
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Skill (RF4)",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/collaborators/me/skills/{{collaboratorSkillId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["collaborators", "me", "skills", "{{collaboratorSkillId}}"]
+            },
+            "description": "204 sin body. Corre esto al final, después de Update Skill."
+          },
+          "response": []
+        },
+        {
+          "name": "Create Experience (RF5)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"SEMILLERO_INVESTIGACION\",\n  \"role\": \"Desarrolladora Frontend\",\n  \"organization\": \"Semillero de Software\",\n  \"startDate\": \"2024-01-15\",\n  \"current\": true,\n  \"weeklyHours\": 10,\n  \"level\": \"AVANZADO\",\n  \"description\": \"React, Next.js. Módulos de gestión y dashboards.\",\n  \"skillIds\": [\"{{skillId}}\"]\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/collaborators/me/experience",
+              "host": ["{{baseUrl}}"],
+              "path": ["collaborators", "me", "experience"]
+            },
+            "description": "type: LABORAL, PRACTICA, PROYECTO_ACADEMICO, SEMILLERO_INVESTIGACION, PROYECTO_PERSONAL, VOLUNTARIADO o DOCENCIA. skillIds es opcional (tecnologías usadas, del catálogo). La respuesta incluye durationMonths calculado."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Create Experience responde 201', function () {",
+                  "  pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "if (pm.response.code === 201) {",
+                  "  pm.environment.set('experienceId', pm.response.json().id);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Update Experience (RF5)",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"SEMILLERO_INVESTIGACION\",\n  \"role\": \"Desarrolladora Frontend Senior\",\n  \"organization\": \"Semillero de Software\",\n  \"startDate\": \"2024-01-15\",\n  \"current\": false,\n  \"endDate\": \"2026-06-01\",\n  \"weeklyHours\": 10,\n  \"level\": \"EXPERTO\",\n  \"description\": \"Actualizado desde Postman.\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/collaborators/me/experience/{{experienceId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["collaborators", "me", "experience", "{{experienceId}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Experience (RF5)",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/collaborators/me/experience/{{experienceId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["collaborators", "me", "experience", "{{experienceId}}"]
+            },
+            "description": "204 sin body. Corre esto al final, después de Update Experience."
+          },
+          "response": []
+        },
+        {
+          "name": "Update Availability (RF6)",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"availabilityStatus\": \"PARCIAL\",\n  \"weeklyHours\": 8\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/collaborators/me/availability",
+              "host": ["{{baseUrl}}"],
+              "path": ["collaborators", "me", "availability"]
+            },
+            "description": "availabilityStatus debe ser DISPONIBLE, PARCIAL o NO_DISPONIBLE. weeklyHours es numérico (0-60)."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Projects (Líder)",
+      "description": "RF7-RF11. Requiere estar logueado como LIDER (corre Auth > Login - Líder primero) y haber corrido Catalogs > List Project Types y List Project Categories. El líder solo ve/edita sus propios proyectos (leaderId = usuario autenticado).",
+      "item": [
+        {
+          "name": "Create Project (RF7-RF10)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"SISGELAB - Sistema de gestión de laboratorios\",\n  \"summary\": \"Plataforma para gestionar el uso, reserva y mantenimiento de los laboratorios del programa.\",\n  \"objectives\": \"Digitalizar la reserva de laboratorios y llevar el inventario de equipos.\",\n  \"typeId\": \"{{projectTypeId}}\",\n  \"categoryId\": \"{{projectCategoryId}}\",\n  \"programId\": \"{{programId}}\",\n  \"typeData\": {\n    \"asignatura\": \"Seminario Integrador III\",\n    \"docente\": \"Judith Rodríguez\"\n  },\n  \"knownSkillIds\": [\"{{skillId}}\"],\n  \"deliverables\": [\n    { \"name\": \"Módulo de reservas\", \"scope\": \"Reserva de laboratorios en línea\" },\n    { \"name\": \"Módulo de inventario\", \"scope\": \"Registro y trazabilidad de préstamos\" }\n  ]\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/projects",
+              "host": ["{{baseUrl}}"],
+              "path": ["projects"]
+            },
+            "description": "typeData debe traer todos los templateFields obligatorios del tipo elegido (revisa Catalogs > List Project Types) y ninguna clave desconocida, o responde 400. Si projectTypeId apunta al tipo CURSO (por defecto), los campos obligatorios son asignatura y docente. deliverables requiere al menos 1 elemento."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Create Project responde 201', function () {",
+                  "  pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "if (pm.response.code === 201) {",
+                  "  pm.environment.set('projectId', pm.response.json().id);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "List My Projects (RF11)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/projects",
+              "host": ["{{baseUrl}}"],
+              "path": ["projects"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Project By Id (RF11)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/projects/{{projectId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["projects", "{{projectId}}"]
+            },
+            "description": "403 si el proyecto existe pero no es del líder autenticado; 404 si no existe."
+          },
+          "response": []
+        },
+        {
+          "name": "Update Project (RF11)",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"SISGELAB v2 - Sistema de gestión de laboratorios\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/projects/{{projectId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["projects", "{{projectId}}"]
+            },
+            "description": "Todos los campos son opcionales. Si mandas typeId o typeData, se revalida contra la plantilla del tipo resultante."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Import (Admin)",
+      "description": "RF23-RF24. Requiere estar logueado como ADMIN (corre Auth > Login - Admin primero).",
+      "item": [
+        {
+          "name": "Download Collaborators Template",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/admin/import/collaborators/template",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "import", "collaborators", "template"]
+            },
+            "description": "Devuelve un .xlsx (application/vnd.openxmlformats-officedocument.spreadsheetml.sheet) con las hojas Colaboradores, Habilidades y Experiencia y sus encabezados. En Postman: Send and Download, o revisa el body en modo 'Preview' para confirmar el Content-Type."
+          },
+          "response": []
+        },
+        {
+          "name": "Import Collaborators",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": [],
+                  "description": "Selecciona un .xlsx con las hojas Colaboradores/Habilidades/Experiencia (descarga la plantilla primero). Máximo 5 MB."
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/admin/import/collaborators",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "import", "collaborators"]
+            },
+            "description": "Responde { created, rejected: [{sheet,row,email,reason}], warnings }. Los correos que ya existen en la base se rechazan; las habilidades que no están en el catálogo se crean como PENDIENTE con una advertencia."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
       "name": "Users (Admin)",
       "description": "Requiere estar logueado como ADMIN (corre Auth > Login - Admin primero).",
       "item": [
@@ -303,7 +849,7 @@
             "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"fullName\": \"Usuario Creado por Admin\",\n  \"email\": \"creado.por.admin@ufps.edu.co\",\n  \"password\": \"Secret123*\",\n  \"role\": \"COLABORADOR\",\n  \"program\": \"{{programValue}}\"\n}",
+              "raw": "{\n  \"fullName\": \"Usuario Creado por Admin\",\n  \"email\": \"creado.por.admin@ufps.edu.co\",\n  \"password\": \"Secret123*\",\n  \"role\": \"COLABORADOR\"\n}",
               "options": { "raw": { "language": "json" } }
             },
             "url": {
@@ -311,7 +857,7 @@
               "host": ["{{baseUrl}}"],
               "path": ["users"]
             },
-            "description": "Mismo caso de uso que /auth/register, pero detrás de auth de ADMIN en lugar de ser público."
+            "description": "A diferencia de /auth/register, este endpoint admite cualquier role (incluido ADMIN) porque ya está detrás de auth de ADMIN, y no crea ni vincula ningún Collaborator — es solo la cuenta de usuario."
           },
           "response": [],
           "event": [
@@ -339,14 +885,15 @@
             "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"fullName\": \"Usuario Actualizado por Admin\"\n}",
+              "raw": "{\n  \"fullName\": \"Usuario Actualizado por Admin\",\n  \"active\": true\n}",
               "options": { "raw": { "language": "json" } }
             },
             "url": {
               "raw": "{{baseUrl}}/users/{{targetUserId}}",
               "host": ["{{baseUrl}}"],
               "path": ["users", "{{targetUserId}}"]
-            }
+            },
+            "description": "active permite activar/desactivar la cuenta; un usuario inactivo no puede hacer login."
           },
           "response": []
         },
@@ -394,297 +941,6 @@
               "path": ["menu", "{{menuRole}}"]
             },
             "description": "menuRole debe ser LIDER, COLABORADOR o ADMIN."
-          },
-          "response": []
-        }
-      ]
-    },
-    {
-      "name": "Profiles (Colaborador)",
-      "description": "RF3-RF6. Requiere estar logueado como COLABORADOR (corre Auth > Login - Colaborador primero). Todas las rutas operan sobre el perfil del usuario autenticado (/me), no aceptan un id de otro colaborador.",
-      "item": [
-        {
-          "name": "Get My Profile (RF3)",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/profiles/me",
-              "host": ["{{baseUrl}}"],
-              "path": ["profiles", "me"]
-            },
-            "description": "Devuelve datos generales + skills + experiencia + disponibilidad."
-          },
-          "response": []
-        },
-        {
-          "name": "Update My Profile (RF3)",
-          "request": {
-            "method": "PATCH",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"headline\": \"Desarrolladora Frontend\"\n}",
-              "options": { "raw": { "language": "json" } }
-            },
-            "url": {
-              "raw": "{{baseUrl}}/profiles/me",
-              "host": ["{{baseUrl}}"],
-              "path": ["profiles", "me"]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "List My Skills (RF4)",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/profiles/me/skills",
-              "host": ["{{baseUrl}}"],
-              "path": ["profiles", "me", "skills"]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Create Skill (RF4)",
-          "request": {
-            "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"name\": \"React\",\n  \"type\": \"CONOCIMIENTO\",\n  \"level\": \"medio\"\n}",
-              "options": { "raw": { "language": "json" } }
-            },
-            "url": {
-              "raw": "{{baseUrl}}/profiles/me/skills",
-              "host": ["{{baseUrl}}"],
-              "path": ["profiles", "me", "skills"]
-            },
-            "description": "type debe ser CONOCIMIENTO o COMPETENCIA."
-          },
-          "response": [],
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test('Create Skill responde 201', function () {",
-                  "  pm.response.to.have.status(201);",
-                  "});",
-                  "",
-                  "if (pm.response.code === 201) {",
-                  "  pm.environment.set('skillId', pm.response.json().id);",
-                  "}"
-                ]
-              }
-            }
-          ]
-        },
-        {
-          "name": "Update Skill (RF4)",
-          "request": {
-            "method": "PATCH",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"name\": \"React\",\n  \"type\": \"COMPETENCIA\",\n  \"level\": \"alto\"\n}",
-              "options": { "raw": { "language": "json" } }
-            },
-            "url": {
-              "raw": "{{baseUrl}}/profiles/me/skills/{{skillId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["profiles", "me", "skills", "{{skillId}}"]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Delete Skill (RF4)",
-          "request": {
-            "method": "DELETE",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/profiles/me/skills/{{skillId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["profiles", "me", "skills", "{{skillId}}"]
-            },
-            "description": "204 sin body. Corre esto al final, después de Update Skill."
-          },
-          "response": []
-        },
-        {
-          "name": "Create Experience (RF5)",
-          "request": {
-            "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"title\": \"Desarrolladora Frontend\",\n  \"organization\": \"Semillero de Software\",\n  \"period\": \"2024 - actual\",\n  \"description\": \"React, Next.js. Módulos de gestión y dashboards.\"\n}",
-              "options": { "raw": { "language": "json" } }
-            },
-            "url": {
-              "raw": "{{baseUrl}}/profiles/me/experience",
-              "host": ["{{baseUrl}}"],
-              "path": ["profiles", "me", "experience"]
-            }
-          },
-          "response": [],
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test('Create Experience responde 201', function () {",
-                  "  pm.response.to.have.status(201);",
-                  "});",
-                  "",
-                  "if (pm.response.code === 201) {",
-                  "  pm.environment.set('experienceId', pm.response.json().id);",
-                  "}"
-                ]
-              }
-            }
-          ]
-        },
-        {
-          "name": "Update Experience (RF5)",
-          "request": {
-            "method": "PATCH",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"title\": \"Desarrolladora Frontend Senior\",\n  \"organization\": \"Semillero de Software\",\n  \"period\": \"2024 - actual\",\n  \"description\": \"Actualizado desde Postman.\"\n}",
-              "options": { "raw": { "language": "json" } }
-            },
-            "url": {
-              "raw": "{{baseUrl}}/profiles/me/experience/{{experienceId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["profiles", "me", "experience", "{{experienceId}}"]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Delete Experience (RF5)",
-          "request": {
-            "method": "DELETE",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/profiles/me/experience/{{experienceId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["profiles", "me", "experience", "{{experienceId}}"]
-            },
-            "description": "204 sin body. Corre esto al final, después de Update Experience."
-          },
-          "response": []
-        },
-        {
-          "name": "Update Availability (RF6)",
-          "request": {
-            "method": "PATCH",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"availabilityStatus\": \"PARCIAL\",\n  \"weeklyHours\": \"5-10\",\n  \"modality\": \"Remoto\"\n}",
-              "options": { "raw": { "language": "json" } }
-            },
-            "url": {
-              "raw": "{{baseUrl}}/profiles/me/availability",
-              "host": ["{{baseUrl}}"],
-              "path": ["profiles", "me", "availability"]
-            },
-            "description": "availabilityStatus debe ser DISPONIBLE, PARCIAL o NO_DISPONIBLE."
-          },
-          "response": []
-        }
-      ]
-    },
-    {
-      "name": "Projects (Líder)",
-      "description": "RF7-RF9. Requiere estar logueado como LIDER (corre Auth > Login - Líder primero). El líder solo ve/edita sus propios proyectos (leaderId = usuario autenticado).",
-      "item": [
-        {
-          "name": "Create Project (RF7+RF8)",
-          "request": {
-            "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"title\": \"SISGELAB - Sistema de gestión de laboratorios\",\n  \"summary\": \"Plataforma para gestionar el uso, reserva y mantenimiento de los laboratorios del programa.\",\n  \"objectives\": \"Digitalizar la reserva de laboratorios y llevar el inventario de equipos.\",\n  \"knownSkills\": [\"React\", \"NestJS\", \"PostgreSQL\"],\n  \"semillero\": \"Semillero de Software\",\n  \"program\": \"{{programValue}}\"\n}",
-              "options": { "raw": { "language": "json" } }
-            },
-            "url": {
-              "raw": "{{baseUrl}}/projects",
-              "host": ["{{baseUrl}}"],
-              "path": ["projects"]
-            }
-          },
-          "response": [],
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test('Create Project responde 201', function () {",
-                  "  pm.response.to.have.status(201);",
-                  "});",
-                  "",
-                  "if (pm.response.code === 201) {",
-                  "  pm.environment.set('projectId', pm.response.json().id);",
-                  "}"
-                ]
-              }
-            }
-          ]
-        },
-        {
-          "name": "List My Projects (RF9)",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/projects",
-              "host": ["{{baseUrl}}"],
-              "path": ["projects"]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Get Project By Id (RF9)",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/projects/{{projectId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["projects", "{{projectId}}"]
-            },
-            "description": "403 si el proyecto existe pero no es del líder autenticado; 404 si no existe."
-          },
-          "response": []
-        },
-        {
-          "name": "Update Project (RF9)",
-          "request": {
-            "method": "PATCH",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"title\": \"SISGELAB v2 - Sistema de gestión de laboratorios\"\n}",
-              "options": { "raw": { "language": "json" } }
-            },
-            "url": {
-              "raw": "{{baseUrl}}/projects/{{projectId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["projects", "{{projectId}}"]
-            }
           },
           "response": []
         }

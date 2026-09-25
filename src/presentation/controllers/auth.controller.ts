@@ -9,14 +9,14 @@ import {
   UnauthorizedException,
   UseGuards,
 } from '@nestjs/common';
-import { CreateUserDto } from '../../application/dto/create-user.dto';
 import type { LoginResponseDto } from '../../application/dto/login-response.dto';
 import { LoginDto } from '../../application/dto/login.dto';
 import type { LogoutResponseDto } from '../../application/dto/logout-response.dto';
 import { RefreshTokenDto } from '../../application/dto/refresh-token.dto';
-import { CreateUserUseCase } from '../../application/use-cases/create-user.use-case';
+import { RegisterDto } from '../../application/dto/register.dto';
 import { GetMeUseCase } from '../../application/use-cases/get-me.use-case';
 import { LoginUseCase } from '../../application/use-cases/login.use-case';
+import { RegisterUseCase } from '../../application/use-cases/register.use-case';
 import type { TokenService } from '../../domain/repositories/token-service.interface';
 import { TOKEN_SERVICE } from '../../shared/interfaces/tokens';
 import type { AuthenticatedRequest } from '../guards/jwt-auth.guard';
@@ -27,14 +27,14 @@ export class AuthController {
   constructor(
     private readonly loginUseCase: LoginUseCase,
     private readonly getMeUseCase: GetMeUseCase,
-    private readonly createUserUseCase: CreateUserUseCase,
+    private readonly registerUseCase: RegisterUseCase,
     @Inject(TOKEN_SERVICE) private readonly tokenService: TokenService,
   ) {}
 
   @HttpCode(201)
   @Post('register')
-  register(@Body() createUserDto: CreateUserDto) {
-    return this.createUserUseCase.execute(createUserDto);
+  register(@Body() registerDto: RegisterDto) {
+    return this.registerUseCase.execute(registerDto);
   }
 
   @HttpCode(200)

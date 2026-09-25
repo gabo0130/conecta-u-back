@@ -1,11 +1,4 @@
-import {
-  IsEmail,
-  IsIn,
-  IsOptional,
-  IsString,
-  MaxLength,
-  MinLength,
-} from 'class-validator';
+import { IsEmail, IsIn, IsString, MaxLength, MinLength } from 'class-validator';
 import { USER_ROLES } from '../../domain/entities/user-role.type';
 import type { UserRole } from '../../domain/entities/user-role.type';
 
@@ -24,9 +17,4 @@ export class CreateUserDto {
 
   @IsIn(USER_ROLES)
   role: UserRole;
-
-  @IsOptional()
-  @IsString()
-  @MaxLength(120)
-  program?: string;
 }

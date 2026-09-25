@@ -6,14 +6,13 @@ export interface CreateUserRepositoryDto {
   email: string;
   passwordHash: string;
   role: UserRole;
-  program?: string | null;
 }
 
 export interface UpdateUserRepositoryDto {
   fullName?: string;
   email?: string;
   role?: UserRole;
-  program?: string | null;
+  active?: boolean;
 }
 
 export interface UserRepository {

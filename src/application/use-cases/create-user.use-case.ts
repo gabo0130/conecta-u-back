@@ -30,7 +30,6 @@ export class CreateUserUseCase {
       email,
       passwordHash,
       role,
-      program: data.program ?? null,
     });
 
     return {
@@ -38,7 +37,7 @@ export class CreateUserUseCase {
       fullName: user.fullName,
       email: user.email,
       role: user.role,
-      program: user.program,
+      active: user.active,
     };
   }
 }

@@ -36,8 +36,8 @@ export class UserOrmEntity {
   })
   role: string;
 
-  @Column({ type: 'varchar', length: 120, nullable: true })
-  program: string | null;
+  @Column({ default: true })
+  active: boolean;
 
   @OneToOne(() => CollaboratorOrmEntity, (collaborator) => collaborator.user, {
     cascade: true,

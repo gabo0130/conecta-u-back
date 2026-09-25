@@ -2,15 +2,25 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { CollaboratorEntity } from '../../../domain/entities/collaborator.entity';
+import { CollaboratorSkillEntity } from '../../../domain/entities/collaborator-skill.entity';
 import { ExperienceEntity } from '../../../domain/entities/experience.entity';
 import { SkillEntity } from '../../../domain/entities/skill.entity';
 import {
   CollaboratorRepository,
-  type UpdateCollaboratorRepositoryDto,
+  CreateCollaboratorRepositoryDto,
+  UpdateCollaboratorRepositoryDto,
 } from '../../../domain/repositories/collaborator.repository.interface';
 import { CollaboratorOrmEntity } from './collaborator.orm-entity';
+import { CollaboratorSkillOrmEntity } from './collaborator-skill.orm-entity';
 import { ExperienceOrmEntity } from './experience.orm-entity';
 import { SkillOrmEntity } from './skill.orm-entity';
+
+const RELATIONS = [
+  'skills',
+  'skills.skill',
+  'experiences',
+  'experiences.technologies',
+];
 
 @Injectable()
 export class TypeOrmCollaboratorRepository implements CollaboratorRepository {
@@ -19,72 +29,164 @@ export class TypeOrmCollaboratorRepository implements CollaboratorRepository {
     private readonly repository: Repository<CollaboratorOrmEntity>,
   ) {}
 
-  async findByUserId(userId: string): Promise<CollaboratorEntity | null> {
+  async findById(id: string): Promise<CollaboratorEntity | null> {
     const collaborator = await this.repository.findOne({
-      where: { userId },
-      relations: ['skills', 'experiences'],
+      where: { id },
+      relations: RELATIONS,
     });
-
     return collaborator ? this.toDomain(collaborator) : null;
   }
 
+  async findByUserId(userId: string): Promise<CollaboratorEntity | null> {
+    const collaborator = await this.repository.findOne({
+      where: { userId },
+      relations: RELATIONS,
+    });
+    return collaborator ? this.toDomain(collaborator) : null;
+  }
+
+  async findByEmail(email: string): Promise<CollaboratorEntity | null> {
+    const collaborator = await this.repository.findOne({
+      where: { email },
+      relations: RELATIONS,
+    });
+    return collaborator ? this.toDomain(collaborator) : null;
+  }
+
+  async create(
+    data: CreateCollaboratorRepositoryDto,
+  ): Promise<CollaboratorEntity> {
+    const collaborator = this.repository.create({
+      email: data.email,
+      userId: data.userId ?? null,
+      firstName: data.firstName,
+      lastName: data.lastName,
+      personType: data.personType,
+      programId: data.programId,
+      semester: data.semester ?? null,
+      researchGroup: data.researchGroup ?? null,
+      summary: data.summary ?? null,
+      profileUrl: data.profileUrl ?? null,
+      dataConsent: data.dataConsent ?? false,
+      dataConsentAt: data.dataConsentAt ?? null,
+      source: data.source ?? 'REGISTRO',
+    });
+
+    const saved = await this.repository.save(collaborator);
+    return this.findById(saved.id) as Promise<CollaboratorEntity>;
+  }
+
   async update(
-    userId: string,
+    id: string,
     data: UpdateCollaboratorRepositoryDto,
   ): Promise<CollaboratorEntity | null> {
     const collaborator = await this.repository.findOne({
-      where: { userId },
-      relations: ['skills', 'experiences'],
+      where: { id },
+      relations: RELATIONS,
     });
     if (!collaborator) {
       return null;
     }
 
     const merged = this.repository.merge(collaborator, {
-      ...(data.headline !== undefined ? { headline: data.headline } : {}),
-      ...(data.studyGroup !== undefined ? { studyGroup: data.studyGroup } : {}),
+      ...(data.userId !== undefined ? { userId: data.userId } : {}),
+      ...(data.firstName !== undefined ? { firstName: data.firstName } : {}),
+      ...(data.lastName !== undefined ? { lastName: data.lastName } : {}),
+      ...(data.programId !== undefined ? { programId: data.programId } : {}),
+      ...(data.semester !== undefined ? { semester: data.semester } : {}),
+      ...(data.researchGroup !== undefined
+        ? { researchGroup: data.researchGroup }
+        : {}),
+      ...(data.summary !== undefined ? { summary: data.summary } : {}),
+      ...(data.profileUrl !== undefined ? { profileUrl: data.profileUrl } : {}),
       ...(data.availabilityStatus !== undefined
         ? { availabilityStatus: data.availabilityStatus }
         : {}),
       ...(data.weeklyHours !== undefined
         ? { weeklyHours: data.weeklyHours }
         : {}),
-      ...(data.modality !== undefined ? { modality: data.modality } : {}),
+      ...(data.dataConsent !== undefined
+        ? { dataConsent: data.dataConsent }
+        : {}),
+      ...(data.dataConsentAt !== undefined
+        ? { dataConsentAt: data.dataConsentAt }
+        : {}),
+      ...(data.active !== undefined ? { active: data.active } : {}),
     });
 
     const saved = await this.repository.save(merged);
-    return this.toDomain(saved);
+    return this.findById(saved.id);
   }
 
   private toDomain(collaborator: CollaboratorOrmEntity): CollaboratorEntity {
     return new CollaboratorEntity(
+      collaborator.id,
+      collaborator.email,
       collaborator.userId,
-      collaborator.headline,
+      collaborator.firstName,
+      collaborator.lastName,
+      collaborator.personType as CollaboratorEntity['personType'],
+      collaborator.programId,
+      collaborator.semester,
+      collaborator.researchGroup,
+      collaborator.summary,
+      collaborator.profileUrl,
       collaborator.availabilityStatus as CollaboratorEntity['availabilityStatus'],
       collaborator.weeklyHours,
-      collaborator.modality,
-      (collaborator.skills ?? []).map(
-        (skill: SkillOrmEntity) =>
-          new SkillEntity(
-            skill.id,
-            skill.collaboratorId,
-            skill.name,
-            skill.type as SkillEntity['type'],
-            skill.level,
-          ),
+      collaborator.dataConsent,
+      collaborator.dataConsentAt,
+      collaborator.source as CollaboratorEntity['source'],
+      collaborator.active,
+      (collaborator.skills ?? []).map((entry) =>
+        this.collaboratorSkillToDomain(entry),
       ),
-      (collaborator.experiences ?? []).map(
-        (experience: ExperienceOrmEntity) =>
-          new ExperienceEntity(
-            experience.id,
-            experience.collaboratorId,
-            experience.title,
-            experience.organization,
-            experience.period,
-            experience.description,
-          ),
+      (collaborator.experiences ?? []).map((experience) =>
+        this.experienceToDomain(experience),
       ),
-      collaborator.studyGroup,
+    );
+  }
+
+  private collaboratorSkillToDomain(
+    entry: CollaboratorSkillOrmEntity,
+  ): CollaboratorSkillEntity {
+    return new CollaboratorSkillEntity(
+      entry.id,
+      entry.collaboratorId,
+      this.skillToDomain(entry.skill),
+      entry.level as CollaboratorSkillEntity['level'],
+      entry.experienceMonths,
+      entry.lastUsedYear,
+    );
+  }
+
+  private experienceToDomain(
+    experience: ExperienceOrmEntity,
+  ): ExperienceEntity {
+    return new ExperienceEntity(
+      experience.id,
+      experience.collaboratorId,
+      experience.type as ExperienceEntity['type'],
+      experience.role,
+      experience.organization,
+      experience.startDate,
+      experience.endDate,
+      experience.current,
+      experience.weeklyHours,
+      experience.level as ExperienceEntity['level'],
+      experience.description,
+      (experience.technologies ?? []).map((skill) => this.skillToDomain(skill)),
+    );
+  }
+
+  private skillToDomain(skill: SkillOrmEntity): SkillEntity {
+    return new SkillEntity(
+      skill.id,
+      skill.name,
+      skill.normalizedName,
+      skill.type as SkillEntity['type'],
+      skill.category as SkillEntity['category'],
+      skill.synonyms,
+      skill.status as SkillEntity['status'],
     );
   }
 }

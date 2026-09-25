@@ -1,4 +1,5 @@
 import {
+  IsBoolean,
   IsEmail,
   IsIn,
   IsOptional,
@@ -25,7 +26,6 @@ export class UpdateUserDto {
   role?: UserRole;
 
   @IsOptional()
-  @IsString()
-  @MaxLength(120)
-  program?: string;
+  @IsBoolean()
+  active?: boolean;
 }

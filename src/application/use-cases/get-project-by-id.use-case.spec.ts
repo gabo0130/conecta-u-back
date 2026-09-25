@@ -3,6 +3,23 @@ import { GetProjectByIdUseCase } from './get-project-by-id.use-case';
 import { ProjectEntity } from '../../domain/entities/project.entity';
 import type { ProjectRepository } from '../../domain/repositories/project.repository.interface';
 
+function buildProject(leaderId: string) {
+  return new ProjectEntity(
+    'p1',
+    'SISGELAB',
+    'resumen',
+    'objetivos',
+    't1',
+    'c1',
+    null,
+    {},
+    [],
+    [],
+    leaderId,
+    'BORRADOR',
+  );
+}
+
 describe('GetProjectByIdUseCase', () => {
   const projectRepository: jest.Mocked<Pick<ProjectRepository, 'findById'>> = {
     findById: jest.fn(),
@@ -15,19 +32,7 @@ describe('GetProjectByIdUseCase', () => {
   });
 
   it('returns the project when owned by the leader', async () => {
-    projectRepository.findById.mockResolvedValue(
-      new ProjectEntity(
-        'p1',
-        'SISGELAB',
-        'resumen',
-        'objetivos',
-        null,
-        null,
-        null,
-        '1',
-        'BORRADOR',
-      ),
-    );
+    projectRepository.findById.mockResolvedValue(buildProject('1'));
 
     const result = await useCase.execute('1', 'p1');
 
@@ -43,19 +48,7 @@ describe('GetProjectByIdUseCase', () => {
   });
 
   it('throws ForbiddenException when project belongs to another leader', async () => {
-    projectRepository.findById.mockResolvedValue(
-      new ProjectEntity(
-        'p1',
-        'SISGELAB',
-        'resumen',
-        'objetivos',
-        null,
-        null,
-        null,
-        '2',
-        'BORRADOR',
-      ),
-    );
+    projectRepository.findById.mockResolvedValue(buildProject('2'));
 
     await expect(useCase.execute('1', 'p1')).rejects.toBeInstanceOf(
       ForbiddenException,

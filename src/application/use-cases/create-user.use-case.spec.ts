@@ -26,14 +26,7 @@ describe('CreateUserUseCase', () => {
     userRepository.findByEmail.mockResolvedValue(null);
     passwordHasher.hash.mockResolvedValue('hashed');
     userRepository.create.mockResolvedValue(
-      new UserEntity(
-        '2',
-        'Ana',
-        'ana@example.com',
-        'hashed',
-        'COLABORADOR',
-        'sistemas',
-      ),
+      new UserEntity('2', 'Ana', 'ana@example.com', 'hashed', 'COLABORADOR'),
     );
 
     const result = await useCase.execute({
@@ -41,7 +34,6 @@ describe('CreateUserUseCase', () => {
       email: ' ANA@EXAMPLE.COM ',
       password: 'Secret123*',
       role: 'COLABORADOR',
-      program: 'sistemas',
     });
 
     expect(userRepository.findByEmail).toHaveBeenCalledWith('ana@example.com');
@@ -51,7 +43,6 @@ describe('CreateUserUseCase', () => {
       email: 'ana@example.com',
       passwordHash: 'hashed',
       role: 'COLABORADOR',
-      program: 'sistemas',
     });
     expect(result.role).toBe('COLABORADOR');
   });

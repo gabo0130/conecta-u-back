@@ -1,19 +1,55 @@
-import { IsOptional, IsString, Length, MaxLength } from 'class-validator';
+import {
+  IsArray,
+  IsBoolean,
+  IsDateString,
+  IsIn,
+  IsInt,
+  IsOptional,
+  IsString,
+  IsUUID,
+  Max,
+  MaxLength,
+  Min,
+} from 'class-validator';
+import { EXPERIENCE_TYPES } from '../../domain/entities/experience-type.type';
+import type { ExperienceType } from '../../domain/entities/experience-type.type';
+import { LEVELS } from '../../domain/entities/level.type';
+import type { Level } from '../../domain/entities/level.type';
 
 export class ExperienceDto {
+  @IsIn(EXPERIENCE_TYPES)
+  type: ExperienceType;
+
   @IsString()
-  @Length(1, 140)
-  title: string;
+  @MaxLength(120)
+  role: string;
+
+  @IsString()
+  @MaxLength(160)
+  organization: string;
+
+  @IsDateString()
+  startDate: string;
 
   @IsOptional()
-  @IsString()
-  @MaxLength(140)
-  organization?: string;
+  @IsDateString()
+  endDate?: string;
+
+  @IsBoolean()
+  current: boolean;
+
+  @IsInt()
+  @Min(1)
+  @Max(60)
+  weeklyHours: number;
+
+  @IsIn(LEVELS)
+  level: Level;
 
   @IsOptional()
-  @IsString()
-  @MaxLength(60)
-  period?: string;
+  @IsArray()
+  @IsUUID('4', { each: true })
+  skillIds?: string[];
 
   @IsOptional()
   @IsString()

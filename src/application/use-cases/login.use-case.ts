@@ -37,6 +37,10 @@ export class LoginUseCase {
       throw new UnauthorizedException({ message: 'Credenciales inválidas' });
     }
 
+    if (!user.active) {
+      throw new UnauthorizedException({ message: 'Usuario inactivo' });
+    }
+
     const accessToken = this.tokenService.generate(user.id, user.role);
     const refreshToken = this.tokenService.generateRefresh(user.id, user.role);
 
@@ -49,7 +53,6 @@ export class LoginUseCase {
         fullName: user.fullName,
         email: user.email,
         role: user.role,
-        program: user.program,
         menu: getMenuByRole(user.role),
       },
     };

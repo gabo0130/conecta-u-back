@@ -7,6 +7,6 @@ export class UserEntity {
     public readonly email: string,
     public readonly passwordHash: string,
     public readonly role: UserRole,
-    public readonly program: string | null = null,
+    public readonly active: boolean = true,
   ) {}
 }
