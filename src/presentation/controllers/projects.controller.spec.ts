@@ -27,7 +27,14 @@ describe('ProjectsController', () => {
   });
 
   it('delegates create to use case', () => {
-    const dto = { title: 'SISGELAB', summary: 'r', objectives: 'o' };
+    const dto = {
+      title: 'SISGELAB',
+      summary: 'r',
+      objectives: 'o',
+      typeId: 'type-1',
+      categoryId: 'category-1',
+      deliverables: [{ name: 'PMV', scope: 'Iteración 1' }],
+    };
     void controller.create(request, dto);
     expect(createProjectUseCase.execute).toHaveBeenCalledWith('1', dto);
   });

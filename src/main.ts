@@ -8,7 +8,8 @@ import { AppLoggerService } from './shared/logging/logger.service';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, { bufferLogs: true });
 
-  app.useLogger(app.get(AppLoggerService));
+  const logger = app.get(AppLoggerService);
+  app.useLogger(logger);
   app.setGlobalPrefix('api');
 
   const swaggerConfig = new DocumentBuilder()
@@ -41,7 +42,9 @@ async function bootstrap() {
     }),
   );
 
-  app.useGlobalFilters(new HttpExceptionFilter());
+  app.useGlobalFilters(
+    new HttpExceptionFilter(logger.forContext(HttpExceptionFilter.name)),
+  );
 
   await app.listen(process.env.PORT ?? 4000);
 }

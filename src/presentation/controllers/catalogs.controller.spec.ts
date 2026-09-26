@@ -29,11 +29,9 @@ describe('CatalogsController', () => {
   });
 
   it('delegates searchSkills to use case with query and type', () => {
-    void controller.searchSkills('rea', 'CONOCIMIENTO');
-    expect(searchSkillsUseCase.execute).toHaveBeenCalledWith(
-      'rea',
-      'CONOCIMIENTO',
-    );
+    const query = { q: 'rea', type: 'CONOCIMIENTO' as const };
+    void controller.searchSkills(query);
+    expect(searchSkillsUseCase.execute).toHaveBeenCalledWith(query);
   });
 
   it('delegates proposeSkill to use case', () => {

@@ -2,14 +2,13 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { CollaboratorSkillEntity } from '../../../domain/entities/collaborator-skill.entity';
-import { SkillEntity } from '../../../domain/entities/skill.entity';
 import {
   CollaboratorSkillRepository,
   CreateCollaboratorSkillRepositoryDto,
   UpdateCollaboratorSkillRepositoryDto,
 } from '../../../domain/repositories/collaborator-skill.repository.interface';
 import { CollaboratorSkillOrmEntity } from './collaborator-skill.orm-entity';
-import { SkillOrmEntity } from './skill.orm-entity';
+import { toCollaboratorSkillEntity } from './mappers/collaborator.mapper';
 
 @Injectable()
 export class TypeOrmCollaboratorSkillRepository implements CollaboratorSkillRepository {
@@ -20,14 +19,14 @@ export class TypeOrmCollaboratorSkillRepository implements CollaboratorSkillRepo
 
   async findById(id: string): Promise<CollaboratorSkillEntity | null> {
     const entry = await this.repository.findOne({ where: { id } });
-    return entry ? this.toDomain(entry) : null;
+    return entry ? toCollaboratorSkillEntity(entry) : null;
   }
 
   async findByCollaboratorId(
     collaboratorId: string,
   ): Promise<CollaboratorSkillEntity[]> {
     const entries = await this.repository.find({ where: { collaboratorId } });
-    return entries.map((entry) => this.toDomain(entry));
+    return entries.map(toCollaboratorSkillEntity);
   }
 
   async create(
@@ -45,7 +44,7 @@ export class TypeOrmCollaboratorSkillRepository implements CollaboratorSkillRepo
     const withSkill = await this.repository.findOne({
       where: { id: saved.id },
     });
-    return this.toDomain(withSkill ?? saved);
+    return toCollaboratorSkillEntity(withSkill ?? saved);
   }
 
   async update(
@@ -72,34 +71,11 @@ export class TypeOrmCollaboratorSkillRepository implements CollaboratorSkillRepo
     const withSkill = await this.repository.findOne({
       where: { id: saved.id },
     });
-    return this.toDomain(withSkill ?? saved);
+    return toCollaboratorSkillEntity(withSkill ?? saved);
   }
 
   async delete(id: string): Promise<boolean> {
     const result = await this.repository.delete(id);
     return (result.affected ?? 0) > 0;
-  }
-
-  private toDomain(entry: CollaboratorSkillOrmEntity): CollaboratorSkillEntity {
-    return new CollaboratorSkillEntity(
-      entry.id,
-      entry.collaboratorId,
-      this.skillToDomain(entry.skill),
-      entry.level as CollaboratorSkillEntity['level'],
-      entry.experienceMonths,
-      entry.lastUsedYear,
-    );
-  }
-
-  private skillToDomain(skill: SkillOrmEntity): SkillEntity {
-    return new SkillEntity(
-      skill.id,
-      skill.name,
-      skill.normalizedName,
-      skill.type as SkillEntity['type'],
-      skill.category as SkillEntity['category'],
-      skill.synonyms,
-      skill.status as SkillEntity['status'],
-    );
   }
 }

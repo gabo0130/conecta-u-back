@@ -1,39 +1,43 @@
-// Las celdas de un .xlsx llegan tipadas `unknown`; este archivo las normaliza a string a
-// propósito en cada fila leída.
-/* eslint-disable @typescript-eslint/no-base-to-string */
 import { BadRequestException, Inject, Injectable } from '@nestjs/common';
-import ExcelJS from 'exceljs';
-import type { SkillType } from '../../domain/entities/skill-type.type';
-import type { CollaboratorSkillRepository } from '../../domain/repositories/collaborator-skill.repository.interface';
+import { consentFields } from '../../domain/entities/data-consent';
+import {
+  type CollaboratorWorkbook,
+  type CollaboratorWorkbookReader,
+  InvalidWorkbookError,
+  type WorkbookRow,
+} from '../../domain/repositories/collaborator-workbook.interface';
 import type { CollaboratorRepository } from '../../domain/repositories/collaborator.repository.interface';
-import type { ExperienceRepository } from '../../domain/repositories/experience.repository.interface';
 import type { ProgramRepository } from '../../domain/repositories/program.repository.interface';
-import type { SkillRepository } from '../../domain/repositories/skill.repository.interface';
+import type {
+  TransactionalRepositories,
+  UnitOfWork,
+} from '../../domain/repositories/unit-of-work.interface';
 import {
-  COLLABORATOR_REPOSITORY,
-  COLLABORATOR_SKILL_REPOSITORY,
-  EXPERIENCE_REPOSITORY,
-  PROGRAM_REPOSITORY,
-  SKILL_REPOSITORY,
-} from '../../shared/interfaces/tokens';
-import {
-  AVAILABILITY_LABELS,
-  COLLABORATOR_HEADERS,
-  EXPERIENCE_HEADERS,
-  EXPERIENCE_TYPE_LABELS,
-  LEVEL_LABELS,
-  MAX_IMPORT_FILE_SIZE_BYTES,
-  PERSON_TYPE_LABELS,
-  REQUIRED_SHEETS,
   SHEET_COLLABORATORS,
   SHEET_EXPERIENCE,
   SHEET_SKILLS,
-  SKILL_HEADERS,
-  SKILL_TYPE_LABELS,
-  YES_LABELS,
-  normalizeLabel,
 } from '../../shared/constants/import-collaborators.constants';
-import { normalizeSkillName } from '../../shared/utils/normalize-skill-name';
+import {
+  COLLABORATOR_REPOSITORY,
+  COLLABORATOR_WORKBOOK_READER,
+  PROGRAM_REPOSITORY,
+  UNIT_OF_WORK,
+} from '../../shared/interfaces/tokens';
+import { AppLoggerService } from '../../shared/logging/logger.service';
+import { emailOf } from '../import/cell-parsers';
+import {
+  type ParseResult,
+  type ParsedCollaborator,
+  type ParsedExperience,
+  type ParsedSkill,
+  parseCollaboratorRow,
+  parseExperienceRow,
+  parseSkillRow,
+} from '../import/collaborator-row.parsers';
+import {
+  type SkillProposal,
+  resolveOrProposeSkill,
+} from '../support/skill-resolver';
 
 export interface RejectedRow {
   sheet: string;
@@ -42,437 +46,294 @@ export interface RejectedRow {
   reason: string;
 }
 
-interface SheetRow {
+interface ValidRow<T> {
   row: number;
-  values: Record<string, unknown>;
+  value: T;
 }
 
+/** Colaborador validado, listo para guardarse con sus habilidades y experiencia. */
+interface CollaboratorImport {
+  row: number;
+  collaborator: ParsedCollaborator;
+  programId: string;
+  skills: ValidRow<ParsedSkill>[];
+  experience: ValidRow<ParsedExperience>[];
+}
+
+/** Resultado de guardar un colaborador: se aplica al reporte solo si la transacción confirmó. */
+interface SavedCollaborator {
+  proposedSkills: string[];
+  rejected: RejectedRow[];
+}
+
+const UNMATCHED_EMAIL =
+  'El correo no corresponde a un colaborador importado en este archivo';
+const SAVE_FAILED =
+  'No se pudo guardar el colaborador ni sus habilidades o experiencia';
+
+/**
+ * RF23–RF24: importa colaboradores desde la plantilla Excel. Cada colaborador se guarda
+ * con sus habilidades y experiencia en una sola transacción (RNF9): o entra completo o se
+ * reporta como rechazado, sin cortar el resto de la carga.
+ */
 @Injectable()
 export class ImportCollaboratorsUseCase {
+  private readonly logger: ReturnType<AppLoggerService['forContext']>;
+
   constructor(
+    @Inject(COLLABORATOR_WORKBOOK_READER)
+    private readonly workbookReader: CollaboratorWorkbookReader,
     @Inject(COLLABORATOR_REPOSITORY)
     private readonly collaboratorRepository: CollaboratorRepository,
     @Inject(PROGRAM_REPOSITORY)
     private readonly programRepository: ProgramRepository,
-    @Inject(SKILL_REPOSITORY)
-    private readonly skillRepository: SkillRepository,
-    @Inject(COLLABORATOR_SKILL_REPOSITORY)
-    private readonly collaboratorSkillRepository: CollaboratorSkillRepository,
-    @Inject(EXPERIENCE_REPOSITORY)
-    private readonly experienceRepository: ExperienceRepository,
-  ) {}
+    @Inject(UNIT_OF_WORK) private readonly unitOfWork: UnitOfWork,
+    appLogger: AppLoggerService,
+  ) {
+    this.logger = appLogger.forContext(ImportCollaboratorsUseCase.name);
+  }
 
-  async execute(file: Express.Multer.File) {
-    if (file.size > MAX_IMPORT_FILE_SIZE_BYTES) {
-      throw new BadRequestException({
-        message: 'El archivo supera el tamaño máximo permitido (5 MB)',
-      });
-    }
-
-    const workbook = new ExcelJS.Workbook();
-    try {
-      // El .d.ts de exceljs declara su propio `Buffer extends ArrayBuffer` global, lo que
-      // rompe la compatibilidad estructural con el `Buffer` real de Node en tiempo de
-      // compilación; en tiempo de ejecución `file.buffer` sí es un Buffer válido.
-
-      await workbook.xlsx.load(file.buffer as any);
-    } catch {
-      throw new BadRequestException({
-        message: 'No se pudo leer el archivo. Verifica que sea un .xlsx válido',
-      });
-    }
-
-    for (const sheetName of REQUIRED_SHEETS) {
-      if (!workbook.getWorksheet(sheetName)) {
-        throw new BadRequestException({
-          message: `Falta la hoja "${sheetName}"`,
-        });
-      }
-    }
-
-    const collaboratorsSheet = workbook.getWorksheet(SHEET_COLLABORATORS)!;
-    const skillsSheet = workbook.getWorksheet(SHEET_SKILLS)!;
-    const experienceSheet = workbook.getWorksheet(SHEET_EXPERIENCE)!;
-
-    this.assertHeaders(
-      collaboratorsSheet,
-      COLLABORATOR_HEADERS,
-      SHEET_COLLABORATORS,
-    );
-    this.assertHeaders(skillsSheet, SKILL_HEADERS, SHEET_SKILLS);
-    this.assertHeaders(experienceSheet, EXPERIENCE_HEADERS, SHEET_EXPERIENCE);
-
+  /** @param content el .xlsx subido; su tamaño ya lo limitó la capa HTTP. */
+  async execute(content: Uint8Array) {
+    const workbook = await this.readWorkbook(content);
+    const skillRows = groupByEmail(workbook.skills);
+    const experienceRows = groupByEmail(workbook.experience);
+    const importedEmails = new Set<string>();
+    const seenEmails = new Set<string>();
     const rejected: RejectedRow[] = [];
     const warnings: string[] = [];
-    let created = 0;
 
-    const collaboratorRows = this.readRows(
-      collaboratorsSheet,
-      COLLABORATOR_HEADERS,
-    );
-    const skillRows = this.readRows(skillsSheet, SKILL_HEADERS);
-    const experienceRows = this.readRows(experienceSheet, EXPERIENCE_HEADERS);
-    const seenEmails = new Set<string>();
+    for (const { row, values } of workbook.collaborators) {
+      const email = emailOf(values.correo);
+      const reject = (reason: string) =>
+        rejected.push({ sheet: SHEET_COLLABORATORS, row, email, reason });
 
-    for (const { row, values } of collaboratorRows) {
-      const email = String(values.correo ?? '')
-        .trim()
-        .toLowerCase();
-
-      if (!email) {
-        rejected.push({
-          sheet: SHEET_COLLABORATORS,
-          row,
-          email: '',
-          reason: 'Correo obligatorio',
-        });
+      if (email && seenEmails.has(email)) {
+        reject('Correo duplicado en el archivo');
         continue;
       }
-      if (seenEmails.has(email)) {
-        rejected.push({
-          sheet: SHEET_COLLABORATORS,
-          row,
-          email,
-          reason: 'Correo duplicado en el archivo',
-        });
-        continue;
-      }
-
-      const nombres = String(values.nombres ?? '').trim();
-      const apellidos = String(values.apellidos ?? '').trim();
-      const personType =
-        PERSON_TYPE_LABELS[normalizeLabel(values.tipo_persona)];
-      const availabilityStatus =
-        AVAILABILITY_LABELS[normalizeLabel(values.disponibilidad)];
-      const autorizaDatos = YES_LABELS.has(
-        normalizeLabel(values.autoriza_datos),
-      );
-      const weeklyHours = Number(values.horas_semana);
-
-      if (!nombres || !apellidos) {
-        rejected.push({
-          sheet: SHEET_COLLABORATORS,
-          row,
-          email,
-          reason: 'Nombres y apellidos son obligatorios',
-        });
-        continue;
-      }
-      if (!personType) {
-        rejected.push({
-          sheet: SHEET_COLLABORATORS,
-          row,
-          email,
-          reason: 'tipo_persona inválido',
-        });
-        continue;
-      }
-      if (!availabilityStatus) {
-        rejected.push({
-          sheet: SHEET_COLLABORATORS,
-          row,
-          email,
-          reason: 'disponibilidad inválida',
-        });
-        continue;
-      }
-      if (!autorizaDatos) {
-        rejected.push({
-          sheet: SHEET_COLLABORATORS,
-          row,
-          email,
-          reason: 'Debe autorizar el tratamiento de datos',
-        });
-        continue;
-      }
-      if (!Number.isFinite(weeklyHours)) {
-        rejected.push({
-          sheet: SHEET_COLLABORATORS,
-          row,
-          email,
-          reason: 'horas_semana inválida',
-        });
-        continue;
-      }
-
-      const program = await this.programRepository.findByCodeOrName(
-        String(values.programa ?? '').trim(),
-      );
-      if (!program) {
-        rejected.push({
-          sheet: SHEET_COLLABORATORS,
-          row,
-          email,
-          reason: 'Programa no encontrado',
-        });
-        continue;
-      }
-
-      const existing = await this.collaboratorRepository.findByEmail(email);
-      if (existing) {
-        rejected.push({
-          sheet: SHEET_COLLABORATORS,
-          row,
-          email,
-          reason: 'El correo ya existe en la base de datos',
-        });
-        continue;
-      }
-
-      const semesterRaw = values.semestre;
-      const semester =
-        semesterRaw !== undefined &&
-        semesterRaw !== '' &&
-        Number.isFinite(Number(semesterRaw))
-          ? Number(semesterRaw)
-          : null;
-
-      const collaborator = await this.collaboratorRepository.create({
-        email,
-        firstName: nombres,
-        lastName: apellidos,
-        personType,
-        programId: program.id,
-        semester,
-        researchGroup: values.semillero_o_grupo
-          ? String(values.semillero_o_grupo).trim()
-          : null,
-        summary: values.resumen ? String(values.resumen).trim() : null,
-        profileUrl: values.enlace ? String(values.enlace).trim() : null,
-        dataConsent: true,
-        dataConsentAt: new Date(),
-        source: 'IMPORTACION',
-      });
-
-      await this.collaboratorRepository.update(collaborator.id, {
-        availabilityStatus,
-        weeklyHours,
-      });
-
       seenEmails.add(email);
-      created++;
 
-      await this.importSkillsForCollaborator(
-        collaborator.id,
-        email,
-        skillRows,
-        rejected,
-        warnings,
-      );
-      await this.importExperienceForCollaborator(
-        collaborator.id,
-        email,
-        experienceRows,
-        rejected,
-        warnings,
+      const parsed = parseCollaboratorRow(values);
+      if (!parsed.ok) {
+        reject(parsed.reason);
+        continue;
+      }
+
+      const resolved = await this.resolveNewCollaborator(parsed.value);
+      if (!resolved.ok) {
+        reject(resolved.reason);
+        continue;
+      }
+
+      // Los rechazos de filas hijas solo se informan si el colaborador se guarda; si no,
+      // todas sus filas quedan como "sin colaborador importado" al final.
+      const childRejections: RejectedRow[] = [];
+      const saved = await this.save({
+        row,
+        collaborator: parsed.value,
+        programId: resolved.value.programId,
+        skills: this.validRows(
+          skillRows.get(email),
+          parseSkillRow,
+          SHEET_SKILLS,
+          childRejections,
+        ),
+        experience: this.validRows(
+          experienceRows.get(email),
+          parseExperienceRow,
+          SHEET_EXPERIENCE,
+          childRejections,
+        ),
+      });
+      if (!saved) {
+        reject(SAVE_FAILED);
+        continue;
+      }
+      importedEmails.add(email);
+      rejected.push(...childRejections, ...saved.rejected);
+      warnings.push(
+        ...saved.proposedSkills.map(
+          (name) => `Habilidad nueva creada como pendiente: "${name}"`,
+        ),
       );
     }
 
-    return { created, rejected, warnings };
-  }
-
-  private async importSkillsForCollaborator(
-    collaboratorId: string,
-    email: string,
-    skillRows: SheetRow[],
-    rejected: RejectedRow[],
-    warnings: string[],
-  ): Promise<void> {
-    const rows = skillRows.filter(
-      ({ values }) =>
-        String(values.correo ?? '')
-          .trim()
-          .toLowerCase() === email,
+    rejected.push(
+      ...unmatchedRows(skillRows, importedEmails, SHEET_SKILLS),
+      ...unmatchedRows(experienceRows, importedEmails, SHEET_EXPERIENCE),
     );
 
-    for (const { row, values } of rows) {
-      const skillType = SKILL_TYPE_LABELS[normalizeLabel(values.tipo)];
-      const level = LEVEL_LABELS[normalizeLabel(values.nivel)];
-      const experienceMonths = Number(values.meses_experiencia);
-      const skillName = String(values.habilidad ?? '').trim();
+    return { created: importedEmails.size, rejected, warnings };
+  }
 
-      if (
-        !skillName ||
-        !skillType ||
-        !level ||
-        !Number.isFinite(experienceMonths)
-      ) {
+  private async readWorkbook(
+    content: Uint8Array,
+  ): Promise<CollaboratorWorkbook> {
+    try {
+      return await this.workbookReader.read(content);
+    } catch (error) {
+      if (error instanceof InvalidWorkbookError) {
+        throw new BadRequestException({ message: error.message });
+      }
+      throw error;
+    }
+  }
+
+  /** Resuelve el programa y confirma que el correo es nuevo antes de abrir la transacción. */
+  private async resolveNewCollaborator(
+    collaborator: ParsedCollaborator,
+  ): Promise<ParseResult<{ programId: string }>> {
+    const program = await this.programRepository.findByCodeOrName(
+      collaborator.program,
+    );
+    if (!program || !program.active) {
+      return { ok: false, reason: 'Programa no encontrado' };
+    }
+    if (await this.collaboratorRepository.findByEmail(collaborator.email)) {
+      return { ok: false, reason: 'El correo ya existe en la base de datos' };
+    }
+    return { ok: true, value: { programId: program.id } };
+  }
+
+  private validRows<T>(
+    rows: WorkbookRow[] | undefined,
+    parse: (values: WorkbookRow['values']) => ParseResult<T>,
+    sheet: string,
+    rejected: RejectedRow[],
+  ): ValidRow<T>[] {
+    const valid: ValidRow<T>[] = [];
+    for (const { row, values } of rows ?? []) {
+      const parsed = parse(values);
+      if (parsed.ok) {
+        valid.push({ row, value: parsed.value });
+      } else {
         rejected.push({
+          sheet,
+          row,
+          email: emailOf(values.correo),
+          reason: parsed.reason,
+        });
+      }
+    }
+    return valid;
+  }
+
+  private async save(
+    data: CollaboratorImport,
+  ): Promise<SavedCollaborator | null> {
+    try {
+      return await this.unitOfWork.run((repositories) =>
+        this.saveWith(repositories, data),
+      );
+    } catch (error) {
+      this.logger.error('No se pudo importar un colaborador', error, {
+        method: 'save',
+        row: data.row,
+      });
+      return null;
+    }
+  }
+
+  private async saveWith(
+    repositories: TransactionalRepositories,
+    { collaborator, programId, skills, experience }: CollaboratorImport,
+  ): Promise<SavedCollaborator> {
+    const result: SavedCollaborator = { proposedSkills: [], rejected: [] };
+    const resolveSkill = async (proposal: SkillProposal) => {
+      const resolved = await resolveOrProposeSkill(
+        repositories.skills,
+        proposal,
+      );
+      if (resolved.proposed) {
+        result.proposedSkills.push(resolved.skill.name);
+      }
+      return resolved.skill;
+    };
+
+    const { id: collaboratorId } = await repositories.collaborators.create({
+      email: collaborator.email,
+      firstName: collaborator.firstName,
+      lastName: collaborator.lastName,
+      personType: collaborator.personType,
+      programId,
+      semester: collaborator.semester,
+      researchGroup: collaborator.researchGroup,
+      summary: collaborator.summary,
+      profileUrl: collaborator.profileUrl,
+      availabilityStatus: collaborator.availabilityStatus,
+      weeklyHours: collaborator.weeklyHours,
+      ...consentFields(true),
+      source: 'IMPORTACION',
+    });
+
+    const addedSkillIds = new Set<string>();
+    for (const { row, value } of skills) {
+      const skill = await resolveSkill(value);
+      // "React" y "ReactJS" resuelven a la misma habilidad del catálogo.
+      if (addedSkillIds.has(skill.id)) {
+        result.rejected.push({
           sheet: SHEET_SKILLS,
           row,
-          email,
-          reason: 'Datos de habilidad incompletos o inválidos',
+          email: collaborator.email,
+          reason: `Habilidad repetida para este colaborador: ${skill.name}`,
         });
         continue;
       }
-
-      const skill = await this.resolveOrProposeSkill(
-        skillName,
-        skillType,
-        warnings,
-      );
-      const lastUsedYear = values.ultimo_uso ? Number(values.ultimo_uso) : null;
-
-      await this.collaboratorSkillRepository.create({
+      addedSkillIds.add(skill.id);
+      await repositories.collaboratorSkills.create({
         collaboratorId,
         skillId: skill.id,
-        level,
-        experienceMonths,
-        lastUsedYear: Number.isFinite(lastUsedYear) ? lastUsedYear : null,
+        level: value.level,
+        experienceMonths: value.experienceMonths,
+        lastUsedYear: value.lastUsedYear,
       });
     }
-  }
 
-  private async importExperienceForCollaborator(
-    collaboratorId: string,
-    email: string,
-    experienceRows: SheetRow[],
-    rejected: RejectedRow[],
-    warnings: string[],
-  ): Promise<void> {
-    const rows = experienceRows.filter(
-      ({ values }) =>
-        String(values.correo ?? '')
-          .trim()
-          .toLowerCase() === email,
-    );
-
-    for (const { row, values } of rows) {
-      const type = EXPERIENCE_TYPE_LABELS[normalizeLabel(values.tipo)];
-      const level = LEVEL_LABELS[normalizeLabel(values.nivel)];
-      const role = String(values.rol ?? '').trim();
-      const organization = String(values.organizacion ?? '').trim();
-      const startDate = this.parseDate(values.fecha_inicio);
-      const current = YES_LABELS.has(normalizeLabel(values.actual));
-      const weeklyHours = Number(values.horas_semana);
-
-      if (
-        !type ||
-        !level ||
-        !role ||
-        !organization ||
-        !startDate ||
-        !Number.isFinite(weeklyHours)
-      ) {
-        rejected.push({
-          sheet: SHEET_EXPERIENCE,
-          row,
-          email,
-          reason: 'Datos de experiencia incompletos o inválidos',
-        });
-        continue;
-      }
-
-      const technologyNames = String(values.tecnologias ?? '')
-        .split(',')
-        .map((name) => name.trim())
-        .filter(Boolean);
-
-      const skillIds: string[] = [];
-      for (const techName of technologyNames) {
-        const skill = await this.resolveOrProposeSkill(
-          techName,
-          'CONOCIMIENTO',
-          warnings,
+    for (const { value } of experience) {
+      const technologyIds = new Set<string>();
+      for (const name of value.technologies) {
+        technologyIds.add(
+          (await resolveSkill({ name, type: 'CONOCIMIENTO' })).id,
         );
-        skillIds.push(skill.id);
       }
-
-      await this.experienceRepository.create({
+      await repositories.experiences.create({
         collaboratorId,
-        type,
-        role,
-        organization,
-        startDate,
-        endDate: this.parseDate(values.fecha_fin),
-        current,
-        weeklyHours,
-        level,
-        description: values.descripcion
-          ? String(values.descripcion).trim()
-          : null,
-        skillIds,
+        type: value.type,
+        role: value.role,
+        organization: value.organization,
+        startDate: value.startDate,
+        endDate: value.endDate,
+        current: value.current,
+        weeklyHours: value.weeklyHours,
+        level: value.level,
+        description: value.description,
+        skillIds: [...technologyIds],
       });
     }
+
+    return result;
   }
+}
 
-  private async resolveOrProposeSkill(
-    name: string,
-    type: SkillType,
-    warnings: string[],
-  ) {
-    const normalized = normalizeSkillName(name);
-    const existing =
-      await this.skillRepository.findByNormalizedNameOrSynonym(normalized);
-    if (existing) {
-      return existing;
-    }
-
-    warnings.push(`Habilidad nueva creada como pendiente: "${name}"`);
-    return this.skillRepository.create({
-      name,
-      normalizedName: normalized,
-      type,
-      category: 'OTRA',
-      status: 'PENDIENTE',
-    });
+function groupByEmail(rows: WorkbookRow[]): Map<string, WorkbookRow[]> {
+  const groups = new Map<string, WorkbookRow[]>();
+  for (const row of rows) {
+    const email = emailOf(row.values.correo);
+    groups.set(email, [...(groups.get(email) ?? []), row]);
   }
+  return groups;
+}
 
-  private parseDate(value: unknown): string | null {
-    if (!value) return null;
-    if (value instanceof Date) return value.toISOString().slice(0, 10);
-    const parsed = new Date(String(value));
-    return Number.isNaN(parsed.getTime())
-      ? null
-      : parsed.toISOString().slice(0, 10);
-  }
-
-  private assertHeaders(
-    sheet: ExcelJS.Worksheet,
-    headers: readonly string[],
-    sheetName: string,
-  ): void {
-    const headerRow = sheet.getRow(1).values as unknown[];
-    const actual = headerRow.slice(1).map((value) => normalizeLabel(value));
-    for (const header of headers) {
-      if (!actual.includes(header)) {
-        throw new BadRequestException({
-          message: `Falta la columna "${header}" en la hoja "${sheetName}"`,
-        });
-      }
-    }
-  }
-
-  private readRows(
-    sheet: ExcelJS.Worksheet,
-    headers: readonly string[],
-  ): SheetRow[] {
-    const headerRow = sheet.getRow(1).values as unknown[];
-    const columnIndex = new Map<string, number>();
-    headerRow.forEach((value, index) => {
-      const label = normalizeLabel(value);
-      if (headers.includes(label)) {
-        columnIndex.set(label, index);
-      }
-    });
-
-    const rows: SheetRow[] = [];
-    sheet.eachRow((sheetRow, rowNumber) => {
-      if (rowNumber === 1) return;
-      const rowValues = sheetRow.values as unknown[];
-      const isEmpty = rowValues.every(
-        (value) => value === undefined || value === null || value === '',
-      );
-      if (isEmpty) return;
-
-      const values: Record<string, unknown> = {};
-      for (const header of headers) {
-        const index = columnIndex.get(header);
-        values[header] = index !== undefined ? rowValues[index] : undefined;
-      }
-      rows.push({ row: rowNumber, values });
-    });
-
-    return rows;
-  }
+/** Filas de Habilidades/Experiencia cuyo correo no quedó importado: se informan, no se pierden. */
+function unmatchedRows(
+  groups: Map<string, WorkbookRow[]>,
+  importedEmails: Set<string>,
+  sheet: string,
+): RejectedRow[] {
+  return [...groups.entries()]
+    .filter(([email]) => !importedEmails.has(email))
+    .flatMap(([email, rows]) =>
+      rows.map(({ row }) => ({ sheet, row, email, reason: UNMATCHED_EMAIL })),
+    );
 }

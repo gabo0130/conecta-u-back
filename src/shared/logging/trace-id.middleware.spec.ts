@@ -1,3 +1,4 @@
+import type { Request, Response } from 'express';
 import { TraceIdMiddleware, TRACE_ID_HEADER } from './trace-id.middleware';
 import { RequestContext } from './request-context';
 
@@ -5,9 +6,10 @@ describe('TraceIdMiddleware', () => {
   const middleware = new TraceIdMiddleware();
 
   const createRequest = (headers: Record<string, string | string[]> = {}) =>
-    ({ headers }) as never;
+    ({ headers }) as unknown as Request;
 
-  const createResponse = () => ({ setHeader: jest.fn() }) as never;
+  const createResponse = () =>
+    ({ setHeader: jest.fn() }) as unknown as jest.Mocked<Response>;
 
   it('generates a new traceId when the header is missing', () => {
     const req = createRequest();

@@ -1,11 +1,10 @@
 import { ListUsersUseCase } from './list-users.use-case';
 import { UserEntity } from '../../domain/entities/user.entity';
 import type { UserRepository } from '../../domain/repositories/user.repository.interface';
+import { createMock } from '../../testing/test-doubles.testing';
 
 describe('ListUsersUseCase', () => {
-  const userRepository: jest.Mocked<Pick<UserRepository, 'findAll'>> = {
-    findAll: jest.fn(),
-  };
+  const userRepository = createMock<UserRepository>();
 
   const useCase = new ListUsersUseCase(userRepository);
 

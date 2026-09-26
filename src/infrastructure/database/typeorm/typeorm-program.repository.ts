@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { ILike, Repository } from 'typeorm';
+import { Repository } from 'typeorm';
 import { ProgramEntity } from '../../../domain/entities/program.entity';
 import { ProgramRepository } from '../../../domain/repositories/program.repository.interface';
 import { ProgramOrmEntity } from './program.orm-entity';
@@ -26,9 +26,12 @@ export class TypeOrmProgramRepository implements ProgramRepository {
   }
 
   async findByCodeOrName(value: string): Promise<ProgramEntity | null> {
-    const program = await this.repository.findOne({
-      where: [{ code: ILike(value) }, { name: ILike(value) }],
-    });
+    // Comparación exacta sin distinguir mayúsculas: un `%` o `_` del Excel no actúa como comodín.
+    const program = await this.repository
+      .createQueryBuilder('program')
+      .where('LOWER(program.code) = LOWER(:value)', { value })
+      .orWhere('LOWER(program.name) = LOWER(:value)', { value })
+      .getOne();
     return program ? this.toDomain(program) : null;
   }
 

@@ -37,14 +37,13 @@ export class JwtAuthGuard implements CanActivate {
     const payload = this.tokenService.verify(token);
     const user = await this.userRepository.findById(payload.userId);
 
-    if (!user) {
+    // Se consulta la BD en cada petición para que desactivar la cuenta o cambiar el rol
+    // tenga efecto de inmediato, sin esperar a que venza el token.
+    if (!user || !user.active) {
       throw new UnauthorizedException({ message: 'No autorizado' });
     }
 
-    request.user = {
-      userId: user.id,
-      role: (payload as { role?: UserRole }).role ?? user.role,
-    };
+    request.user = { userId: user.id, role: user.role };
 
     return true;
   }

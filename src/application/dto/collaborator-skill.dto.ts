@@ -1,6 +1,8 @@
 import { IsIn, IsInt, IsOptional, IsUUID, Max, Min } from 'class-validator';
+import { SKILL_EXPERIENCE_MONTHS } from '../../domain/entities/collaborator-limits';
 import { LEVELS } from '../../domain/entities/level.type';
 import type { Level } from '../../domain/entities/level.type';
+import { IsValidLastUsedYear } from './validators/is-valid-last-used-year.decorator';
 
 export class CollaboratorSkillDto {
   @IsUUID()
@@ -10,11 +12,11 @@ export class CollaboratorSkillDto {
   level: Level;
 
   @IsInt()
-  @Min(0)
-  @Max(600)
+  @Min(SKILL_EXPERIENCE_MONTHS.min)
+  @Max(SKILL_EXPERIENCE_MONTHS.max)
   experienceMonths: number;
 
   @IsOptional()
-  @IsInt()
+  @IsValidLastUsedYear()
   lastUsedYear?: number;
 }

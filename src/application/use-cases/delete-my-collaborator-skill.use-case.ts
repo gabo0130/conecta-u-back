@@ -5,6 +5,7 @@ import {
   COLLABORATOR_REPOSITORY,
   COLLABORATOR_SKILL_REPOSITORY,
 } from '../../shared/interfaces/tokens';
+import { findMyCollaboratorOrFail } from '../support/my-collaborator';
 
 @Injectable()
 export class DeleteMyCollaboratorSkillUseCase {
@@ -15,13 +16,13 @@ export class DeleteMyCollaboratorSkillUseCase {
     private readonly collaboratorSkillRepository: CollaboratorSkillRepository,
   ) {}
 
-  async execute(userId: string, id: string) {
-    const collaborator = await this.collaboratorRepository.findByUserId(userId);
-    const entry = collaborator
-      ? await this.collaboratorSkillRepository.findById(id)
-      : null;
+  async execute(userId: string, id: string): Promise<void> {
+    const collaborator = await findMyCollaboratorOrFail(
+      this.collaboratorRepository,
+      userId,
+    );
 
-    if (!collaborator || !entry || entry.collaboratorId !== collaborator.id) {
+    if (!collaborator.skills.some((entry) => entry.id === id)) {
       throw new NotFoundException({ message: 'Recurso no encontrado' });
     }
 

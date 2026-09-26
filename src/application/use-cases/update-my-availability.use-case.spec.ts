@@ -1,72 +1,43 @@
 import { NotFoundException } from '@nestjs/common';
 import { UpdateMyAvailabilityUseCase } from './update-my-availability.use-case';
-import { CollaboratorEntity } from '../../domain/entities/collaborator.entity';
 import type { CollaboratorRepository } from '../../domain/repositories/collaborator.repository.interface';
+import {
+  buildCollaborator,
+  createMock,
+} from '../../testing/test-doubles.testing';
 
 describe('UpdateMyAvailabilityUseCase', () => {
-  const collaboratorRepository: jest.Mocked<
-    Pick<CollaboratorRepository, 'findByUserId' | 'update'>
-  > = {
-    findByUserId: jest.fn(),
-    update: jest.fn(),
-  };
-
+  const collaboratorRepository = createMock<CollaboratorRepository>();
   const useCase = new UpdateMyAvailabilityUseCase(collaboratorRepository);
+  const dto = { availabilityStatus: 'PARCIAL' as const, weeklyHours: 10 };
 
   beforeEach(() => {
     jest.clearAllMocks();
+    collaboratorRepository.findByUserId.mockResolvedValue(buildCollaborator());
   });
 
   it('updates availability status and weekly hours', async () => {
-    collaboratorRepository.findByUserId.mockResolvedValue(
-      new CollaboratorEntity(
-        'c1',
-        'ana@example.com',
-        'u1',
-        'Ana',
-        'Gómez',
-        'ESTUDIANTE',
-        'prog-1',
-      ),
-    );
     collaboratorRepository.update.mockResolvedValue(
-      new CollaboratorEntity(
-        'c1',
-        'ana@example.com',
-        'u1',
-        'Ana',
-        'Gómez',
-        'ESTUDIANTE',
-        'prog-1',
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        'PARCIAL',
-        5,
-      ),
+      buildCollaborator({ availabilityStatus: 'PARCIAL', weeklyHours: 10 }),
     );
 
-    const result = await useCase.execute('u1', {
-      availabilityStatus: 'PARCIAL',
-      weeklyHours: 5,
-    });
-
-    expect(collaboratorRepository.update).toHaveBeenCalledWith('c1', {
-      availabilityStatus: 'PARCIAL',
-      weeklyHours: 5,
-    });
-    expect(result).toEqual({ availabilityStatus: 'PARCIAL', weeklyHours: 5 });
+    await expect(useCase.execute('user-1', dto)).resolves.toEqual(dto);
+    expect(collaboratorRepository.update).toHaveBeenCalledWith('collab-1', dto);
   });
 
-  it('throws NotFoundException when the profile does not exist', async () => {
+  it('throws NotFoundException when the user has no profile', async () => {
     collaboratorRepository.findByUserId.mockResolvedValue(null);
 
-    await expect(
-      useCase.execute('u1', {
-        availabilityStatus: 'DISPONIBLE',
-        weeklyHours: 0,
-      }),
-    ).rejects.toBeInstanceOf(NotFoundException);
+    await expect(useCase.execute('user-1', dto)).rejects.toBeInstanceOf(
+      NotFoundException,
+    );
+  });
+
+  it('throws NotFoundException when the profile disappears while updating', async () => {
+    collaboratorRepository.update.mockResolvedValue(null);
+
+    await expect(useCase.execute('user-1', dto)).rejects.toBeInstanceOf(
+      NotFoundException,
+    );
   });
 });

@@ -1,32 +1,15 @@
 import { ListMyProjectsUseCase } from './list-my-projects.use-case';
-import { ProjectEntity } from '../../domain/entities/project.entity';
 import type { ProjectRepository } from '../../domain/repositories/project.repository.interface';
+import { buildProject, createMock } from '../../testing/test-doubles.testing';
 
 describe('ListMyProjectsUseCase', () => {
-  const projectRepository: jest.Mocked<
-    Pick<ProjectRepository, 'findByLeaderId'>
-  > = {
-    findByLeaderId: jest.fn(),
-  };
+  const projectRepository = createMock<ProjectRepository>();
 
   const useCase = new ListMyProjectsUseCase(projectRepository);
 
   it('returns projects for the leader', async () => {
     projectRepository.findByLeaderId.mockResolvedValue([
-      new ProjectEntity(
-        'p1',
-        'SISGELAB',
-        'resumen',
-        'objetivos',
-        't1',
-        'c1',
-        null,
-        {},
-        [],
-        [],
-        '1',
-        'BORRADOR',
-      ),
+      buildProject({ id: 'p1', leaderId: '1' }),
     ]);
 
     const result = await useCase.execute('1');

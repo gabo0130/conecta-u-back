@@ -3,18 +3,12 @@ import { CreateUserUseCase } from './create-user.use-case';
 import { UserEntity } from '../../domain/entities/user.entity';
 import type { UserRepository } from '../../domain/repositories/user.repository.interface';
 import type { PasswordHasher } from '../../domain/repositories/password-hasher.interface';
+import { createMock } from '../../testing/test-doubles.testing';
 
 describe('CreateUserUseCase', () => {
-  const userRepository: jest.Mocked<
-    Pick<UserRepository, 'findByEmail' | 'create'>
-  > = {
-    findByEmail: jest.fn(),
-    create: jest.fn(),
-  };
+  const userRepository = createMock<UserRepository>();
 
-  const passwordHasher: jest.Mocked<Pick<PasswordHasher, 'hash'>> = {
-    hash: jest.fn(),
-  };
+  const passwordHasher = createMock<PasswordHasher>();
 
   const useCase = new CreateUserUseCase(userRepository, passwordHasher);
 

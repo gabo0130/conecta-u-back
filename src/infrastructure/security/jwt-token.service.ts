@@ -32,6 +32,13 @@ export class JwtTokenService implements TokenService {
     });
   }
 
+  expiresInSeconds(token: string): number {
+    const { iat, exp } = this.jwtService.decode<{ iat: number; exp: number }>(
+      token,
+    );
+    return exp - iat;
+  }
+
   verify(token: string): { userId: string; role?: UserRole } {
     return this.verifyToken(token, 'access');
   }

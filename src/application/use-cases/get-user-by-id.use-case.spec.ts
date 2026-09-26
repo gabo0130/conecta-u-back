@@ -2,11 +2,10 @@ import { NotFoundException } from '@nestjs/common';
 import { GetUserByIdUseCase } from './get-user-by-id.use-case';
 import { UserEntity } from '../../domain/entities/user.entity';
 import type { UserRepository } from '../../domain/repositories/user.repository.interface';
+import { createMock } from '../../testing/test-doubles.testing';
 
 describe('GetUserByIdUseCase', () => {
-  const userRepository: jest.Mocked<Pick<UserRepository, 'findById'>> = {
-    findById: jest.fn(),
-  };
+  const userRepository = createMock<UserRepository>();
 
   const useCase = new GetUserByIdUseCase(userRepository);
 

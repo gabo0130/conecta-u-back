@@ -1,29 +1,12 @@
 import { ForbiddenException, NotFoundException } from '@nestjs/common';
 import { GetProjectByIdUseCase } from './get-project-by-id.use-case';
-import { ProjectEntity } from '../../domain/entities/project.entity';
 import type { ProjectRepository } from '../../domain/repositories/project.repository.interface';
+import { buildProject, createMock } from '../../testing/test-doubles.testing';
 
-function buildProject(leaderId: string) {
-  return new ProjectEntity(
-    'p1',
-    'SISGELAB',
-    'resumen',
-    'objetivos',
-    't1',
-    'c1',
-    null,
-    {},
-    [],
-    [],
-    leaderId,
-    'BORRADOR',
-  );
-}
+const projectOf = (leaderId: string) => buildProject({ id: 'p1', leaderId });
 
 describe('GetProjectByIdUseCase', () => {
-  const projectRepository: jest.Mocked<Pick<ProjectRepository, 'findById'>> = {
-    findById: jest.fn(),
-  };
+  const projectRepository = createMock<ProjectRepository>();
 
   const useCase = new GetProjectByIdUseCase(projectRepository);
 
@@ -32,7 +15,7 @@ describe('GetProjectByIdUseCase', () => {
   });
 
   it('returns the project when owned by the leader', async () => {
-    projectRepository.findById.mockResolvedValue(buildProject('1'));
+    projectRepository.findById.mockResolvedValue(projectOf('1'));
 
     const result = await useCase.execute('1', 'p1');
 
@@ -48,7 +31,7 @@ describe('GetProjectByIdUseCase', () => {
   });
 
   it('throws ForbiddenException when project belongs to another leader', async () => {
-    projectRepository.findById.mockResolvedValue(buildProject('2'));
+    projectRepository.findById.mockResolvedValue(projectOf('2'));
 
     await expect(useCase.execute('1', 'p1')).rejects.toBeInstanceOf(
       ForbiddenException,

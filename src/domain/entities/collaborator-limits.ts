@@ -11,6 +11,12 @@ export const SKILL_EXPERIENCE_MONTHS: NumericRange = { min: 0, max: 600 };
 export const SEMESTER: NumericRange = { min: 1, max: 12 };
 export const MIN_LAST_USED_YEAR = 1970;
 
+// Longitudes máximas: coinciden con las columnas de `collaborators` y `experiences`.
+export const PERSON_NAME_MAX_LENGTH = 80;
+export const RESEARCH_GROUP_MAX_LENGTH = 160;
+export const EXPERIENCE_ROLE_MAX_LENGTH = 120;
+export const ORGANIZATION_MAX_LENGTH = 160;
+
 export function isIntegerInRange(value: number, range: NumericRange): boolean {
   return Number.isInteger(value) && value >= range.min && value <= range.max;
 }

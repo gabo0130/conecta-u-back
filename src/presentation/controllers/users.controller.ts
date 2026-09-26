@@ -19,6 +19,7 @@ import { UpdateUserUseCase } from '../../application/use-cases/update-user.use-c
 import { Authorize } from '../guards/authorization.decorator';
 import { AuthorizationGuard } from '../guards/authorization.guard';
 import { JwtAuthGuard } from '../guards/jwt-auth.guard';
+import { UuidParamPipe } from '../pipes/uuid-param.pipe';
 
 @UseGuards(JwtAuthGuard, AuthorizationGuard)
 @Authorize({ anyOfRoles: ['ADMIN'] })
@@ -38,7 +39,7 @@ export class UsersController {
   }
 
   @Get(':id')
-  getById(@Param('id') id: string) {
+  getById(@Param('id', UuidParamPipe) id: string) {
     return this.getUserByIdUseCase.execute(id);
   }
 
@@ -48,13 +49,16 @@ export class UsersController {
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
+  update(
+    @Param('id', UuidParamPipe) id: string,
+    @Body() updateUserDto: UpdateUserDto,
+  ) {
     return this.updateUserUseCase.execute(id, updateUserDto);
   }
 
   @HttpCode(204)
   @Delete(':id')
-  delete(@Param('id') id: string) {
+  delete(@Param('id', UuidParamPipe) id: string) {
     return this.deleteUserUseCase.execute(id);
   }
 }

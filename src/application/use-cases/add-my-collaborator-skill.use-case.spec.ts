@@ -1,92 +1,83 @@
-import { NotFoundException } from '@nestjs/common';
+import { ConflictException, NotFoundException } from '@nestjs/common';
 import { AddMyCollaboratorSkillUseCase } from './add-my-collaborator-skill.use-case';
-import { CollaboratorEntity } from '../../domain/entities/collaborator.entity';
-import { SkillEntity } from '../../domain/entities/skill.entity';
 import type { CollaboratorSkillRepository } from '../../domain/repositories/collaborator-skill.repository.interface';
 import type { CollaboratorRepository } from '../../domain/repositories/collaborator.repository.interface';
 import type { SkillRepository } from '../../domain/repositories/skill.repository.interface';
+import type { CollaboratorSkillDto } from '../dto/collaborator-skill.dto';
+import {
+  buildCollaborator,
+  buildCollaboratorSkill,
+  buildSkill,
+  createMock,
+} from '../../testing/test-doubles.testing';
 
 describe('AddMyCollaboratorSkillUseCase', () => {
-  const collaboratorRepository: jest.Mocked<
-    Pick<CollaboratorRepository, 'findByUserId'>
-  > = {
-    findByUserId: jest.fn(),
-  };
-  const skillRepository: jest.Mocked<Pick<SkillRepository, 'findById'>> = {
-    findById: jest.fn(),
-  };
-  const collaboratorSkillRepository: jest.Mocked<
-    Pick<CollaboratorSkillRepository, 'create'>
-  > = {
-    create: jest.fn(),
-  };
-
+  const collaboratorRepository = createMock<CollaboratorRepository>();
+  const skillRepository = createMock<SkillRepository>();
+  const collaboratorSkillRepository = createMock<CollaboratorSkillRepository>();
   const useCase = new AddMyCollaboratorSkillUseCase(
     collaboratorRepository,
     skillRepository,
     collaboratorSkillRepository,
   );
 
-  const dto = {
-    skillId: 's1',
-    level: 'AVANZADO' as const,
+  const dto: CollaboratorSkillDto = {
+    skillId: 'skill-2',
+    level: 'INTERMEDIO',
     experienceMonths: 12,
   };
 
   beforeEach(() => {
     jest.clearAllMocks();
+    collaboratorRepository.findByUserId.mockResolvedValue(
+      buildCollaborator({ skills: [buildCollaboratorSkill()] }),
+    );
+    skillRepository.findById.mockResolvedValue(buildSkill({ id: 'skill-2' }));
   });
 
-  it('adds a skill to the collaborator profile', async () => {
-    collaboratorRepository.findByUserId.mockResolvedValue(
-      new CollaboratorEntity(
-        'c1',
-        'ana@example.com',
-        'u1',
-        'Ana',
-        'Gómez',
-        'ESTUDIANTE',
-        'prog-1',
-      ),
-    );
-    skillRepository.findById.mockResolvedValue(
-      new SkillEntity('s1', 'React', 'react', 'CONOCIMIENTO'),
+  it('adds a catalog skill and returns it in the profile shape', async () => {
+    collaboratorSkillRepository.create.mockResolvedValue(
+      buildCollaboratorSkill({
+        id: 'entry-2',
+        skill: buildSkill({ id: 'skill-2', name: 'Docker' }),
+      }),
     );
 
-    await useCase.execute('u1', dto);
+    const result = await useCase.execute('user-1', dto);
 
     expect(collaboratorSkillRepository.create).toHaveBeenCalledWith({
-      collaboratorId: 'c1',
-      skillId: 's1',
-      level: 'AVANZADO',
+      collaboratorId: 'collab-1',
+      skillId: 'skill-2',
+      level: 'INTERMEDIO',
       experienceMonths: 12,
       lastUsedYear: null,
     });
+    expect(result.skill).toEqual({
+      id: 'skill-2',
+      name: 'Docker',
+      type: 'CONOCIMIENTO',
+      category: 'FRAMEWORK',
+    });
   });
 
-  it('throws NotFoundException when the profile does not exist', async () => {
-    collaboratorRepository.findByUserId.mockResolvedValue(null);
+  it('rejects a skill the collaborator already has', async () => {
+    await expect(
+      useCase.execute('user-1', { ...dto, skillId: 'skill-1' }),
+    ).rejects.toBeInstanceOf(ConflictException);
+  });
 
-    await expect(useCase.execute('u1', dto)).rejects.toBeInstanceOf(
+  it('rejects a skill that is not in the catalog', async () => {
+    skillRepository.findById.mockResolvedValue(null);
+
+    await expect(useCase.execute('user-1', dto)).rejects.toBeInstanceOf(
       NotFoundException,
     );
   });
 
-  it('throws NotFoundException when the skill does not exist', async () => {
-    collaboratorRepository.findByUserId.mockResolvedValue(
-      new CollaboratorEntity(
-        'c1',
-        'ana@example.com',
-        'u1',
-        'Ana',
-        'Gómez',
-        'ESTUDIANTE',
-        'prog-1',
-      ),
-    );
-    skillRepository.findById.mockResolvedValue(null);
+  it('rejects a user without profile', async () => {
+    collaboratorRepository.findByUserId.mockResolvedValue(null);
 
-    await expect(useCase.execute('u1', dto)).rejects.toBeInstanceOf(
+    await expect(useCase.execute('user-1', dto)).rejects.toBeInstanceOf(
       NotFoundException,
     );
   });

@@ -13,12 +13,14 @@ export interface CreateSkillRepositoryDto {
 }
 
 export interface SkillSearchFilter {
-  query?: string;
+  /** Texto ya normalizado con `normalizeSkillName`. */
+  normalizedQuery?: string;
   type?: SkillType;
 }
 
 export interface SkillRepository {
   findById(id: string): Promise<SkillEntity | null>;
+  findByIds(ids: string[]): Promise<SkillEntity[]>;
   findByNormalizedNameOrSynonym(
     normalized: string,
   ): Promise<SkillEntity | null>;

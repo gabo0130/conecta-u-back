@@ -1,12 +1,17 @@
 import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import type { CollaboratorRepository } from '../../domain/repositories/collaborator.repository.interface';
 import type { ExperienceRepository } from '../../domain/repositories/experience.repository.interface';
+import type { SkillRepository } from '../../domain/repositories/skill.repository.interface';
 import {
   COLLABORATOR_REPOSITORY,
   EXPERIENCE_REPOSITORY,
+  SKILL_REPOSITORY,
 } from '../../shared/interfaces/tokens';
-import { computeDurationMonths } from '../../shared/utils/compute-duration-months';
 import { ExperienceDto } from '../dto/experience.dto';
+import { toExperienceResponse } from '../mappers/collaborator-response.mapper';
+import { assertSkillsExist } from '../support/catalog-references';
+import { assertValidExperiencePeriod } from '../support/experience-period';
+import { findMyCollaboratorOrFail } from '../support/my-collaborator';
 
 @Injectable()
 export class UpdateMyExperienceUseCase {
@@ -15,28 +20,35 @@ export class UpdateMyExperienceUseCase {
     private readonly collaboratorRepository: CollaboratorRepository,
     @Inject(EXPERIENCE_REPOSITORY)
     private readonly experienceRepository: ExperienceRepository,
+    @Inject(SKILL_REPOSITORY)
+    private readonly skillRepository: SkillRepository,
   ) {}
 
   async execute(userId: string, id: string, data: ExperienceDto) {
-    const collaborator = await this.collaboratorRepository.findByUserId(userId);
-    const experience = collaborator
-      ? await this.experienceRepository.findById(id)
-      : null;
+    const collaborator = await findMyCollaboratorOrFail(
+      this.collaboratorRepository,
+      userId,
+    );
 
-    if (
-      !collaborator ||
-      !experience ||
-      experience.collaboratorId !== collaborator.id
-    ) {
+    // Un 404 genérico también cuando la experiencia es de otro colaborador.
+    if (!collaborator.experiences.some((experience) => experience.id === id)) {
       throw new NotFoundException({ message: 'Recurso no encontrado' });
     }
+
+    const endDate = data.endDate ?? null;
+    assertValidExperiencePeriod({
+      startDate: data.startDate,
+      endDate,
+      current: data.current,
+    });
+    await assertSkillsExist(this.skillRepository, data.skillIds);
 
     const updated = await this.experienceRepository.update(id, {
       type: data.type,
       role: data.role,
       organization: data.organization,
       startDate: data.startDate,
-      endDate: data.endDate ?? null,
+      endDate,
       current: data.current,
       weeklyHours: data.weeklyHours,
       level: data.level,
@@ -48,9 +60,6 @@ export class UpdateMyExperienceUseCase {
       throw new NotFoundException({ message: 'Recurso no encontrado' });
     }
 
-    return {
-      ...updated,
-      durationMonths: computeDurationMonths(updated.startDate, updated.endDate),
-    };
+    return toExperienceResponse(updated);
   }
 }

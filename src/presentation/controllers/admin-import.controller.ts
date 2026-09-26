@@ -5,6 +5,7 @@ import {
   Post,
   Res,
   UploadedFile,
+  UseFilters,
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
@@ -13,6 +14,7 @@ import type { Response } from 'express';
 import { GenerateCollaboratorsTemplateUseCase } from '../../application/use-cases/generate-collaborators-template.use-case';
 import { ImportCollaboratorsUseCase } from '../../application/use-cases/import-collaborators.use-case';
 import { MAX_IMPORT_FILE_SIZE_BYTES } from '../../shared/constants/import-collaborators.constants';
+import { FileTooLargeFilter } from '../filters/file-too-large.filter';
 import { Authorize } from '../guards/authorization.decorator';
 import { AuthorizationGuard } from '../guards/authorization.guard';
 import { JwtAuthGuard } from '../guards/jwt-auth.guard';
@@ -35,10 +37,11 @@ export class AdminImportController {
       'Content-Disposition':
         'attachment; filename="plantilla-carga-colaboradores.xlsx"',
     });
-    res.send(buffer);
+    res.send(Buffer.from(buffer));
   }
 
   @Post()
+  @UseFilters(FileTooLargeFilter)
   @UseInterceptors(
     FileInterceptor('file', {
       limits: { fileSize: MAX_IMPORT_FILE_SIZE_BYTES },
@@ -50,6 +53,6 @@ export class AdminImportController {
         message: 'Debes adjuntar un archivo .xlsx',
       });
     }
-    return this.importCollaboratorsUseCase.execute(file);
+    return this.importCollaboratorsUseCase.execute(file.buffer);
   }
 }

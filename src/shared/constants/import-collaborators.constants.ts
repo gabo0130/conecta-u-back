@@ -1,21 +1,13 @@
-// Las celdas de un .xlsx llegan tipadas `unknown` (string | number | Date | null | objeto de
-// texto enriquecido); este archivo las normaliza a string a propósito.
-/* eslint-disable @typescript-eslint/no-base-to-string */
 import type { AvailabilityStatus } from '../../domain/entities/availability-status.type';
 import type { ExperienceType } from '../../domain/entities/experience-type.type';
 import type { Level } from '../../domain/entities/level.type';
 import type { PersonType } from '../../domain/entities/person-type.type';
+import type { SkillCategory } from '../../domain/entities/skill-category.type';
 import type { SkillType } from '../../domain/entities/skill-type.type';
 
 export const SHEET_COLLABORATORS = 'Colaboradores';
 export const SHEET_SKILLS = 'Habilidades';
 export const SHEET_EXPERIENCE = 'Experiencia';
-
-export const REQUIRED_SHEETS = [
-  SHEET_COLLABORATORS,
-  SHEET_SKILLS,
-  SHEET_EXPERIENCE,
-];
 
 export const COLLABORATOR_HEADERS = [
   'correo',
@@ -56,7 +48,10 @@ export const EXPERIENCE_HEADERS = [
   'descripcion',
 ] as const;
 
-export function normalizeLabel(value: unknown): string {
+/** Etiqueta comparable: minúsculas, sin tildes ni espacios sobrantes ("Sí" → "si"). */
+export function normalizeLabel(
+  value: string | number | boolean | Date | null | undefined,
+): string {
   return String(value ?? '')
     .trim()
     .toLowerCase()
@@ -88,6 +83,23 @@ export const SKILL_TYPE_LABELS: Record<string, SkillType> = {
   'habilidad blanda': 'HABILIDAD_BLANDA',
 };
 
+// Solo se usa al proponer una habilidad nueva; las del catálogo conservan su categoría.
+export const SKILL_CATEGORY_LABELS: Record<string, SkillCategory> = {
+  lenguaje: 'LENGUAJE',
+  framework: 'FRAMEWORK',
+  'base de datos': 'BASE_DATOS',
+  'nube y devops': 'NUBE_DEVOPS',
+  'datos e ia': 'DATOS_IA',
+  'diseno ux': 'DISENO_UX',
+  herramienta: 'HERRAMIENTA',
+  metodologia: 'METODOLOGIA',
+  gestion: 'GESTION',
+  comunicacion: 'COMUNICACION',
+  'trabajo en equipo': 'TRABAJO_EQUIPO',
+  liderazgo: 'LIDERAZGO',
+  otra: 'OTRA',
+};
+
 export const EXPERIENCE_TYPE_LABELS: Record<string, ExperienceType> = {
   laboral: 'LABORAL',
   practica: 'PRACTICA',
@@ -98,6 +110,8 @@ export const EXPERIENCE_TYPE_LABELS: Record<string, ExperienceType> = {
   docencia: 'DOCENCIA',
 };
 
-export const YES_LABELS = new Set(['si', 'sí', 'yes', 'true', '1']);
+// Se comparan contra `normalizeLabel`, que ya quitó las tildes.
+export const YES_LABELS = new Set(['si', 'yes', 'true', '1']);
 
-export const MAX_IMPORT_FILE_SIZE_BYTES = 5 * 1024 * 1024;
+export const MAX_IMPORT_FILE_SIZE_MB = 5;
+export const MAX_IMPORT_FILE_SIZE_BYTES = MAX_IMPORT_FILE_SIZE_MB * 1024 * 1024;

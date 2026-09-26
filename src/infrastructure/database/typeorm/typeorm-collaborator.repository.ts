@@ -2,18 +2,13 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { CollaboratorEntity } from '../../../domain/entities/collaborator.entity';
-import { CollaboratorSkillEntity } from '../../../domain/entities/collaborator-skill.entity';
-import { ExperienceEntity } from '../../../domain/entities/experience.entity';
-import { SkillEntity } from '../../../domain/entities/skill.entity';
 import {
   CollaboratorRepository,
   CreateCollaboratorRepositoryDto,
   UpdateCollaboratorRepositoryDto,
 } from '../../../domain/repositories/collaborator.repository.interface';
 import { CollaboratorOrmEntity } from './collaborator.orm-entity';
-import { CollaboratorSkillOrmEntity } from './collaborator-skill.orm-entity';
-import { ExperienceOrmEntity } from './experience.orm-entity';
-import { SkillOrmEntity } from './skill.orm-entity';
+import { toCollaboratorEntity } from './mappers/collaborator.mapper';
 
 const RELATIONS = [
   'skills',
@@ -34,7 +29,7 @@ export class TypeOrmCollaboratorRepository implements CollaboratorRepository {
       where: { id },
       relations: RELATIONS,
     });
-    return collaborator ? this.toDomain(collaborator) : null;
+    return collaborator ? toCollaboratorEntity(collaborator) : null;
   }
 
   async findByUserId(userId: string): Promise<CollaboratorEntity | null> {
@@ -42,7 +37,7 @@ export class TypeOrmCollaboratorRepository implements CollaboratorRepository {
       where: { userId },
       relations: RELATIONS,
     });
-    return collaborator ? this.toDomain(collaborator) : null;
+    return collaborator ? toCollaboratorEntity(collaborator) : null;
   }
 
   async findByEmail(email: string): Promise<CollaboratorEntity | null> {
@@ -50,7 +45,7 @@ export class TypeOrmCollaboratorRepository implements CollaboratorRepository {
       where: { email },
       relations: RELATIONS,
     });
-    return collaborator ? this.toDomain(collaborator) : null;
+    return collaborator ? toCollaboratorEntity(collaborator) : null;
   }
 
   async create(
@@ -67,6 +62,8 @@ export class TypeOrmCollaboratorRepository implements CollaboratorRepository {
       researchGroup: data.researchGroup ?? null,
       summary: data.summary ?? null,
       profileUrl: data.profileUrl ?? null,
+      availabilityStatus: data.availabilityStatus ?? 'DISPONIBLE',
+      weeklyHours: data.weeklyHours ?? 0,
       dataConsent: data.dataConsent ?? false,
       dataConsentAt: data.dataConsentAt ?? null,
       source: data.source ?? 'REGISTRO',
@@ -116,77 +113,5 @@ export class TypeOrmCollaboratorRepository implements CollaboratorRepository {
 
     const saved = await this.repository.save(merged);
     return this.findById(saved.id);
-  }
-
-  private toDomain(collaborator: CollaboratorOrmEntity): CollaboratorEntity {
-    return new CollaboratorEntity(
-      collaborator.id,
-      collaborator.email,
-      collaborator.userId,
-      collaborator.firstName,
-      collaborator.lastName,
-      collaborator.personType as CollaboratorEntity['personType'],
-      collaborator.programId,
-      collaborator.semester,
-      collaborator.researchGroup,
-      collaborator.summary,
-      collaborator.profileUrl,
-      collaborator.availabilityStatus as CollaboratorEntity['availabilityStatus'],
-      collaborator.weeklyHours,
-      collaborator.dataConsent,
-      collaborator.dataConsentAt,
-      collaborator.source as CollaboratorEntity['source'],
-      collaborator.active,
-      (collaborator.skills ?? []).map((entry) =>
-        this.collaboratorSkillToDomain(entry),
-      ),
-      (collaborator.experiences ?? []).map((experience) =>
-        this.experienceToDomain(experience),
-      ),
-    );
-  }
-
-  private collaboratorSkillToDomain(
-    entry: CollaboratorSkillOrmEntity,
-  ): CollaboratorSkillEntity {
-    return new CollaboratorSkillEntity(
-      entry.id,
-      entry.collaboratorId,
-      this.skillToDomain(entry.skill),
-      entry.level as CollaboratorSkillEntity['level'],
-      entry.experienceMonths,
-      entry.lastUsedYear,
-    );
-  }
-
-  private experienceToDomain(
-    experience: ExperienceOrmEntity,
-  ): ExperienceEntity {
-    return new ExperienceEntity(
-      experience.id,
-      experience.collaboratorId,
-      experience.type as ExperienceEntity['type'],
-      experience.role,
-      experience.organization,
-      experience.startDate,
-      experience.endDate,
-      experience.current,
-      experience.weeklyHours,
-      experience.level as ExperienceEntity['level'],
-      experience.description,
-      (experience.technologies ?? []).map((skill) => this.skillToDomain(skill)),
-    );
-  }
-
-  private skillToDomain(skill: SkillOrmEntity): SkillEntity {
-    return new SkillEntity(
-      skill.id,
-      skill.name,
-      skill.normalizedName,
-      skill.type as SkillEntity['type'],
-      skill.category as SkillEntity['category'],
-      skill.synonyms,
-      skill.status as SkillEntity['status'],
-    );
   }
 }

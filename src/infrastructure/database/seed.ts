@@ -867,6 +867,10 @@ async function seed() {
   const adminEmail = (process.env.ADMIN_EMAIL ?? 'admin@conectau.test')
     .trim()
     .toLowerCase();
+  // Fuera de desarrollo el admin no puede heredar la contraseña pública de los datos de prueba.
+  if (!process.env.ADMIN_PASSWORD && process.env.NODE_ENV === 'production') {
+    throw new Error('Define ADMIN_PASSWORD para crear el administrador.');
+  }
   const adminPasswordHash = process.env.ADMIN_PASSWORD
     ? await bcrypt.hash(process.env.ADMIN_PASSWORD, 10)
     : passwordHash;
@@ -1043,7 +1047,10 @@ async function seed() {
     `Seed completado: ${counters.programs} programas, ${counters.skills} habilidades, ` +
       `${counters.projectTypes} tipos y ${counters.projectCategories} categorías de proyecto, ` +
       `${counters.users} usuarios, ${counters.collaborators} perfiles de colaborador y ` +
-      `${counters.projects} proyectos nuevos. Contraseña de todos: ${PASSWORD}`,
+      `${counters.projects} proyectos nuevos. Contraseña de los usuarios de prueba: ${PASSWORD}` +
+      (process.env.ADMIN_PASSWORD
+        ? ' (el administrador usa ADMIN_PASSWORD).'
+        : ' (también la del administrador: define ADMIN_PASSWORD para cambiarla).'),
   );
   await AppDataSource.destroy();
 }

@@ -30,6 +30,7 @@ import { Authorize } from '../guards/authorization.decorator';
 import { AuthorizationGuard } from '../guards/authorization.guard';
 import type { AuthenticatedRequest } from '../guards/jwt-auth.guard';
 import { JwtAuthGuard } from '../guards/jwt-auth.guard';
+import { UuidParamPipe } from '../pipes/uuid-param.pipe';
 
 @UseGuards(JwtAuthGuard, AuthorizationGuard)
 @Authorize({ anyOfRoles: ['COLABORADOR', 'LIDER'] })
@@ -95,7 +96,7 @@ export class CollaboratorsController {
   @Patch('me/skills/:id')
   updateSkill(
     @Req() request: AuthenticatedRequest,
-    @Param('id') id: string,
+    @Param('id', UuidParamPipe) id: string,
     @Body() dto: CollaboratorSkillDto,
   ) {
     return this.updateMyCollaboratorSkillUseCase.execute(
@@ -107,7 +108,10 @@ export class CollaboratorsController {
 
   @HttpCode(204)
   @Delete('me/skills/:id')
-  deleteSkill(@Req() request: AuthenticatedRequest, @Param('id') id: string) {
+  deleteSkill(
+    @Req() request: AuthenticatedRequest,
+    @Param('id', UuidParamPipe) id: string,
+  ) {
     return this.deleteMyCollaboratorSkillUseCase.execute(
       request.user!.userId,
       id,
@@ -125,7 +129,7 @@ export class CollaboratorsController {
   @Patch('me/experience/:id')
   updateExperience(
     @Req() request: AuthenticatedRequest,
-    @Param('id') id: string,
+    @Param('id', UuidParamPipe) id: string,
     @Body() dto: ExperienceDto,
   ) {
     return this.updateMyExperienceUseCase.execute(
@@ -139,7 +143,7 @@ export class CollaboratorsController {
   @Delete('me/experience/:id')
   deleteExperience(
     @Req() request: AuthenticatedRequest,
-    @Param('id') id: string,
+    @Param('id', UuidParamPipe) id: string,
   ) {
     return this.deleteMyExperienceUseCase.execute(request.user!.userId, id);
   }

@@ -2,15 +2,10 @@ import { ConflictException, NotFoundException } from '@nestjs/common';
 import { UpdateUserUseCase } from './update-user.use-case';
 import { UserEntity } from '../../domain/entities/user.entity';
 import type { UserRepository } from '../../domain/repositories/user.repository.interface';
+import { createMock } from '../../testing/test-doubles.testing';
 
 describe('UpdateUserUseCase', () => {
-  const userRepository: jest.Mocked<
-    Pick<UserRepository, 'findById' | 'findByEmail' | 'update'>
-  > = {
-    findById: jest.fn(),
-    findByEmail: jest.fn(),
-    update: jest.fn(),
-  };
+  const userRepository = createMock<UserRepository>();
 
   const useCase = new UpdateUserUseCase(userRepository);
 

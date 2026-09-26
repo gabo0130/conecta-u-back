@@ -1,11 +1,11 @@
 import { Body, Controller, Get, Post, Query, UseGuards } from '@nestjs/common';
 import { ProposeSkillDto } from '../../application/dto/propose-skill.dto';
+import { SearchSkillsQueryDto } from '../../application/dto/search-skills-query.dto';
 import { ListProgramsUseCase } from '../../application/use-cases/list-programs.use-case';
 import { ListProjectCategoriesUseCase } from '../../application/use-cases/list-project-categories.use-case';
 import { ListProjectTypesUseCase } from '../../application/use-cases/list-project-types.use-case';
 import { ProposeSkillUseCase } from '../../application/use-cases/propose-skill.use-case';
 import { SearchSkillsUseCase } from '../../application/use-cases/search-skills.use-case';
-import type { SkillType } from '../../domain/entities/skill-type.type';
 import { Authorize } from '../guards/authorization.decorator';
 import { AuthorizationGuard } from '../guards/authorization.guard';
 import { JwtAuthGuard } from '../guards/jwt-auth.guard';
@@ -27,8 +27,8 @@ export class CatalogsController {
 
   @UseGuards(JwtAuthGuard)
   @Get('skills')
-  searchSkills(@Query('q') q?: string, @Query('type') type?: SkillType) {
-    return this.searchSkillsUseCase.execute(q, type);
+  searchSkills(@Query() query: SearchSkillsQueryDto) {
+    return this.searchSkillsUseCase.execute(query);
   }
 
   @UseGuards(JwtAuthGuard)

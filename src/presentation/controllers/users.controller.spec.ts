@@ -4,23 +4,14 @@ import type { DeleteUserUseCase } from '../../application/use-cases/delete-user.
 import type { GetUserByIdUseCase } from '../../application/use-cases/get-user-by-id.use-case';
 import type { ListUsersUseCase } from '../../application/use-cases/list-users.use-case';
 import type { UpdateUserUseCase } from '../../application/use-cases/update-user.use-case';
+import { createMock } from '../../testing/test-doubles.testing';
 
 describe('UsersController', () => {
-  const listUsersUseCase: jest.Mocked<Pick<ListUsersUseCase, 'execute'>> = {
-    execute: jest.fn(),
-  };
-  const getUserByIdUseCase: jest.Mocked<Pick<GetUserByIdUseCase, 'execute'>> = {
-    execute: jest.fn(),
-  };
-  const createUserUseCase: jest.Mocked<Pick<CreateUserUseCase, 'execute'>> = {
-    execute: jest.fn(),
-  };
-  const updateUserUseCase: jest.Mocked<Pick<UpdateUserUseCase, 'execute'>> = {
-    execute: jest.fn(),
-  };
-  const deleteUserUseCase: jest.Mocked<Pick<DeleteUserUseCase, 'execute'>> = {
-    execute: jest.fn(),
-  };
+  const listUsersUseCase = createMock<ListUsersUseCase>();
+  const getUserByIdUseCase = createMock<GetUserByIdUseCase>();
+  const createUserUseCase = createMock<CreateUserUseCase>();
+  const updateUserUseCase = createMock<UpdateUserUseCase>();
+  const deleteUserUseCase = createMock<DeleteUserUseCase>();
 
   const controller = new UsersController(
     listUsersUseCase,
@@ -35,9 +26,9 @@ describe('UsersController', () => {
   });
 
   it('delegates list to use case', () => {
-    listUsersUseCase.execute.mockReturnValue({ users: [] });
+    listUsersUseCase.execute.mockResolvedValue({ users: [] });
 
-    expect(controller.list()).toEqual({ users: [] });
+    void expect(controller.list()).resolves.toEqual({ users: [] });
     expect(listUsersUseCase.execute).toHaveBeenCalledTimes(1);
   });
 
@@ -47,6 +38,7 @@ describe('UsersController', () => {
       fullName: 'Ana',
       email: 'ana@example.com',
       role: 'COLABORADOR',
+      active: true,
     });
 
     void controller.getById('1');

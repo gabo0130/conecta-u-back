@@ -1,21 +1,36 @@
 import { Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { consentFields } from '../../domain/entities/data-consent';
 import type { CollaboratorRepository } from '../../domain/repositories/collaborator.repository.interface';
-import { COLLABORATOR_REPOSITORY } from '../../shared/interfaces/tokens';
+import type { ProgramRepository } from '../../domain/repositories/program.repository.interface';
+import {
+  COLLABORATOR_REPOSITORY,
+  PROGRAM_REPOSITORY,
+} from '../../shared/interfaces/tokens';
 import { UpdateCollaboratorDto } from '../dto/update-collaborator.dto';
+import { toCollaboratorProfileResponse } from '../mappers/collaborator-response.mapper';
+import { findProgramOrFail } from '../support/catalog-references';
+import {
+  COLLABORATOR_PROFILE_NOT_FOUND,
+  findMyCollaboratorOrFail,
+} from '../support/my-collaborator';
 
 @Injectable()
 export class UpdateMyCollaboratorProfileUseCase {
   constructor(
     @Inject(COLLABORATOR_REPOSITORY)
     private readonly collaboratorRepository: CollaboratorRepository,
+    @Inject(PROGRAM_REPOSITORY)
+    private readonly programRepository: ProgramRepository,
   ) {}
 
   async execute(userId: string, data: UpdateCollaboratorDto) {
-    const collaborator = await this.collaboratorRepository.findByUserId(userId);
-    if (!collaborator) {
-      throw new NotFoundException({
-        message: 'Perfil de colaborador no encontrado',
-      });
+    const collaborator = await findMyCollaboratorOrFail(
+      this.collaboratorRepository,
+      userId,
+    );
+
+    if (data.programId !== undefined) {
+      await findProgramOrFail(this.programRepository, data.programId);
     }
 
     const updated = await this.collaboratorRepository.update(collaborator.id, {
@@ -29,28 +44,14 @@ export class UpdateMyCollaboratorProfileUseCase {
       ...(data.summary !== undefined ? { summary: data.summary } : {}),
       ...(data.profileUrl !== undefined ? { profileUrl: data.profileUrl } : {}),
       ...(data.dataConsent !== undefined
-        ? {
-            dataConsent: data.dataConsent,
-            dataConsentAt: data.dataConsent ? new Date() : null,
-          }
+        ? consentFields(data.dataConsent)
         : {}),
     });
 
     if (!updated) {
-      throw new NotFoundException({
-        message: 'Perfil de colaborador no encontrado',
-      });
+      throw new NotFoundException({ message: COLLABORATOR_PROFILE_NOT_FOUND });
     }
 
-    return {
-      firstName: updated.firstName,
-      lastName: updated.lastName,
-      programId: updated.programId,
-      semester: updated.semester,
-      researchGroup: updated.researchGroup,
-      summary: updated.summary,
-      profileUrl: updated.profileUrl,
-      dataConsent: updated.dataConsent,
-    };
+    return toCollaboratorProfileResponse(updated);
   }
 }

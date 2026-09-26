@@ -1,325 +1,327 @@
 import { BadRequestException } from '@nestjs/common';
-import ExcelJS from 'exceljs';
 import { ImportCollaboratorsUseCase } from './import-collaborators.use-case';
-import { CollaboratorEntity } from '../../domain/entities/collaborator.entity';
-import { ProgramEntity } from '../../domain/entities/program.entity';
-import { SkillEntity } from '../../domain/entities/skill.entity';
-import type { CollaboratorSkillRepository } from '../../domain/repositories/collaborator-skill.repository.interface';
-import type { CollaboratorRepository } from '../../domain/repositories/collaborator.repository.interface';
-import type { ExperienceRepository } from '../../domain/repositories/experience.repository.interface';
-import type { ProgramRepository } from '../../domain/repositories/program.repository.interface';
-import type { SkillRepository } from '../../domain/repositories/skill.repository.interface';
 import {
-  COLLABORATOR_HEADERS,
-  EXPERIENCE_HEADERS,
-  SHEET_COLLABORATORS,
-  SHEET_EXPERIENCE,
-  SHEET_SKILLS,
-  SKILL_HEADERS,
-} from '../../shared/constants/import-collaborators.constants';
+  type CellValue,
+  type CollaboratorWorkbook,
+  type CollaboratorWorkbookReader,
+  InvalidWorkbookError,
+} from '../../domain/repositories/collaborator-workbook.interface';
+import type { CollaboratorRepository } from '../../domain/repositories/collaborator.repository.interface';
+import type { ProgramRepository } from '../../domain/repositories/program.repository.interface';
+import type { AppLoggerService } from '../../shared/logging/logger.service';
+import {
+  buildCollaborator,
+  buildCollaboratorSkill,
+  buildExperience,
+  buildProgram,
+  buildSkill,
+  createFakeUnitOfWork,
+  createMock,
+} from '../../testing/test-doubles.testing';
 
-interface BuildWorkbookOptions {
-  collaborators?: Record<string, unknown>[];
-  skills?: Record<string, unknown>[];
-  experience?: Record<string, unknown>[];
-  skipSheet?: string;
-}
+const collaboratorRow = (
+  row: number,
+  overrides: Record<string, CellValue> = {},
+) => ({
+  row,
+  values: {
+    correo: 'ana@example.com',
+    nombres: 'Ana',
+    apellidos: 'Pérez',
+    tipo_persona: 'Estudiante',
+    programa: '115',
+    semestre: 7,
+    semillero_o_grupo: 'GIDIS',
+    resumen: null,
+    enlace: null,
+    disponibilidad: 'Parcial',
+    horas_semana: 10,
+    autoriza_datos: 'Sí',
+    ...overrides,
+  },
+});
 
-async function buildWorkbookBuffer(
-  options: BuildWorkbookOptions,
-): Promise<Buffer> {
-  const workbook = new ExcelJS.Workbook();
+const skillRow = (row: number, overrides: Record<string, CellValue> = {}) => ({
+  row,
+  values: {
+    correo: 'ana@example.com',
+    habilidad: 'React',
+    tipo: 'Conocimiento',
+    categoria: null,
+    nivel: 'Avanzado',
+    meses_experiencia: 24,
+    ultimo_uso: 2025,
+    ...overrides,
+  },
+});
 
-  if (options.skipSheet !== SHEET_COLLABORATORS) {
-    const sheet = workbook.addWorksheet(SHEET_COLLABORATORS);
-    sheet.columns = COLLABORATOR_HEADERS.map((header) => ({
-      header,
-      key: header,
-    }));
-    (options.collaborators ?? []).forEach((row) => sheet.addRow(row));
-  }
-  if (options.skipSheet !== SHEET_SKILLS) {
-    const sheet = workbook.addWorksheet(SHEET_SKILLS);
-    sheet.columns = SKILL_HEADERS.map((header) => ({ header, key: header }));
-    (options.skills ?? []).forEach((row) => sheet.addRow(row));
-  }
-  if (options.skipSheet !== SHEET_EXPERIENCE) {
-    const sheet = workbook.addWorksheet(SHEET_EXPERIENCE);
-    sheet.columns = EXPERIENCE_HEADERS.map((header) => ({
-      header,
-      key: header,
-    }));
-    (options.experience ?? []).forEach((row) => sheet.addRow(row));
-  }
-
-  const arrayBuffer = await workbook.xlsx.writeBuffer();
-  return Buffer.from(arrayBuffer);
-}
-
-function buildFile(buffer: Buffer): Express.Multer.File {
-  return { buffer, size: buffer.length } as unknown as Express.Multer.File;
-}
+const experienceRow = (
+  row: number,
+  overrides: Record<string, CellValue> = {},
+) => ({
+  row,
+  values: {
+    correo: 'ana@example.com',
+    tipo: 'Laboral',
+    rol: 'Desarrolladora',
+    organizacion: 'UFPS',
+    fecha_inicio: new Date('2024-01-01'),
+    fecha_fin: null,
+    actual: 'Sí',
+    horas_semana: 20,
+    nivel: 'Intermedio',
+    tecnologias: 'React, Docker',
+    descripcion: null,
+    ...overrides,
+  },
+});
 
 describe('ImportCollaboratorsUseCase', () => {
-  const collaboratorRepository: jest.Mocked<
-    Pick<CollaboratorRepository, 'findByEmail' | 'create' | 'update'>
-  > = {
-    findByEmail: jest.fn(),
-    create: jest.fn(),
-    update: jest.fn(),
-  };
-  const programRepository: jest.Mocked<
-    Pick<ProgramRepository, 'findByCodeOrName'>
-  > = {
-    findByCodeOrName: jest.fn(),
-  };
-  const skillRepository: jest.Mocked<
-    Pick<SkillRepository, 'findByNormalizedNameOrSynonym' | 'create'>
-  > = {
-    findByNormalizedNameOrSynonym: jest.fn(),
-    create: jest.fn(),
-  };
-  const collaboratorSkillRepository: jest.Mocked<
-    Pick<CollaboratorSkillRepository, 'create'>
-  > = {
-    create: jest.fn(),
-  };
-  const experienceRepository: jest.Mocked<
-    Pick<ExperienceRepository, 'create'>
-  > = {
-    create: jest.fn(),
-  };
+  const workbookReader = createMock<CollaboratorWorkbookReader>();
+  const collaboratorRepository = createMock<CollaboratorRepository>();
+  const programRepository = createMock<ProgramRepository>();
+  const { unitOfWork, repositories } = createFakeUnitOfWork();
+  const contextLogger = { error: jest.fn() };
+  const appLogger = {
+    forContext: () => contextLogger,
+  } as unknown as AppLoggerService;
 
   const useCase = new ImportCollaboratorsUseCase(
+    workbookReader,
     collaboratorRepository,
     programRepository,
-    skillRepository,
-    collaboratorSkillRepository,
-    experienceRepository,
+    unitOfWork,
+    appLogger,
   );
+
+  const file = Buffer.from('xlsx');
+  const givenWorkbook = (workbook: Partial<CollaboratorWorkbook>) =>
+    workbookReader.read.mockResolvedValue({
+      collaborators: [],
+      skills: [],
+      experience: [],
+      ...workbook,
+    });
 
   beforeEach(() => {
     jest.clearAllMocks();
+    programRepository.findByCodeOrName.mockResolvedValue(buildProgram());
+    collaboratorRepository.findByEmail.mockResolvedValue(null);
+    repositories.collaborators.create.mockResolvedValue(buildCollaborator());
+    repositories.skills.findByNormalizedNameOrSynonym.mockImplementation(
+      (normalized) =>
+        Promise.resolve(
+          normalized === 'react' || normalized === 'reactjs'
+            ? buildSkill()
+            : null,
+        ),
+    );
+    repositories.skills.create.mockImplementation((data) =>
+      Promise.resolve(buildSkill({ id: `new-${data.name}`, name: data.name })),
+    );
+    repositories.collaboratorSkills.create.mockResolvedValue(
+      buildCollaboratorSkill(),
+    );
+    repositories.experiences.create.mockResolvedValue(buildExperience());
   });
 
-  it('imports a valid collaborator with a skill and an experience', async () => {
-    const buffer = await buildWorkbookBuffer({
-      collaborators: [
-        {
-          correo: 'ana@example.com',
-          nombres: 'Ana',
-          apellidos: 'Gómez',
-          tipo_persona: 'Estudiante',
-          programa: 'ISI',
-          semestre: 7,
-          semillero_o_grupo: 'Grupo A',
-          resumen: 'Resumen',
-          enlace: 'https://ana.dev',
-          disponibilidad: 'Disponible',
-          horas_semana: 10,
-          autoriza_datos: 'Sí',
-        },
-      ],
-      skills: [
-        {
-          correo: 'ana@example.com',
-          habilidad: 'React',
-          tipo: 'Conocimiento',
-          nivel: 'Avanzado',
-          meses_experiencia: 12,
-          ultimo_uso: 2026,
-        },
-      ],
-      experience: [
-        {
-          correo: 'ana@example.com',
-          tipo: 'Practica',
-          rol: 'Dev',
-          organizacion: 'Empresa',
-          fecha_inicio: '2025-01-01',
-          fecha_fin: '2025-06-01',
-          actual: 'No',
-          horas_semana: 10,
-          nivel: 'Intermedio',
-          tecnologias: 'React',
-          descripcion: 'Descripción',
-        },
-      ],
+  it('imports a collaborator with skills and experience in one transaction', async () => {
+    givenWorkbook({
+      collaborators: [collaboratorRow(2)],
+      skills: [skillRow(2)],
+      experience: [experienceRow(2)],
     });
 
-    programRepository.findByCodeOrName.mockResolvedValue(
-      new ProgramEntity('prog-1', 'ISI', 'Ingeniería de Sistemas'),
-    );
-    collaboratorRepository.findByEmail.mockResolvedValue(null);
-    collaboratorRepository.create.mockResolvedValue(
-      new CollaboratorEntity(
-        'c1',
-        'ana@example.com',
-        null,
-        'Ana',
-        'Gómez',
-        'ESTUDIANTE',
-        'prog-1',
-      ),
-    );
-    skillRepository.findByNormalizedNameOrSynonym.mockResolvedValue(
-      new SkillEntity('s1', 'React', 'react', 'CONOCIMIENTO'),
-    );
+    const result = await useCase.execute(file);
 
-    const result = await useCase.execute(buildFile(buffer));
-
-    expect(result.created).toBe(1);
-    expect(result.rejected).toEqual([]);
-    expect(collaboratorRepository.create).toHaveBeenCalledWith(
+    expect(result).toEqual({
+      created: 1,
+      rejected: [],
+      warnings: ['Habilidad nueva creada como pendiente: "Docker"'],
+    });
+    expect(unitOfWork.run).toHaveBeenCalledTimes(1);
+    expect(repositories.collaborators.create).toHaveBeenCalledWith(
       expect.objectContaining({
         email: 'ana@example.com',
+        programId: 'program-1',
+        availabilityStatus: 'PARCIAL',
+        weeklyHours: 10,
+        dataConsent: true,
+        dataConsentAt: expect.any(Date),
         source: 'IMPORTACION',
       }),
     );
-    expect(collaboratorSkillRepository.create).toHaveBeenCalledWith(
+    expect(repositories.experiences.create).toHaveBeenCalledWith(
       expect.objectContaining({
-        collaboratorId: 'c1',
-        skillId: 's1',
-        level: 'AVANZADO',
-      }),
-    );
-    expect(experienceRepository.create).toHaveBeenCalledWith(
-      expect.objectContaining({
-        collaboratorId: 'c1',
-        role: 'Dev',
-        skillIds: ['s1'],
+        startDate: '2024-01-01',
+        current: true,
+        skillIds: ['skill-1', 'new-Docker'],
       }),
     );
   });
 
-  it('rejects a row with an invalid tipo_persona', async () => {
-    const buffer = await buildWorkbookBuffer({
+  it('rejects invalid rows and keeps importing the rest', async () => {
+    givenWorkbook({
       collaborators: [
-        {
-          correo: 'bad@example.com',
-          nombres: 'B',
-          apellidos: 'C',
-          tipo_persona: 'Alien',
-          programa: 'ISI',
-          disponibilidad: 'Disponible',
-          horas_semana: 10,
-          autoriza_datos: 'Sí',
-        },
+        collaboratorRow(2, { horas_semana: 100 }),
+        collaboratorRow(3, { correo: 'maria@example.com' }),
+        collaboratorRow(4, { correo: 'maria@example.com' }),
       ],
     });
 
-    const result = await useCase.execute(buildFile(buffer));
+    const result = await useCase.execute(file);
 
-    expect(result.created).toBe(0);
+    expect(result.created).toBe(1);
     expect(result.rejected).toEqual([
       {
-        sheet: SHEET_COLLABORATORS,
+        sheet: 'Colaboradores',
         row: 2,
-        email: 'bad@example.com',
-        reason: 'tipo_persona inválido',
+        email: 'ana@example.com',
+        reason: 'horas_semana debe ser un entero entre 0 y 60',
+      },
+      {
+        sheet: 'Colaboradores',
+        row: 4,
+        email: 'maria@example.com',
+        reason: 'Correo duplicado en el archivo',
       },
     ]);
   });
 
-  it('rejects a row when the program does not exist', async () => {
-    const buffer = await buildWorkbookBuffer({
+  it('rejects unknown programs and emails already registered', async () => {
+    givenWorkbook({
       collaborators: [
-        {
-          correo: 'ana@example.com',
-          nombres: 'Ana',
-          apellidos: 'Gómez',
-          tipo_persona: 'Estudiante',
-          programa: 'NOPE',
-          disponibilidad: 'Disponible',
-          horas_semana: 10,
-          autoriza_datos: 'Sí',
-        },
+        collaboratorRow(2),
+        collaboratorRow(3, { correo: 'luis@example.com', programa: '%' }),
       ],
     });
-    programRepository.findByCodeOrName.mockResolvedValue(null);
+    collaboratorRepository.findByEmail.mockResolvedValueOnce(
+      buildCollaborator(),
+    );
+    programRepository.findByCodeOrName.mockImplementation((value) =>
+      Promise.resolve(value === '%' ? null : buildProgram()),
+    );
 
-    const result = await useCase.execute(buildFile(buffer));
+    const result = await useCase.execute(file);
 
-    expect(result.rejected[0].reason).toBe('Programa no encontrado');
+    expect(result.created).toBe(0);
+    expect(result.rejected.map(({ reason }) => reason)).toEqual([
+      'El correo ya existe en la base de datos',
+      'Programa no encontrado',
+    ]);
   });
 
-  it('proposes a new skill and records a warning when it does not exist in the catalog', async () => {
-    const buffer = await buildWorkbookBuffer({
+  it('reports a collaborator whose transaction fails instead of aborting the import', async () => {
+    givenWorkbook({
       collaborators: [
-        {
-          correo: 'ana@example.com',
-          nombres: 'Ana',
-          apellidos: 'Gómez',
-          tipo_persona: 'Estudiante',
-          programa: 'ISI',
-          disponibilidad: 'Disponible',
-          horas_semana: 10,
-          autoriza_datos: 'Sí',
-        },
+        collaboratorRow(2),
+        collaboratorRow(3, { correo: 'luis@example.com' }),
       ],
+      skills: [skillRow(5)],
+    });
+    repositories.collaboratorSkills.create.mockRejectedValueOnce(
+      new Error('smallint out of range'),
+    );
+
+    const result = await useCase.execute(file);
+
+    expect(result.created).toBe(1);
+    expect(result.rejected).toEqual([
+      expect.objectContaining({
+        sheet: 'Colaboradores',
+        row: 2,
+        reason:
+          'No se pudo guardar el colaborador ni sus habilidades o experiencia',
+      }),
+      expect.objectContaining({
+        sheet: 'Habilidades',
+        row: 5,
+        reason:
+          'El correo no corresponde a un colaborador importado en este archivo',
+      }),
+    ]);
+    expect(contextLogger.error).toHaveBeenCalled();
+  });
+
+  it('proposes a new skill with the category written in the sheet', async () => {
+    givenWorkbook({
+      collaborators: [collaboratorRow(2)],
+      skills: [skillRow(2, { habilidad: 'Rust', categoria: 'Lenguaje' })],
+    });
+
+    await useCase.execute(file);
+
+    expect(repositories.skills.create).toHaveBeenCalledWith(
+      expect.objectContaining({ name: 'Rust', category: 'LENGUAJE' }),
+    );
+  });
+
+  it('rejects a skill repeated for the same collaborator (name or synonym)', async () => {
+    givenWorkbook({
+      collaborators: [collaboratorRow(2)],
+      skills: [skillRow(2), skillRow(3, { habilidad: 'ReactJS' })],
+    });
+
+    const result = await useCase.execute(file);
+
+    expect(repositories.collaboratorSkills.create).toHaveBeenCalledTimes(1);
+    expect(result.rejected).toEqual([
+      {
+        sheet: 'Habilidades',
+        row: 3,
+        email: 'ana@example.com',
+        reason: 'Habilidad repetida para este colaborador: React',
+      },
+    ]);
+  });
+
+  it('rejects invalid child rows and orphan rows without losing them', async () => {
+    givenWorkbook({
+      collaborators: [collaboratorRow(2)],
       skills: [
-        {
-          correo: 'ana@example.com',
-          habilidad: 'Rust',
-          tipo: 'Conocimiento',
-          nivel: 'Basico',
-          meses_experiencia: 3,
-        },
+        skillRow(2, { meses_experiencia: 99999 }),
+        skillRow(3, { correo: 'nadie@example.com' }),
       ],
+      experience: [experienceRow(2, { fecha_fin: new Date('2024-06-01') })],
     });
 
-    programRepository.findByCodeOrName.mockResolvedValue(
-      new ProgramEntity('prog-1', 'ISI', 'Ingeniería de Sistemas'),
-    );
-    collaboratorRepository.findByEmail.mockResolvedValue(null);
-    collaboratorRepository.create.mockResolvedValue(
-      new CollaboratorEntity(
-        'c1',
-        'ana@example.com',
-        null,
-        'Ana',
-        'Gómez',
-        'ESTUDIANTE',
-        'prog-1',
-      ),
-    );
-    skillRepository.findByNormalizedNameOrSynonym.mockResolvedValue(null);
-    skillRepository.create.mockResolvedValue(
-      new SkillEntity(
-        's2',
-        'Rust',
-        'rust',
-        'CONOCIMIENTO',
-        'OTRA',
-        [],
-        'PENDIENTE',
-      ),
-    );
+    const result = await useCase.execute(file);
 
-    const result = await useCase.execute(buildFile(buffer));
-
-    expect(result.warnings).toHaveLength(1);
-    expect(skillRepository.create).toHaveBeenCalledWith(
-      expect.objectContaining({ name: 'Rust', status: 'PENDIENTE' }),
-    );
+    expect(result.created).toBe(1);
+    expect(result.rejected).toEqual([
+      expect.objectContaining({
+        sheet: 'Habilidades',
+        row: 2,
+        reason: 'meses_experiencia debe ser un entero entre 0 y 600',
+      }),
+      expect.objectContaining({
+        sheet: 'Experiencia',
+        row: 2,
+        reason: 'Una experiencia actual no debe tener fecha de fin',
+      }),
+      expect.objectContaining({
+        sheet: 'Habilidades',
+        row: 3,
+        email: 'nadie@example.com',
+        reason:
+          'El correo no corresponde a un colaborador importado en este archivo',
+      }),
+    ]);
   });
 
-  it('rejects the whole file when it exceeds the size limit', async () => {
-    const file = {
-      buffer: Buffer.from(''),
-      size: 10 * 1024 * 1024,
-    } as unknown as Express.Multer.File;
+  it('translates an unreadable workbook into a 400', async () => {
+    workbookReader.read.mockRejectedValue(
+      new InvalidWorkbookError('Falta la hoja "Habilidades"'),
+    );
 
     await expect(useCase.execute(file)).rejects.toBeInstanceOf(
       BadRequestException,
     );
   });
 
-  it('rejects the whole file when a required sheet is missing', async () => {
-    const buffer = await buildWorkbookBuffer({ skipSheet: SHEET_EXPERIENCE });
+  it('propagates unexpected reader errors', async () => {
+    workbookReader.read.mockRejectedValue(new Error('disk'));
 
-    await expect(useCase.execute(buildFile(buffer))).rejects.toBeInstanceOf(
-      BadRequestException,
-    );
+    await expect(useCase.execute(file)).rejects.toThrow('disk');
   });
 });

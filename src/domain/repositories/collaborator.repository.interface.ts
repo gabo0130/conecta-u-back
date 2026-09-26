@@ -14,6 +14,8 @@ export interface CreateCollaboratorRepositoryDto {
   researchGroup?: string | null;
   summary?: string | null;
   profileUrl?: string | null;
+  availabilityStatus?: AvailabilityStatus;
+  weeklyHours?: number;
   dataConsent?: boolean;
   dataConsentAt?: Date | null;
   source?: CollaboratorSource;

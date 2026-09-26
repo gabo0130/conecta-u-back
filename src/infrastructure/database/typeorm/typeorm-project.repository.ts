@@ -3,7 +3,6 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { In, Repository } from 'typeorm';
 import { DeliverableEntity } from '../../../domain/entities/deliverable.entity';
 import { ProjectEntity } from '../../../domain/entities/project.entity';
-import { SkillEntity } from '../../../domain/entities/skill.entity';
 import {
   CreateProjectRepositoryDto,
   DeliverableInput,
@@ -11,6 +10,7 @@ import {
   UpdateProjectRepositoryDto,
 } from '../../../domain/repositories/project.repository.interface';
 import { DeliverableOrmEntity } from './deliverable.orm-entity';
+import { toSkillEntity } from './mappers/skill.mapper';
 import { ProjectOrmEntity } from './project.orm-entity';
 import { SkillOrmEntity } from './skill.orm-entity';
 
@@ -120,28 +120,17 @@ export class TypeOrmProjectRepository implements ProjectRepository {
   }
 
   private toDomain(project: ProjectOrmEntity): ProjectEntity {
-    return new ProjectEntity(
-      project.id,
-      project.title,
-      project.summary,
-      project.objectives,
-      project.typeId,
-      project.categoryId,
-      project.programId,
-      project.typeData,
-      (project.knownSkills ?? []).map(
-        (skill) =>
-          new SkillEntity(
-            skill.id,
-            skill.name,
-            skill.normalizedName,
-            skill.type as SkillEntity['type'],
-            skill.category as SkillEntity['category'],
-            skill.synonyms,
-            skill.status as SkillEntity['status'],
-          ),
-      ),
-      (project.deliverables ?? []).map(
+    return new ProjectEntity({
+      id: project.id,
+      title: project.title,
+      summary: project.summary,
+      objectives: project.objectives,
+      typeId: project.typeId,
+      categoryId: project.categoryId,
+      programId: project.programId,
+      typeData: project.typeData,
+      knownSkills: (project.knownSkills ?? []).map(toSkillEntity),
+      deliverables: (project.deliverables ?? []).map(
         (deliverable) =>
           new DeliverableEntity(
             deliverable.id,
@@ -150,10 +139,10 @@ export class TypeOrmProjectRepository implements ProjectRepository {
             deliverable.scope,
           ),
       ),
-      project.leaderId,
-      project.status as ProjectEntity['status'],
-      project.createdAt,
-      project.updatedAt,
-    );
+      leaderId: project.leaderId,
+      status: project.status as ProjectEntity['status'],
+      createdAt: project.createdAt,
+      updatedAt: project.updatedAt,
+    });
   }
 }

@@ -5,6 +5,7 @@ import {
   COLLABORATOR_REPOSITORY,
   EXPERIENCE_REPOSITORY,
 } from '../../shared/interfaces/tokens';
+import { findMyCollaboratorOrFail } from '../support/my-collaborator';
 
 @Injectable()
 export class DeleteMyExperienceUseCase {
@@ -15,17 +16,13 @@ export class DeleteMyExperienceUseCase {
     private readonly experienceRepository: ExperienceRepository,
   ) {}
 
-  async execute(userId: string, id: string) {
-    const collaborator = await this.collaboratorRepository.findByUserId(userId);
-    const experience = collaborator
-      ? await this.experienceRepository.findById(id)
-      : null;
+  async execute(userId: string, id: string): Promise<void> {
+    const collaborator = await findMyCollaboratorOrFail(
+      this.collaboratorRepository,
+      userId,
+    );
 
-    if (
-      !collaborator ||
-      !experience ||
-      experience.collaboratorId !== collaborator.id
-    ) {
+    if (!collaborator.experiences.some((experience) => experience.id === id)) {
       throw new NotFoundException({ message: 'Recurso no encontrado' });
     }
 

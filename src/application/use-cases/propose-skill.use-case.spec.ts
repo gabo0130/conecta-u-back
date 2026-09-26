@@ -1,14 +1,10 @@
 import { ProposeSkillUseCase } from './propose-skill.use-case';
 import { SkillEntity } from '../../domain/entities/skill.entity';
 import type { SkillRepository } from '../../domain/repositories/skill.repository.interface';
+import { createMock } from '../../testing/test-doubles.testing';
 
 describe('ProposeSkillUseCase', () => {
-  const skillRepository: jest.Mocked<
-    Pick<SkillRepository, 'findByNormalizedNameOrSynonym' | 'create'>
-  > = {
-    findByNormalizedNameOrSynonym: jest.fn(),
-    create: jest.fn(),
-  };
+  const skillRepository = createMock<SkillRepository>();
 
   const useCase = new ProposeSkillUseCase(skillRepository);
 

@@ -18,6 +18,7 @@ import { Authorize } from '../guards/authorization.decorator';
 import { AuthorizationGuard } from '../guards/authorization.guard';
 import type { AuthenticatedRequest } from '../guards/jwt-auth.guard';
 import { JwtAuthGuard } from '../guards/jwt-auth.guard';
+import { UuidParamPipe } from '../pipes/uuid-param.pipe';
 
 @UseGuards(JwtAuthGuard, AuthorizationGuard)
 @Authorize({ anyOfRoles: ['LIDER'] })
@@ -41,14 +42,17 @@ export class ProjectsController {
   }
 
   @Get(':id')
-  getById(@Req() request: AuthenticatedRequest, @Param('id') id: string) {
+  getById(
+    @Req() request: AuthenticatedRequest,
+    @Param('id', UuidParamPipe) id: string,
+  ) {
     return this.getProjectByIdUseCase.execute(request.user!.userId, id);
   }
 
   @Patch(':id')
   update(
     @Req() request: AuthenticatedRequest,
-    @Param('id') id: string,
+    @Param('id', UuidParamPipe) id: string,
     @Body() dto: UpdateProjectDto,
   ) {
     return this.updateProjectUseCase.execute(request.user!.userId, id, dto);

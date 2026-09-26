@@ -1,5 +1,6 @@
 import { Type } from 'class-transformer';
 import {
+  ArrayMinSize,
   IsArray,
   IsObject,
   IsOptional,
@@ -45,8 +46,10 @@ export class UpdateProjectDto {
   @IsUUID('4', { each: true })
   knownSkillIds?: string[];
 
+  // RF10: un proyecto conserva al menos un entregable.
   @IsOptional()
   @IsArray()
+  @ArrayMinSize(1)
   @ValidateNested({ each: true })
   @Type(() => DeliverableDto)
   deliverables?: DeliverableDto[];

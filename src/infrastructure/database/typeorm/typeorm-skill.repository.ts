@@ -1,12 +1,13 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 import { SkillEntity } from '../../../domain/entities/skill.entity';
 import {
   CreateSkillRepositoryDto,
   SkillRepository,
   SkillSearchFilter,
 } from '../../../domain/repositories/skill.repository.interface';
+import { toSkillEntity } from './mappers/skill.mapper';
 import { SkillOrmEntity } from './skill.orm-entity';
 
 @Injectable()
@@ -18,7 +19,15 @@ export class TypeOrmSkillRepository implements SkillRepository {
 
   async findById(id: string): Promise<SkillEntity | null> {
     const skill = await this.repository.findOne({ where: { id } });
-    return skill ? this.toDomain(skill) : null;
+    return skill ? toSkillEntity(skill) : null;
+  }
+
+  async findByIds(ids: string[]): Promise<SkillEntity[]> {
+    if (ids.length === 0) {
+      return [];
+    }
+    const skills = await this.repository.find({ where: { id: In(ids) } });
+    return skills.map(toSkillEntity);
   }
 
   async findByNormalizedNameOrSynonym(
@@ -28,7 +37,7 @@ export class TypeOrmSkillRepository implements SkillRepository {
       where: { normalizedName: normalized },
     });
     if (byName) {
-      return this.toDomain(byName);
+      return toSkillEntity(byName);
     }
 
     const bySynonym = await this.repository
@@ -36,14 +45,15 @@ export class TypeOrmSkillRepository implements SkillRepository {
       .where(':normalized = ANY(skill.synonyms)', { normalized })
       .getOne();
 
-    return bySynonym ? this.toDomain(bySynonym) : null;
+    return bySynonym ? toSkillEntity(bySynonym) : null;
   }
 
   async search(filter: SkillSearchFilter): Promise<SkillEntity[]> {
     const query = this.repository.createQueryBuilder('skill');
 
-    if (filter.query) {
-      const like = `%${filter.query.toLowerCase()}%`;
+    if (filter.normalizedQuery) {
+      // El texto normalizado no contiene `%` ni `_`, así que no hay comodines que escapar.
+      const like = `%${filter.normalizedQuery}%`;
       query.andWhere(
         '(skill.normalizedName LIKE :like OR EXISTS (SELECT 1 FROM unnest(skill.synonyms) s WHERE s LIKE :like))',
         { like },
@@ -57,7 +67,7 @@ export class TypeOrmSkillRepository implements SkillRepository {
     query.orderBy('skill.name', 'ASC');
 
     const skills = await query.getMany();
-    return skills.map((skill) => this.toDomain(skill));
+    return skills.map(toSkillEntity);
   }
 
   async create(data: CreateSkillRepositoryDto): Promise<SkillEntity> {
@@ -71,18 +81,6 @@ export class TypeOrmSkillRepository implements SkillRepository {
     });
 
     const saved = await this.repository.save(skill);
-    return this.toDomain(saved);
-  }
-
-  private toDomain(skill: SkillOrmEntity): SkillEntity {
-    return new SkillEntity(
-      skill.id,
-      skill.name,
-      skill.normalizedName,
-      skill.type as SkillEntity['type'],
-      skill.category as SkillEntity['category'],
-      skill.synonyms,
-      skill.status as SkillEntity['status'],
-    );
+    return toSkillEntity(saved);
   }
 }

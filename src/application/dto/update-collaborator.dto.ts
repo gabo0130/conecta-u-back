@@ -8,16 +8,21 @@ import {
   MaxLength,
   Min,
 } from 'class-validator';
+import {
+  PERSON_NAME_MAX_LENGTH,
+  RESEARCH_GROUP_MAX_LENGTH,
+  SEMESTER,
+} from '../../domain/entities/collaborator-limits';
 
 export class UpdateCollaboratorDto {
   @IsOptional()
   @IsString()
-  @MaxLength(80)
+  @MaxLength(PERSON_NAME_MAX_LENGTH)
   firstName?: string;
 
   @IsOptional()
   @IsString()
-  @MaxLength(80)
+  @MaxLength(PERSON_NAME_MAX_LENGTH)
   lastName?: string;
 
   @IsOptional()
@@ -26,13 +31,13 @@ export class UpdateCollaboratorDto {
 
   @IsOptional()
   @IsInt()
-  @Min(1)
-  @Max(12)
+  @Min(SEMESTER.min)
+  @Max(SEMESTER.max)
   semester?: number;
 
   @IsOptional()
   @IsString()
-  @MaxLength(160)
+  @MaxLength(RESEARCH_GROUP_MAX_LENGTH)
   researchGroup?: string;
 
   @IsOptional()

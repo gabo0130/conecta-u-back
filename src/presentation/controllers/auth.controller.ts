@@ -3,7 +3,6 @@ import {
   Controller,
   Get,
   HttpCode,
-  Inject,
   Post,
   Req,
   UnauthorizedException,
@@ -16,9 +15,8 @@ import { RefreshTokenDto } from '../../application/dto/refresh-token.dto';
 import { RegisterDto } from '../../application/dto/register.dto';
 import { GetMeUseCase } from '../../application/use-cases/get-me.use-case';
 import { LoginUseCase } from '../../application/use-cases/login.use-case';
+import { RefreshTokenUseCase } from '../../application/use-cases/refresh-token.use-case';
 import { RegisterUseCase } from '../../application/use-cases/register.use-case';
-import type { TokenService } from '../../domain/repositories/token-service.interface';
-import { TOKEN_SERVICE } from '../../shared/interfaces/tokens';
 import type { AuthenticatedRequest } from '../guards/jwt-auth.guard';
 import { JwtAuthGuard } from '../guards/jwt-auth.guard';
 
@@ -28,7 +26,7 @@ export class AuthController {
     private readonly loginUseCase: LoginUseCase,
     private readonly getMeUseCase: GetMeUseCase,
     private readonly registerUseCase: RegisterUseCase,
-    @Inject(TOKEN_SERVICE) private readonly tokenService: TokenService,
+    private readonly refreshTokenUseCase: RefreshTokenUseCase,
   ) {}
 
   @HttpCode(201)
@@ -46,14 +44,7 @@ export class AuthController {
   @HttpCode(200)
   @Post('refresh')
   refresh(@Body() refreshTokenDto: RefreshTokenDto) {
-    const payload = this.tokenService.verifyRefresh(
-      refreshTokenDto.refresh_token,
-    );
-
-    return {
-      access_token: this.tokenService.generate(payload.userId, payload.role),
-      expires_in: 604800,
-    };
+    return this.refreshTokenUseCase.execute(refreshTokenDto.refresh_token);
   }
 
   @HttpCode(200)

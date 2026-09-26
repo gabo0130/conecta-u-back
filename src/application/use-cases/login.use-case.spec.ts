@@ -4,24 +4,12 @@ import { UserEntity } from '../../domain/entities/user.entity';
 import type { UserRepository } from '../../domain/repositories/user.repository.interface';
 import type { PasswordHasher } from '../../domain/repositories/password-hasher.interface';
 import type { TokenService } from '../../domain/repositories/token-service.interface';
+import { createMock } from '../../testing/test-doubles.testing';
 
 describe('LoginUseCase', () => {
-  const userRepository: jest.Mocked<
-    Pick<UserRepository, 'findByEmailWithPassword'>
-  > = {
-    findByEmailWithPassword: jest.fn(),
-  };
-
-  const passwordHasher: jest.Mocked<Pick<PasswordHasher, 'compare'>> = {
-    compare: jest.fn(),
-  };
-
-  const tokenService: jest.Mocked<
-    Pick<TokenService, 'generate' | 'generateRefresh'>
-  > = {
-    generate: jest.fn(),
-    generateRefresh: jest.fn(),
-  };
+  const userRepository = createMock<UserRepository>();
+  const passwordHasher = createMock<PasswordHasher>();
+  const tokenService = createMock<TokenService>();
 
   const useCase = new LoginUseCase(
     userRepository,
@@ -46,6 +34,7 @@ describe('LoginUseCase', () => {
     passwordHasher.compare.mockResolvedValue(true);
     tokenService.generate.mockReturnValue('access-token');
     tokenService.generateRefresh.mockReturnValue('refresh-token');
+    tokenService.expiresInSeconds.mockReturnValue(86400);
 
     const result = await useCase.execute({
       email: '  JUAN@EXAMPLE.COM ',
@@ -60,6 +49,7 @@ describe('LoginUseCase', () => {
       'hashed-password',
     );
     expect(tokenService.generate).toHaveBeenCalledWith('1', 'COLABORADOR');
+    expect(tokenService.expiresInSeconds).toHaveBeenCalledWith('access-token');
     expect(tokenService.generateRefresh).toHaveBeenCalledWith(
       '1',
       'COLABORADOR',
@@ -67,7 +57,7 @@ describe('LoginUseCase', () => {
     expect(result).toEqual({
       access_token: 'access-token',
       refresh_token: 'refresh-token',
-      expires_in: 604800,
+      expires_in: 86400,
       user: {
         id: '1',
         fullName: 'Juan',

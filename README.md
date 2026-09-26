@@ -95,7 +95,7 @@ Para probar cada endpoint individualmente contra local o contra el ambiente depl
 npm install
 ```
 
-2. Copia `.env.example` a `.env` y ajusta los valores (`DATABASE_URL`, `JWT_SECRET`, `ADMIN_EMAIL`, `ADMIN_PASSWORD`):
+2. Copia `.env.example` a `.env` y ajusta los valores (`DATABASE_URL`, `JWT_SECRET`, `ADMIN_EMAIL`, `ADMIN_PASSWORD`). `JWT_SECRET` es obligatorio: sin él la API no arranca (no hay secreto por defecto). En producción el seed también exige `ADMIN_PASSWORD`:
 
 ```bash
 cp .env.example .env
@@ -107,9 +107,9 @@ cp .env.example .env
 npm run migration:run
 ```
 
-> ⚠️ **La migración `RestructureCollaboratorAndProjectModel` requiere que `users`, `collaborators`, `skills`, `experiences` y `projects` estén vacías.** Agrega columnas `NOT NULL` (p. ej. `skills.normalizedName`, `collaborators.programId/personType/firstName/lastName`, `projects.typeId/categoryId`, `experiences.type/role/startDate/weeklyHours/level`) que no existían en el modelo anterior, así que no hay un valor por el que rellenarlas automáticamente en filas viejas.
+> ⚠️ **La migración `RestructureCollaboratorAndProjectModel` requiere que `users`, `collaborators`, `skills`, `experiences` y `projects` estén vacías** y lo verifica antes de tocar el esquema: si alguna tiene filas, falla con un mensaje que nombra la tabla. Además es **irreversible**: su `down()` lanza un error a propósito, así que `migration:revert` no la deshace (restaura desde un respaldo). Agrega columnas `NOT NULL` (p. ej. `skills.normalizedName`, `collaborators.programId/personType/firstName/lastName`, `projects.typeId/categoryId`, `experiences.type/role/startDate/weeklyHours/level`) que no existían en el modelo anterior, así que no hay un valor por el que rellenarlas automáticamente en filas viejas.
 >
-> Si `migration:run` falla con algo como `column "normalizedName" of relation "skills" contains null values`, es porque esas tablas ya tenían filas (por ejemplo, en un entorno compartido como el Neon de `.env`). La migración corre dentro de una transacción, así que un fallo hace rollback completo — no deja el esquema a medias. Antes de reintentar:
+> Si `migration:run` falla con `La migración al modelo v2.0 requiere la tabla "…" vacía`, es porque esas tablas ya tenían filas (por ejemplo, en un entorno compartido como el Neon de `.env`). La migración corre dentro de una transacción, así que un fallo hace rollback completo — no deja el esquema a medias. Antes de reintentar:
 > 1. Confirma que los datos existentes son descartables (datos de prueba, no usuarios reales de producción).
 > 2. Vacíalas: `TRUNCATE TABLE users, collaborators, skills, experiences, projects CASCADE;`
 > 3. Corre `npm run migration:run` de nuevo y luego `npm run seed`.
@@ -142,7 +142,7 @@ npm run start:dev
 - `npm run test:cov`: pruebas unitarias con reporte de cobertura.
 - `npm run test:e2e`: pruebas end-to-end.
 - `npm run migration:generate`: genera una migración a partir de los cambios en las entidades.
-- `npm run migration:run` / `migration:revert`: aplica o revierte migraciones.
+- `npm run migration:run` / `migration:revert`: aplica o revierte migraciones (la del modelo v2.0 no se puede revertir).
 - `npm run seed`: pobla catálogos (programas, habilidades, tipos y categorías de proyecto) y datos de prueba (usuarios, colaboradores, proyectos). Es idempotente.
 
 ## Guardarraíles de esta iteración

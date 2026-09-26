@@ -4,6 +4,18 @@ export class RestructureCollaboratorAndProjectModel1790355369034 implements Migr
     name = 'RestructureCollaboratorAndProjectModel1790355369034'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
+        // Agrega columnas NOT NULL sin equivalente en el modelo anterior: solo corre sobre tablas
+        // vacías. Se verifica antes de tocar nada para fallar con un mensaje claro (ver README).
+        for (const table of ['users', 'collaborators', 'skills', 'experiences', 'projects']) {
+            const [{ count }] = await queryRunner.query(`SELECT COUNT(*)::int AS count FROM "${table}"`);
+            if (count > 0) {
+                throw new Error(
+                    `La migración al modelo v2.0 requiere la tabla "${table}" vacía (tiene ${count} filas). ` +
+                    'Confirma que los datos son descartables, vacíalas con TRUNCATE ... CASCADE y vuelve a correr migration:run.',
+                );
+            }
+        }
+
         await queryRunner.query(`ALTER TABLE "skills" DROP CONSTRAINT "FK_80dfdf58503c0398fec3f49ba59"`);
         await queryRunner.query(`ALTER TABLE "collaborators" DROP CONSTRAINT "FK_e5b82c5ada6a6557ec22f219b30"`);
         await queryRunner.query(`ALTER TABLE "experiences" DROP CONSTRAINT "FK_0b2edf89c2ce5a23ea09f37f222"`);
@@ -99,100 +111,13 @@ export class RestructureCollaboratorAndProjectModel1790355369034 implements Migr
         await queryRunner.query(`ALTER TABLE "project_skills" ADD CONSTRAINT "FK_a60e9e349e2e6cbe2cf73b1fbda" FOREIGN KEY ("skillId") REFERENCES "skills"("id") ON DELETE CASCADE ON UPDATE CASCADE`);
     }
 
-    public async down(queryRunner: QueryRunner): Promise<void> {
-        await queryRunner.query(`ALTER TABLE "project_skills" DROP CONSTRAINT "FK_a60e9e349e2e6cbe2cf73b1fbda"`);
-        await queryRunner.query(`ALTER TABLE "project_skills" DROP CONSTRAINT "FK_8cbc0f1e52a4bfaf783108f99c4"`);
-        await queryRunner.query(`ALTER TABLE "experience_skills" DROP CONSTRAINT "FK_f7a7dfa66dca37429e8c4e33359"`);
-        await queryRunner.query(`ALTER TABLE "experience_skills" DROP CONSTRAINT "FK_fa99fda757c5d7775f8559f0627"`);
-        await queryRunner.query(`ALTER TABLE "deliverables" DROP CONSTRAINT "FK_aa4b7aaf46037568e3af653c2b3"`);
-        await queryRunner.query(`ALTER TABLE "projects" DROP CONSTRAINT "FK_b6f108b63cbcf38b1fa3c3a69e7"`);
-        await queryRunner.query(`ALTER TABLE "projects" DROP CONSTRAINT "FK_b7d7d44e0e33834351af221757d"`);
-        await queryRunner.query(`ALTER TABLE "projects" DROP CONSTRAINT "FK_a573d9e58cc758d53ae9371ed34"`);
-        await queryRunner.query(`ALTER TABLE "collaborators" DROP CONSTRAINT "FK_18f40eb832fa18226fd72cec48e"`);
-        await queryRunner.query(`ALTER TABLE "collaborators" DROP CONSTRAINT "FK_e5b82c5ada6a6557ec22f219b30"`);
-        await queryRunner.query(`ALTER TABLE "experiences" DROP CONSTRAINT "FK_0b2edf89c2ce5a23ea09f37f222"`);
-        await queryRunner.query(`ALTER TABLE "collaborator_skills" DROP CONSTRAINT "FK_1094d090166a57f099a9c89c2a0"`);
-        await queryRunner.query(`ALTER TABLE "collaborator_skills" DROP CONSTRAINT "FK_2c6c27d74ccc8e8cb6458c472d1"`);
-        await queryRunner.query(`ALTER TABLE "collaborators" DROP COLUMN "weeklyHours"`);
-        await queryRunner.query(`ALTER TABLE "collaborators" ADD "weeklyHours" character varying(40)`);
-        await queryRunner.query(`ALTER TABLE "collaborators" DROP CONSTRAINT "UQ_e5b82c5ada6a6557ec22f219b30"`);
-        await queryRunner.query(`ALTER TABLE "collaborators" DROP CONSTRAINT "PK_f579a5df9d66287f400806ad875"`);
-        await queryRunner.query(`ALTER TABLE "collaborators" ADD CONSTRAINT "PK_d2bf48acc6d412fae80aa674ce8" PRIMARY KEY ("userId", "id")`);
-        await queryRunner.query(`ALTER TABLE "collaborators" ALTER COLUMN "userId" SET NOT NULL`);
-        await queryRunner.query(`ALTER TABLE "experiences" ADD CONSTRAINT "FK_0b2edf89c2ce5a23ea09f37f222" FOREIGN KEY ("collaboratorId") REFERENCES "collaborators"("userId") ON DELETE CASCADE ON UPDATE NO ACTION`);
-        await queryRunner.query(`ALTER TABLE "users" DROP COLUMN "active"`);
-        await queryRunner.query(`ALTER TABLE "users" ADD "active" character varying(120)`);
-        await queryRunner.query(`ALTER TABLE "experiences" DROP COLUMN "organization"`);
-        await queryRunner.query(`ALTER TABLE "experiences" ADD "organization" character varying(140)`);
-        await queryRunner.query(`CREATE TYPE "public"."skills_type_enum_old" AS ENUM('CONOCIMIENTO', 'COMPETENCIA')`);
-        await queryRunner.query(`ALTER TABLE "skills" ALTER COLUMN "type" TYPE "public"."skills_type_enum_old" USING "type"::"text"::"public"."skills_type_enum_old"`);
-        await queryRunner.query(`ALTER TABLE "skills" ALTER COLUMN "type" SET DEFAULT 'CONOCIMIENTO'`);
-        await queryRunner.query(`DROP TYPE "public"."skills_type_enum"`);
-        await queryRunner.query(`ALTER TYPE "public"."skills_type_enum_old" RENAME TO "skills_type_enum"`);
-        await queryRunner.query(`ALTER TABLE "projects" DROP COLUMN "typeData"`);
-        await queryRunner.query(`ALTER TABLE "projects" DROP COLUMN "programId"`);
-        await queryRunner.query(`ALTER TABLE "projects" DROP COLUMN "categoryId"`);
-        await queryRunner.query(`ALTER TABLE "projects" DROP COLUMN "typeId"`);
-        await queryRunner.query(`ALTER TABLE "collaborators" DROP COLUMN "active"`);
-        await queryRunner.query(`ALTER TABLE "collaborators" DROP COLUMN "source"`);
-        await queryRunner.query(`DROP TYPE "public"."collaborators_source_enum"`);
-        await queryRunner.query(`ALTER TABLE "collaborators" DROP COLUMN "dataConsentAt"`);
-        await queryRunner.query(`ALTER TABLE "collaborators" DROP COLUMN "dataConsent"`);
-        await queryRunner.query(`ALTER TABLE "collaborators" DROP COLUMN "profileUrl"`);
-        await queryRunner.query(`ALTER TABLE "collaborators" DROP COLUMN "summary"`);
-        await queryRunner.query(`ALTER TABLE "collaborators" DROP COLUMN "researchGroup"`);
-        await queryRunner.query(`ALTER TABLE "collaborators" DROP COLUMN "semester"`);
-        await queryRunner.query(`ALTER TABLE "collaborators" DROP COLUMN "programId"`);
-        await queryRunner.query(`ALTER TABLE "collaborators" DROP COLUMN "personType"`);
-        await queryRunner.query(`DROP TYPE "public"."collaborators_persontype_enum"`);
-        await queryRunner.query(`ALTER TABLE "collaborators" DROP COLUMN "lastName"`);
-        await queryRunner.query(`ALTER TABLE "collaborators" DROP COLUMN "firstName"`);
-        await queryRunner.query(`ALTER TABLE "collaborators" DROP CONSTRAINT "UQ_b210f505222bd59004a77165857"`);
-        await queryRunner.query(`ALTER TABLE "collaborators" DROP COLUMN "email"`);
-        await queryRunner.query(`ALTER TABLE "collaborators" DROP CONSTRAINT "PK_d2bf48acc6d412fae80aa674ce8"`);
-        await queryRunner.query(`ALTER TABLE "collaborators" ADD CONSTRAINT "PK_e5b82c5ada6a6557ec22f219b30" PRIMARY KEY ("userId")`);
-        await queryRunner.query(`ALTER TABLE "collaborators" DROP COLUMN "id"`);
-        await queryRunner.query(`ALTER TABLE "experiences" DROP COLUMN "level"`);
-        await queryRunner.query(`DROP TYPE "public"."experiences_level_enum"`);
-        await queryRunner.query(`ALTER TABLE "experiences" DROP COLUMN "weeklyHours"`);
-        await queryRunner.query(`ALTER TABLE "experiences" DROP COLUMN "current"`);
-        await queryRunner.query(`ALTER TABLE "experiences" DROP COLUMN "endDate"`);
-        await queryRunner.query(`ALTER TABLE "experiences" DROP COLUMN "startDate"`);
-        await queryRunner.query(`ALTER TABLE "experiences" DROP COLUMN "role"`);
-        await queryRunner.query(`ALTER TABLE "experiences" DROP COLUMN "type"`);
-        await queryRunner.query(`DROP TYPE "public"."experiences_type_enum"`);
-        await queryRunner.query(`ALTER TABLE "skills" DROP COLUMN "status"`);
-        await queryRunner.query(`DROP TYPE "public"."skills_status_enum"`);
-        await queryRunner.query(`ALTER TABLE "skills" DROP COLUMN "synonyms"`);
-        await queryRunner.query(`ALTER TABLE "skills" DROP COLUMN "category"`);
-        await queryRunner.query(`DROP TYPE "public"."skills_category_enum"`);
-        await queryRunner.query(`ALTER TABLE "skills" DROP CONSTRAINT "UQ_c2823e39a34b6628b85feb5ffbb"`);
-        await queryRunner.query(`ALTER TABLE "skills" DROP COLUMN "normalizedName"`);
-        await queryRunner.query(`ALTER TABLE "projects" ADD "program" character varying(120)`);
-        await queryRunner.query(`ALTER TABLE "projects" ADD "semillero" character varying(120)`);
-        await queryRunner.query(`ALTER TABLE "projects" ADD "knownSkills" text`);
-        await queryRunner.query(`ALTER TABLE "collaborators" ADD "studyGroup" character varying(120)`);
-        await queryRunner.query(`ALTER TABLE "collaborators" ADD "modality" character varying(60)`);
-        await queryRunner.query(`ALTER TABLE "collaborators" ADD "headline" character varying(160)`);
-        await queryRunner.query(`ALTER TABLE "experiences" ADD "period" character varying(60)`);
-        await queryRunner.query(`ALTER TABLE "experiences" ADD "title" character varying(140) NOT NULL`);
-        await queryRunner.query(`ALTER TABLE "skills" ADD "level" character varying(20)`);
-        await queryRunner.query(`ALTER TABLE "skills" ADD "collaboratorId" uuid NOT NULL`);
-        await queryRunner.query(`DROP INDEX "public"."IDX_a60e9e349e2e6cbe2cf73b1fbd"`);
-        await queryRunner.query(`DROP INDEX "public"."IDX_8cbc0f1e52a4bfaf783108f99c"`);
-        await queryRunner.query(`DROP TABLE "project_skills"`);
-        await queryRunner.query(`DROP INDEX "public"."IDX_f7a7dfa66dca37429e8c4e3335"`);
-        await queryRunner.query(`DROP INDEX "public"."IDX_fa99fda757c5d7775f8559f062"`);
-        await queryRunner.query(`DROP TABLE "experience_skills"`);
-        await queryRunner.query(`DROP TABLE "deliverables"`);
-        await queryRunner.query(`DROP TABLE "project_types"`);
-        await queryRunner.query(`DROP TABLE "project_categories"`);
-        await queryRunner.query(`DROP TABLE "programs"`);
-        await queryRunner.query(`DROP TABLE "collaborator_skills"`);
-        await queryRunner.query(`DROP TYPE "public"."collaborator_skills_level_enum"`);
-        await queryRunner.query(`ALTER TABLE "users" RENAME COLUMN "active" TO "program"`);
-        await queryRunner.query(`ALTER TABLE "collaborators" ADD CONSTRAINT "FK_e5b82c5ada6a6557ec22f219b30" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE NO ACTION`);
-        await queryRunner.query(`ALTER TABLE "skills" ADD CONSTRAINT "FK_80dfdf58503c0398fec3f49ba59" FOREIGN KEY ("collaboratorId") REFERENCES "collaborators"("userId") ON DELETE CASCADE ON UPDATE NO ACTION`);
+    public async down(): Promise<void> {
+        // El modelo v1 tenía la PK de collaborators en userId y columnas NOT NULL sin
+        // equivalente en v2.0: revertir con datos no es posible sin perderlos. Restaurar
+        // desde un respaldo de la base de datos en lugar de ejecutar migration:revert.
+        throw new Error(
+            'Migración irreversible (modelo v2.0): restaura la base de datos desde un respaldo.',
+        );
     }
 
 }

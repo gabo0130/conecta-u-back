@@ -47,7 +47,7 @@ export class LoginUseCase {
     return {
       access_token: accessToken,
       refresh_token: refreshToken,
-      expires_in: 604800,
+      expires_in: this.tokenService.expiresInSeconds(accessToken),
       user: {
         id: user.id,
         fullName: user.fullName,

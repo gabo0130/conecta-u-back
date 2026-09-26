@@ -1,82 +1,79 @@
 import { NotFoundException } from '@nestjs/common';
 import { UpdateMyCollaboratorProfileUseCase } from './update-my-collaborator-profile.use-case';
-import { CollaboratorEntity } from '../../domain/entities/collaborator.entity';
 import type { CollaboratorRepository } from '../../domain/repositories/collaborator.repository.interface';
-
-function buildCollaborator(
-  overrides: Partial<{ id: string; userId: string | null }> = {},
-) {
-  return new CollaboratorEntity(
-    overrides.id ?? 'c1',
-    'ana@example.com',
-    overrides.userId ?? 'u1',
-    'Ana',
-    'Gómez',
-    'ESTUDIANTE',
-    'prog-1',
-  );
-}
+import type { ProgramRepository } from '../../domain/repositories/program.repository.interface';
+import {
+  buildCollaborator,
+  buildProgram,
+  createMock,
+} from '../../testing/test-doubles.testing';
 
 describe('UpdateMyCollaboratorProfileUseCase', () => {
-  const collaboratorRepository: jest.Mocked<
-    Pick<CollaboratorRepository, 'findByUserId' | 'update'>
-  > = {
-    findByUserId: jest.fn(),
-    update: jest.fn(),
-  };
-
+  const collaboratorRepository = createMock<CollaboratorRepository>();
+  const programRepository = createMock<ProgramRepository>();
   const useCase = new UpdateMyCollaboratorProfileUseCase(
     collaboratorRepository,
+    programRepository,
   );
 
   beforeEach(() => {
     jest.clearAllMocks();
-  });
-
-  it('updates the collaborator profile', async () => {
     collaboratorRepository.findByUserId.mockResolvedValue(buildCollaborator());
     collaboratorRepository.update.mockResolvedValue(
-      new CollaboratorEntity(
-        'c1',
-        'ana@example.com',
-        'u1',
-        'Ana',
-        'Gómez actualizado',
-        'ESTUDIANTE',
-        'prog-1',
-      ),
+      buildCollaborator({ summary: 'Nuevo resumen' }),
     );
-
-    const result = await useCase.execute('u1', {
-      lastName: 'Gómez actualizado',
-    });
-
-    expect(collaboratorRepository.update).toHaveBeenCalledWith('c1', {
-      lastName: 'Gómez actualizado',
-    });
-    expect(result.lastName).toBe('Gómez actualizado');
+    programRepository.findById.mockResolvedValue(buildProgram());
   });
 
-  it('stamps dataConsentAt when dataConsent changes', async () => {
-    collaboratorRepository.findByUserId.mockResolvedValue(buildCollaborator());
-    collaboratorRepository.update.mockResolvedValue(buildCollaborator());
+  it('updates only the fields sent and returns the full profile', async () => {
+    const result = await useCase.execute('user-1', {
+      summary: 'Nuevo resumen',
+    });
 
-    await useCase.execute('u1', { dataConsent: true });
-
-    expect(collaboratorRepository.update).toHaveBeenCalledWith(
-      'c1',
-      expect.objectContaining({
-        dataConsent: true,
-        dataConsentAt: expect.any(Date),
-      }),
+    expect(collaboratorRepository.update).toHaveBeenCalledWith('collab-1', {
+      summary: 'Nuevo resumen',
+    });
+    expect(result).toEqual(
+      expect.objectContaining({ summary: 'Nuevo resumen', skills: [] }),
     );
   });
 
-  it('throws NotFoundException when the profile does not exist', async () => {
+  it('stores the consent date when consent is granted and clears it when revoked', async () => {
+    await useCase.execute('user-1', { dataConsent: true });
+    expect(collaboratorRepository.update).toHaveBeenLastCalledWith('collab-1', {
+      dataConsent: true,
+      dataConsentAt: expect.any(Date),
+    });
+
+    await useCase.execute('user-1', { dataConsent: false });
+    expect(collaboratorRepository.update).toHaveBeenLastCalledWith('collab-1', {
+      dataConsent: false,
+      dataConsentAt: null,
+    });
+  });
+
+  it('validates a new program before updating', async () => {
+    programRepository.findById.mockResolvedValue(null);
+
+    await expect(
+      useCase.execute('user-1', { programId: 'missing' }),
+    ).rejects.toBeInstanceOf(NotFoundException);
+    expect(collaboratorRepository.update).not.toHaveBeenCalled();
+  });
+
+  it('throws NotFoundException when the user has no profile', async () => {
     collaboratorRepository.findByUserId.mockResolvedValue(null);
 
     await expect(
-      useCase.execute('u1', { lastName: 'x' }),
+      useCase.execute('user-1', { summary: 'x' }),
+    ).rejects.toBeInstanceOf(NotFoundException);
+  });
+
+  it('throws NotFoundException when the profile disappears while updating', async () => {
+    collaboratorRepository.update.mockResolvedValue(null);
+
+    await expect(
+      useCase.execute('user-1', { summary: 'x' }),
     ).rejects.toBeInstanceOf(NotFoundException);
   });
 });

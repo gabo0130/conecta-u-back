@@ -1,90 +1,87 @@
-import { NotFoundException } from '@nestjs/common';
+import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { CreateMyExperienceUseCase } from './create-my-experience.use-case';
-import { CollaboratorEntity } from '../../domain/entities/collaborator.entity';
-import { ExperienceEntity } from '../../domain/entities/experience.entity';
 import type { CollaboratorRepository } from '../../domain/repositories/collaborator.repository.interface';
 import type { ExperienceRepository } from '../../domain/repositories/experience.repository.interface';
+import type { SkillRepository } from '../../domain/repositories/skill.repository.interface';
+import type { ExperienceDto } from '../dto/experience.dto';
+import {
+  buildCollaborator,
+  buildExperience,
+  buildSkill,
+  createMock,
+} from '../../testing/test-doubles.testing';
 
 describe('CreateMyExperienceUseCase', () => {
-  const collaboratorRepository: jest.Mocked<
-    Pick<CollaboratorRepository, 'findByUserId'>
-  > = {
-    findByUserId: jest.fn(),
-  };
-  const experienceRepository: jest.Mocked<
-    Pick<ExperienceRepository, 'create'>
-  > = {
-    create: jest.fn(),
-  };
-
+  const collaboratorRepository = createMock<CollaboratorRepository>();
+  const experienceRepository = createMock<ExperienceRepository>();
+  const skillRepository = createMock<SkillRepository>();
   const useCase = new CreateMyExperienceUseCase(
     collaboratorRepository,
     experienceRepository,
+    skillRepository,
   );
 
-  const dto = {
-    type: 'PRACTICA' as const,
-    role: 'Dev',
-    organization: 'Empresa',
-    startDate: '2025-01-01',
-    current: true,
-    weeklyHours: 10,
-    level: 'INTERMEDIO' as const,
+  const dto: ExperienceDto = {
+    type: 'LABORAL',
+    role: 'Desarrolladora',
+    organization: 'UFPS',
+    startDate: '2024-01-01',
+    endDate: '2024-07-01',
+    current: false,
+    weeklyHours: 20,
+    level: 'INTERMEDIO',
+    skillIds: ['skill-1'],
   };
 
   beforeEach(() => {
     jest.clearAllMocks();
+    collaboratorRepository.findByUserId.mockResolvedValue(buildCollaborator());
+    skillRepository.findByIds.mockResolvedValue([buildSkill()]);
+    experienceRepository.create.mockResolvedValue(buildExperience());
   });
 
-  it('creates the experience and computes durationMonths', async () => {
-    collaboratorRepository.findByUserId.mockResolvedValue(
-      new CollaboratorEntity(
-        'c1',
-        'ana@example.com',
-        'u1',
-        'Ana',
-        'Gómez',
-        'ESTUDIANTE',
-        'prog-1',
-      ),
-    );
-    experienceRepository.create.mockResolvedValue(
-      new ExperienceEntity(
-        'e1',
-        'c1',
-        'PRACTICA',
-        'Dev',
-        'Empresa',
-        '2025-01-01',
-        '2025-07-01',
-        false,
-        10,
-        'INTERMEDIO',
-      ),
-    );
+  it('creates the experience and returns it with its duration', async () => {
+    const result = await useCase.execute('user-1', dto);
 
-    const result = await useCase.execute('u1', dto);
-
-    expect(experienceRepository.create).toHaveBeenCalledWith({
-      collaboratorId: 'c1',
-      type: 'PRACTICA',
-      role: 'Dev',
-      organization: 'Empresa',
-      startDate: '2025-01-01',
-      endDate: null,
-      current: true,
-      weeklyHours: 10,
-      level: 'INTERMEDIO',
-      description: null,
-      skillIds: undefined,
-    });
-    expect(result.durationMonths).toBe(6);
+    expect(experienceRepository.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        collaboratorId: 'collab-1',
+        skillIds: ['skill-1'],
+      }),
+    );
+    expect(result).toEqual(
+      expect.objectContaining({
+        durationMonths: 6,
+        technologies: [{ id: 'skill-1', name: 'React' }],
+      }),
+    );
   });
 
-  it('throws NotFoundException when the profile does not exist', async () => {
+  it('rejects technologies that are not in the catalog', async () => {
+    skillRepository.findByIds.mockResolvedValue([]);
+
+    await expect(useCase.execute('user-1', dto)).rejects.toBeInstanceOf(
+      NotFoundException,
+    );
+    expect(experienceRepository.create).not.toHaveBeenCalled();
+  });
+
+  it('rejects an end date before the start date', async () => {
+    await expect(
+      useCase.execute('user-1', { ...dto, endDate: '2023-12-01' }),
+    ).rejects.toBeInstanceOf(BadRequestException);
+  });
+
+  it('rejects a current experience with an end date', async () => {
+    await expect(
+      useCase.execute('user-1', { ...dto, current: true }),
+    ).rejects.toBeInstanceOf(BadRequestException);
+  });
+
+  it('rejects a user without profile', async () => {
     collaboratorRepository.findByUserId.mockResolvedValue(null);
 
-    await expect(useCase.execute('u1', dto)).rejects.toBeInstanceOf(
+    await expect(useCase.execute('user-1', dto)).rejects.toBeInstanceOf(
       NotFoundException,
     );
   });

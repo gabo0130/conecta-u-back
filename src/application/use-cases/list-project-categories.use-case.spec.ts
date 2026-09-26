@@ -1,13 +1,10 @@
 import { ListProjectCategoriesUseCase } from './list-project-categories.use-case';
 import { ProjectCategoryEntity } from '../../domain/entities/project-category.entity';
 import type { ProjectCategoryRepository } from '../../domain/repositories/project-category.repository.interface';
+import { createMock } from '../../testing/test-doubles.testing';
 
 describe('ListProjectCategoriesUseCase', () => {
-  const projectCategoryRepository: jest.Mocked<
-    Pick<ProjectCategoryRepository, 'findAll'>
-  > = {
-    findAll: jest.fn(),
-  };
+  const projectCategoryRepository = createMock<ProjectCategoryRepository>();
 
   const useCase = new ListProjectCategoriesUseCase(projectCategoryRepository);
 

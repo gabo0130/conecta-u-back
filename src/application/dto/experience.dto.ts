@@ -1,7 +1,6 @@
 import {
   IsArray,
   IsBoolean,
-  IsDateString,
   IsIn,
   IsInt,
   IsOptional,
@@ -11,9 +10,15 @@ import {
   MaxLength,
   Min,
 } from 'class-validator';
+import {
+  EXPERIENCE_ROLE_MAX_LENGTH,
+  EXPERIENCE_WEEKLY_HOURS,
+  ORGANIZATION_MAX_LENGTH,
+} from '../../domain/entities/collaborator-limits';
 import { EXPERIENCE_TYPES } from '../../domain/entities/experience-type.type';
 import type { ExperienceType } from '../../domain/entities/experience-type.type';
 import { LEVELS } from '../../domain/entities/level.type';
+import { IsCalendarDate } from './validators/is-calendar-date.decorator';
 import type { Level } from '../../domain/entities/level.type';
 
 export class ExperienceDto {
@@ -21,26 +26,26 @@ export class ExperienceDto {
   type: ExperienceType;
 
   @IsString()
-  @MaxLength(120)
+  @MaxLength(EXPERIENCE_ROLE_MAX_LENGTH)
   role: string;
 
   @IsString()
-  @MaxLength(160)
+  @MaxLength(ORGANIZATION_MAX_LENGTH)
   organization: string;
 
-  @IsDateString()
+  @IsCalendarDate()
   startDate: string;
 
   @IsOptional()
-  @IsDateString()
+  @IsCalendarDate()
   endDate?: string;
 
   @IsBoolean()
   current: boolean;
 
   @IsInt()
-  @Min(1)
-  @Max(60)
+  @Min(EXPERIENCE_WEEKLY_HOURS.min)
+  @Max(EXPERIENCE_WEEKLY_HOURS.max)
   weeklyHours: number;
 
   @IsIn(LEVELS)

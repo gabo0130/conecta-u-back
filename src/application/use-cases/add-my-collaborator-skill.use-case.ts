@@ -1,4 +1,9 @@
-import { Inject, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ConflictException,
+  Inject,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import type { CollaboratorSkillRepository } from '../../domain/repositories/collaborator-skill.repository.interface';
 import type { CollaboratorRepository } from '../../domain/repositories/collaborator.repository.interface';
 import type { SkillRepository } from '../../domain/repositories/skill.repository.interface';
@@ -8,6 +13,11 @@ import {
   SKILL_REPOSITORY,
 } from '../../shared/interfaces/tokens';
 import { CollaboratorSkillDto } from '../dto/collaborator-skill.dto';
+import { toCollaboratorSkillResponse } from '../mappers/collaborator-response.mapper';
+import {
+  DUPLICATED_SKILL,
+  findMyCollaboratorOrFail,
+} from '../support/my-collaborator';
 
 @Injectable()
 export class AddMyCollaboratorSkillUseCase {
@@ -21,24 +31,27 @@ export class AddMyCollaboratorSkillUseCase {
   ) {}
 
   async execute(userId: string, data: CollaboratorSkillDto) {
-    const collaborator = await this.collaboratorRepository.findByUserId(userId);
-    if (!collaborator) {
-      throw new NotFoundException({
-        message: 'Perfil de colaborador no encontrado',
-      });
-    }
+    const collaborator = await findMyCollaboratorOrFail(
+      this.collaboratorRepository,
+      userId,
+    );
 
-    const skill = await this.skillRepository.findById(data.skillId);
-    if (!skill) {
+    if (!(await this.skillRepository.findById(data.skillId))) {
       throw new NotFoundException({ message: 'Habilidad no encontrada' });
     }
 
-    return this.collaboratorSkillRepository.create({
+    if (collaborator.skills.some((entry) => entry.skill.id === data.skillId)) {
+      throw new ConflictException({ message: DUPLICATED_SKILL });
+    }
+
+    const created = await this.collaboratorSkillRepository.create({
       collaboratorId: collaborator.id,
       skillId: data.skillId,
       level: data.level,
       experienceMonths: data.experienceMonths,
       lastUsedYear: data.lastUsedYear ?? null,
     });
+
+    return toCollaboratorSkillResponse(created);
   }
 }

@@ -2,13 +2,13 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, Repository } from 'typeorm';
 import { ExperienceEntity } from '../../../domain/entities/experience.entity';
-import { SkillEntity } from '../../../domain/entities/skill.entity';
 import {
   CreateExperienceRepositoryDto,
   ExperienceRepository,
   UpdateExperienceRepositoryDto,
 } from '../../../domain/repositories/experience.repository.interface';
 import { ExperienceOrmEntity } from './experience.orm-entity';
+import { toExperienceEntity } from './mappers/collaborator.mapper';
 import { SkillOrmEntity } from './skill.orm-entity';
 
 @Injectable()
@@ -25,7 +25,7 @@ export class TypeOrmExperienceRepository implements ExperienceRepository {
       where: { id },
       relations: ['technologies'],
     });
-    return experience ? this.toDomain(experience) : null;
+    return experience ? toExperienceEntity(experience) : null;
   }
 
   async findByCollaboratorId(
@@ -35,7 +35,7 @@ export class TypeOrmExperienceRepository implements ExperienceRepository {
       where: { collaboratorId },
       relations: ['technologies'],
     });
-    return experiences.map((experience) => this.toDomain(experience));
+    return experiences.map(toExperienceEntity);
   }
 
   async create(data: CreateExperienceRepositoryDto): Promise<ExperienceEntity> {
@@ -109,33 +109,5 @@ export class TypeOrmExperienceRepository implements ExperienceRepository {
       return [];
     }
     return this.skillRepository.find({ where: { id: In(skillIds) } });
-  }
-
-  private toDomain(experience: ExperienceOrmEntity): ExperienceEntity {
-    return new ExperienceEntity(
-      experience.id,
-      experience.collaboratorId,
-      experience.type as ExperienceEntity['type'],
-      experience.role,
-      experience.organization,
-      experience.startDate,
-      experience.endDate,
-      experience.current,
-      experience.weeklyHours,
-      experience.level as ExperienceEntity['level'],
-      experience.description,
-      (experience.technologies ?? []).map(
-        (skill) =>
-          new SkillEntity(
-            skill.id,
-            skill.name,
-            skill.normalizedName,
-            skill.type as SkillEntity['type'],
-            skill.category as SkillEntity['category'],
-            skill.synonyms,
-            skill.status as SkillEntity['status'],
-          ),
-      ),
-    );
   }
 }
