@@ -38,14 +38,15 @@ export class CatalogsController {
   }
 
   @UseGuards(JwtAuthGuard, AuthorizationGuard)
-  @Authorize({ anyOfRoles: ['LIDER'] })
+  // El ADMIN también los necesita para mostrar el tipo y la categoría de cualquier proyecto.
+  @Authorize({ anyOfRoles: ['LIDER', 'ADMIN'] })
   @Get('project-types')
   listProjectTypes() {
     return this.listProjectTypesUseCase.execute();
   }
 
   @UseGuards(JwtAuthGuard, AuthorizationGuard)
-  @Authorize({ anyOfRoles: ['LIDER'] })
+  @Authorize({ anyOfRoles: ['LIDER', 'ADMIN'] })
   @Get('project-categories')
   listProjectCategories() {
     return this.listProjectCategoriesUseCase.execute();

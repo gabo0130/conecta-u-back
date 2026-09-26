@@ -12,8 +12,11 @@ export class DeliverableOrmEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
+  // orphanedRowAction va en este lado (ManyToOne): al quitar un entregable de project.deliverables
+  // y guardar, TypeORM borra la fila en vez de intentar dejar projectId en NULL.
   @ManyToOne(() => ProjectOrmEntity, (project) => project.deliverables, {
     onDelete: 'CASCADE',
+    orphanedRowAction: 'delete',
   })
   @JoinColumn({ name: 'projectId' })
   project: ProjectOrmEntity;

@@ -41,6 +41,8 @@ export interface CollaboratorRepository {
   findById(id: string): Promise<CollaboratorEntity | null>;
   findByUserId(userId: string): Promise<CollaboratorEntity | null>;
   findByEmail(email: string): Promise<CollaboratorEntity | null>;
+  /** Todas las personas con perfil técnico, con o sin usuario (vista del ADMIN). */
+  findAll(): Promise<CollaboratorEntity[]>;
   create(data: CreateCollaboratorRepositoryDto): Promise<CollaboratorEntity>;
   update(
     id: string,

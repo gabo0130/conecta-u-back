@@ -34,6 +34,13 @@ export const MENU_CATALOG: MenuConfig[] = [
         icon: 'folder',
         path: '/proyectos',
       },
+      // RF3: un líder también puede tener (o crear) su perfil técnico de colaborador.
+      {
+        id: 'perfil',
+        label: 'Mi perfil',
+        icon: 'user',
+        path: '/perfil',
+      },
     ],
   },
   {
@@ -66,11 +73,31 @@ export const MENU_CATALOG: MenuConfig[] = [
         description: 'Resumen general',
         isActive: true,
       },
+      // El ADMIN ve todo: proyectos de todos los líderes, todos los perfiles técnicos,
+      // cuentas de usuario e importación de colaboradores desde Excel.
+      {
+        id: 'proyectos',
+        label: 'Proyectos',
+        icon: 'folder',
+        path: '/proyectos',
+      },
+      {
+        id: 'colaboradores',
+        label: 'Colaboradores',
+        icon: 'profiles',
+        path: '/colaboradores',
+      },
       {
         id: 'usuarios',
         label: 'Usuarios',
         icon: 'people',
         path: '/users',
+      },
+      {
+        id: 'importar',
+        label: 'Importar Excel',
+        icon: 'upload',
+        path: '/importar',
       },
       {
         id: 'configuracion',

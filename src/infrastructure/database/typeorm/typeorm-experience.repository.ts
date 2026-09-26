@@ -71,11 +71,6 @@ export class TypeOrmExperienceRepository implements ExperienceRepository {
       return null;
     }
 
-    const technologies =
-      data.skillIds !== undefined
-        ? await this.resolveSkills(data.skillIds)
-        : experience.technologies;
-
     const merged = this.repository.merge(experience, {
       ...(data.type !== undefined ? { type: data.type } : {}),
       ...(data.role !== undefined ? { role: data.role } : {}),
@@ -92,8 +87,13 @@ export class TypeOrmExperienceRepository implements ExperienceRepository {
       ...(data.description !== undefined
         ? { description: data.description }
         : {}),
-      technologies,
     });
+
+    // Las tecnologías se asignan fuera de merge(): merge combina arreglos por posición con los
+    // cargados de la BD y conservaba las tecnologías quitadas.
+    if (data.skillIds !== undefined) {
+      merged.technologies = await this.resolveSkills(data.skillIds);
+    }
 
     const saved = await this.repository.save(merged);
     return this.findById(saved.id);

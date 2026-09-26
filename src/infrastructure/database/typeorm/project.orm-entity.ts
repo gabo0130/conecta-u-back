@@ -66,7 +66,6 @@ export class ProjectOrmEntity {
 
   @OneToMany(() => DeliverableOrmEntity, (deliverable) => deliverable.project, {
     cascade: true,
-    orphanedRowAction: 'delete',
   })
   deliverables: DeliverableOrmEntity[];
 

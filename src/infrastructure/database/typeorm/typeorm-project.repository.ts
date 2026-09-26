@@ -42,6 +42,14 @@ export class TypeOrmProjectRepository implements ProjectRepository {
     return projects.map((project) => this.toDomain(project));
   }
 
+  async findAll(): Promise<ProjectEntity[]> {
+    const projects = await this.repository.find({
+      order: { createdAt: 'DESC' },
+      relations: RELATIONS,
+    });
+    return projects.map((project) => this.toDomain(project));
+  }
+
   async create(data: CreateProjectRepositoryDto): Promise<ProjectEntity> {
     const knownSkills = await this.resolveSkills(data.knownSkillIds);
 
@@ -75,16 +83,6 @@ export class TypeOrmProjectRepository implements ProjectRepository {
       return null;
     }
 
-    const knownSkills =
-      data.knownSkillIds !== undefined
-        ? await this.resolveSkills(data.knownSkillIds)
-        : project.knownSkills;
-
-    const deliverables =
-      data.deliverables !== undefined
-        ? this.toDeliverableOrm(data.deliverables)
-        : project.deliverables;
-
     const merged = this.repository.merge(project, {
       ...(data.title !== undefined ? { title: data.title } : {}),
       ...(data.summary !== undefined ? { summary: data.summary } : {}),
@@ -94,9 +92,18 @@ export class TypeOrmProjectRepository implements ProjectRepository {
       ...(data.programId !== undefined ? { programId: data.programId } : {}),
       ...(data.typeData !== undefined ? { typeData: data.typeData } : {}),
       ...(data.status !== undefined ? { status: data.status } : {}),
-      knownSkills,
-      deliverables,
     });
+
+    // Las relaciones se asignan fuera de merge(): merge combina los arreglos por posición con los
+    // cargados de la BD, así que conservaba habilidades quitadas y reinsertaba todos los entregables
+    // (duplicados en cada PATCH). Asignadas directo, TypeORM reemplaza la lista: las habilidades
+    // quitadas salen de la tabla puente y los entregables viejos se borran (orphanedRowAction).
+    if (data.knownSkillIds !== undefined) {
+      merged.knownSkills = await this.resolveSkills(data.knownSkillIds);
+    }
+    if (data.deliverables !== undefined) {
+      merged.deliverables = this.toDeliverableOrm(data.deliverables);
+    }
 
     const saved = await this.repository.save(merged);
     return this.findById(saved.id);

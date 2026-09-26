@@ -2,6 +2,7 @@ import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import type { TypeOrmModuleOptions } from '@nestjs/typeorm';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { AdminModule } from './presentation/admin.module';
 import { AiModule } from './presentation/ai.module';
 import { AuthModule } from './presentation/auth.module';
 import { CatalogsModule } from './presentation/catalogs.module';
@@ -45,6 +46,7 @@ import { TraceIdMiddleware } from './shared/logging/trace-id.middleware';
     CollaboratorsModule,
     ProjectsModule,
     ImportModule,
+    AdminModule,
     AiModule,
     MatchmakingModule,
   ],

@@ -40,6 +40,14 @@ export class TypeOrmCollaboratorRepository implements CollaboratorRepository {
     return collaborator ? toCollaboratorEntity(collaborator) : null;
   }
 
+  async findAll(): Promise<CollaboratorEntity[]> {
+    const collaborators = await this.repository.find({
+      order: { firstName: 'ASC', lastName: 'ASC' },
+      relations: RELATIONS,
+    });
+    return collaborators.map(toCollaboratorEntity);
+  }
+
   async findByEmail(email: string): Promise<CollaboratorEntity | null> {
     const collaborator = await this.repository.findOne({
       where: { email },
