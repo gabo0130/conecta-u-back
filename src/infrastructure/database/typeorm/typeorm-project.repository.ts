@@ -11,6 +11,9 @@ import {
 } from '../../../domain/repositories/project.repository.interface';
 import { DeliverableOrmEntity } from './deliverable.orm-entity';
 import { toSkillEntity } from './mappers/skill.mapper';
+import { pickDefined } from '../../../shared/utils/pick-defined';
+import type { Page, PageParams } from '../../../shared/pagination/pagination.util';
+import { toSkip } from '../../../shared/pagination/pagination.util';
 import { ProjectOrmEntity } from './project.orm-entity';
 import { SkillOrmEntity } from './skill.orm-entity';
 
@@ -33,21 +36,28 @@ export class TypeOrmProjectRepository implements ProjectRepository {
     return project ? this.toDomain(project) : null;
   }
 
-  async findByLeaderId(leaderId: string): Promise<ProjectEntity[]> {
-    const projects = await this.repository.find({
+  async findByLeaderId(
+    leaderId: string,
+    params: PageParams,
+  ): Promise<Page<ProjectEntity>> {
+    const [projects, total] = await this.repository.findAndCount({
       where: { leaderId },
       order: { createdAt: 'DESC' },
       relations: RELATIONS,
+      skip: toSkip(params.page, params.pageSize),
+      take: params.pageSize,
     });
-    return projects.map((project) => this.toDomain(project));
+    return { items: projects.map((project) => this.toDomain(project)), total };
   }
 
-  async findAll(): Promise<ProjectEntity[]> {
-    const projects = await this.repository.find({
+  async findAll(params: PageParams): Promise<Page<ProjectEntity>> {
+    const [projects, total] = await this.repository.findAndCount({
       order: { createdAt: 'DESC' },
       relations: RELATIONS,
+      skip: toSkip(params.page, params.pageSize),
+      take: params.pageSize,
     });
-    return projects.map((project) => this.toDomain(project));
+    return { items: projects.map((project) => this.toDomain(project)), total };
   }
 
   async create(data: CreateProjectRepositoryDto): Promise<ProjectEntity> {
@@ -83,26 +93,18 @@ export class TypeOrmProjectRepository implements ProjectRepository {
       return null;
     }
 
-    const merged = this.repository.merge(project, {
-      ...(data.title !== undefined ? { title: data.title } : {}),
-      ...(data.summary !== undefined ? { summary: data.summary } : {}),
-      ...(data.objectives !== undefined ? { objectives: data.objectives } : {}),
-      ...(data.typeId !== undefined ? { typeId: data.typeId } : {}),
-      ...(data.categoryId !== undefined ? { categoryId: data.categoryId } : {}),
-      ...(data.programId !== undefined ? { programId: data.programId } : {}),
-      ...(data.typeData !== undefined ? { typeData: data.typeData } : {}),
-      ...(data.status !== undefined ? { status: data.status } : {}),
-    });
+    const { knownSkillIds, deliverables, ...columns } = data;
+    const merged = this.repository.merge(project, pickDefined(columns));
 
     // Las relaciones se asignan fuera de merge(): merge combina los arreglos por posición con los
     // cargados de la BD, así que conservaba habilidades quitadas y reinsertaba todos los entregables
     // (duplicados en cada PATCH). Asignadas directo, TypeORM reemplaza la lista: las habilidades
     // quitadas salen de la tabla puente y los entregables viejos se borran (orphanedRowAction).
-    if (data.knownSkillIds !== undefined) {
-      merged.knownSkills = await this.resolveSkills(data.knownSkillIds);
+    if (knownSkillIds !== undefined) {
+      merged.knownSkills = await this.resolveSkills(knownSkillIds);
     }
-    if (data.deliverables !== undefined) {
-      merged.deliverables = this.toDeliverableOrm(data.deliverables);
+    if (deliverables !== undefined) {
+      merged.deliverables = this.toDeliverableOrm(deliverables);
     }
 
     const saved = await this.repository.save(merged);

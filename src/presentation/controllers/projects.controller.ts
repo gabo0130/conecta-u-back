@@ -5,10 +5,12 @@ import {
   Param,
   Patch,
   Post,
+  Query,
   Req,
   UseGuards,
 } from '@nestjs/common';
 import { CreateProjectDto } from '../../application/dto/create-project.dto';
+import { PaginationQueryDto } from '../../application/dto/pagination-query.dto';
 import { UpdateProjectDto } from '../../application/dto/update-project.dto';
 import { CreateProjectUseCase } from '../../application/use-cases/create-project.use-case';
 import { GetProjectByIdUseCase } from '../../application/use-cases/get-project-by-id.use-case';
@@ -37,8 +39,8 @@ export class ProjectsController {
   }
 
   @Get()
-  list(@Req() request: AuthenticatedRequest) {
-    return this.listMyProjectsUseCase.execute(request.user!.userId);
+  list(@Req() request: AuthenticatedRequest, @Query() query: PaginationQueryDto) {
+    return this.listMyProjectsUseCase.execute(request.user!.userId, query);
   }
 
   @Get(':id')

@@ -9,6 +9,7 @@ import {
 } from '../../../domain/repositories/experience.repository.interface';
 import { ExperienceOrmEntity } from './experience.orm-entity';
 import { toExperienceEntity } from './mappers/collaborator.mapper';
+import { pickDefined } from '../../../shared/utils/pick-defined';
 import { SkillOrmEntity } from './skill.orm-entity';
 
 @Injectable()
@@ -71,28 +72,13 @@ export class TypeOrmExperienceRepository implements ExperienceRepository {
       return null;
     }
 
-    const merged = this.repository.merge(experience, {
-      ...(data.type !== undefined ? { type: data.type } : {}),
-      ...(data.role !== undefined ? { role: data.role } : {}),
-      ...(data.organization !== undefined
-        ? { organization: data.organization }
-        : {}),
-      ...(data.startDate !== undefined ? { startDate: data.startDate } : {}),
-      ...(data.endDate !== undefined ? { endDate: data.endDate } : {}),
-      ...(data.current !== undefined ? { current: data.current } : {}),
-      ...(data.weeklyHours !== undefined
-        ? { weeklyHours: data.weeklyHours }
-        : {}),
-      ...(data.level !== undefined ? { level: data.level } : {}),
-      ...(data.description !== undefined
-        ? { description: data.description }
-        : {}),
-    });
+    const { skillIds, ...columns } = data;
+    const merged = this.repository.merge(experience, pickDefined(columns));
 
     // Las tecnologías se asignan fuera de merge(): merge combina arreglos por posición con los
     // cargados de la BD y conservaba las tecnologías quitadas.
-    if (data.skillIds !== undefined) {
-      merged.technologies = await this.resolveSkills(data.skillIds);
+    if (skillIds !== undefined) {
+      merged.technologies = await this.resolveSkills(skillIds);
     }
 
     const saved = await this.repository.save(merged);

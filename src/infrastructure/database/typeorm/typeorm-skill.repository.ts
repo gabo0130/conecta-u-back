@@ -65,6 +65,9 @@ export class TypeOrmSkillRepository implements SkillRepository {
     }
 
     query.orderBy('skill.name', 'ASC');
+    // Autocompletar, no un listado paginado: se acota para que una búsqueda amplia (o vacía)
+    // no traiga todo el catálogo a medida que crece.
+    query.take(20);
 
     const skills = await query.getMany();
     return skills.map(toSkillEntity);

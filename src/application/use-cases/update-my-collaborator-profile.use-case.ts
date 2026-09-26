@@ -6,6 +6,7 @@ import {
   COLLABORATOR_REPOSITORY,
   PROGRAM_REPOSITORY,
 } from '../../shared/interfaces/tokens';
+import { pickDefined } from '../../shared/utils/pick-defined';
 import { UpdateCollaboratorDto } from '../dto/update-collaborator.dto';
 import { toCollaboratorProfileResponse } from '../mappers/collaborator-response.mapper';
 import { findProgramOrFail } from '../support/catalog-references';
@@ -33,19 +34,10 @@ export class UpdateMyCollaboratorProfileUseCase {
       await findProgramOrFail(this.programRepository, data.programId);
     }
 
+    const { dataConsent, ...fields } = data;
     const updated = await this.collaboratorRepository.update(collaborator.id, {
-      ...(data.firstName !== undefined ? { firstName: data.firstName } : {}),
-      ...(data.lastName !== undefined ? { lastName: data.lastName } : {}),
-      ...(data.programId !== undefined ? { programId: data.programId } : {}),
-      ...(data.semester !== undefined ? { semester: data.semester } : {}),
-      ...(data.researchGroup !== undefined
-        ? { researchGroup: data.researchGroup }
-        : {}),
-      ...(data.summary !== undefined ? { summary: data.summary } : {}),
-      ...(data.profileUrl !== undefined ? { profileUrl: data.profileUrl } : {}),
-      ...(data.dataConsent !== undefined
-        ? consentFields(data.dataConsent)
-        : {}),
+      ...pickDefined(fields),
+      ...(dataConsent !== undefined ? consentFields(dataConsent) : {}),
     });
 
     if (!updated) {

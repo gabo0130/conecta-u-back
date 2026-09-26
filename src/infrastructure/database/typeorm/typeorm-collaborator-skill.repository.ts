@@ -9,6 +9,7 @@ import {
 } from '../../../domain/repositories/collaborator-skill.repository.interface';
 import { CollaboratorSkillOrmEntity } from './collaborator-skill.orm-entity';
 import { toCollaboratorSkillEntity } from './mappers/collaborator.mapper';
+import { pickDefined } from '../../../shared/utils/pick-defined';
 
 @Injectable()
 export class TypeOrmCollaboratorSkillRepository implements CollaboratorSkillRepository {
@@ -56,16 +57,7 @@ export class TypeOrmCollaboratorSkillRepository implements CollaboratorSkillRepo
       return null;
     }
 
-    const merged = this.repository.merge(entry, {
-      ...(data.skillId !== undefined ? { skillId: data.skillId } : {}),
-      ...(data.level !== undefined ? { level: data.level } : {}),
-      ...(data.experienceMonths !== undefined
-        ? { experienceMonths: data.experienceMonths }
-        : {}),
-      ...(data.lastUsedYear !== undefined
-        ? { lastUsedYear: data.lastUsedYear }
-        : {}),
-    });
+    const merged = this.repository.merge(entry, pickDefined(data));
 
     const saved = await this.repository.save(merged);
     const withSkill = await this.repository.findOne({

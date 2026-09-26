@@ -26,10 +26,17 @@ describe('UsersController', () => {
   });
 
   it('delegates list to use case', () => {
-    listUsersUseCase.execute.mockResolvedValue({ users: [] });
+    const query = { page: 1, pageSize: 20 };
+    listUsersUseCase.execute.mockResolvedValue({
+      users: [],
+      meta: { page: 1, pageSize: 20, total: 0, totalPages: 1 },
+    });
 
-    void expect(controller.list()).resolves.toEqual({ users: [] });
-    expect(listUsersUseCase.execute).toHaveBeenCalledTimes(1);
+    void expect(controller.list(query)).resolves.toEqual({
+      users: [],
+      meta: { page: 1, pageSize: 20, total: 0, totalPages: 1 },
+    });
+    expect(listUsersUseCase.execute).toHaveBeenCalledWith(query);
   });
 
   it('delegates getById to use case', () => {

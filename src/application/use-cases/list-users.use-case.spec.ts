@@ -8,14 +8,18 @@ describe('ListUsersUseCase', () => {
 
   const useCase = new ListUsersUseCase(userRepository);
 
-  it('returns mapped users list', async () => {
-    userRepository.findAll.mockResolvedValue([
-      new UserEntity('1', 'A', 'a@example.com', 'x', 'ADMIN'),
-      new UserEntity('2', 'B', 'b@example.com', 'x', 'COLABORADOR'),
-    ]);
+  it('returns mapped users list with pagination meta', async () => {
+    userRepository.findAll.mockResolvedValue({
+      items: [
+        new UserEntity('1', 'A', 'a@example.com', 'x', 'ADMIN'),
+        new UserEntity('2', 'B', 'b@example.com', 'x', 'COLABORADOR'),
+      ],
+      total: 2,
+    });
 
-    const result = await useCase.execute();
+    const result = await useCase.execute({ page: 1, pageSize: 20 });
 
+    expect(userRepository.findAll).toHaveBeenCalledWith({ page: 1, pageSize: 20 });
     expect(result).toEqual({
       users: [
         {
@@ -33,6 +37,7 @@ describe('ListUsersUseCase', () => {
           active: true,
         },
       ],
+      meta: { page: 1, pageSize: 20, total: 2, totalPages: 1 },
     });
   });
 });

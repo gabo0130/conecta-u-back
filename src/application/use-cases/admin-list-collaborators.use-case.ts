@@ -5,6 +5,7 @@ import {
   COLLABORATOR_REPOSITORY,
   USER_REPOSITORY,
 } from '../../shared/interfaces/tokens';
+import { toPageMeta, type PageParams } from '../../shared/pagination/pagination.util';
 import {
   indexUsers,
   toAdminCollaboratorSummary,
@@ -19,17 +20,22 @@ export class AdminListCollaboratorsUseCase {
     @Inject(USER_REPOSITORY) private readonly userRepository: UserRepository,
   ) {}
 
-  async execute() {
-    const [collaborators, users] = await Promise.all([
-      this.collaboratorRepository.findAll(),
-      this.userRepository.findAll(),
-    ]);
+  async execute(params: PageParams) {
+    const { items: collaborators, total } =
+      await this.collaboratorRepository.findAll(params);
+
+    // Solo se resuelven las cuentas vinculadas a esta página, no toda la tabla de usuarios.
+    const userIds = collaborators
+      .map((collaborator) => collaborator.userId)
+      .filter((userId): userId is string => Boolean(userId));
+    const users = await this.userRepository.findByIds(userIds);
     const usersById = indexUsers(users);
 
     return {
       collaborators: collaborators.map((collaborator) =>
         toAdminCollaboratorSummary(collaborator, usersById),
       ),
+      meta: toPageMeta(params.page, params.pageSize, total),
     };
   }
 }

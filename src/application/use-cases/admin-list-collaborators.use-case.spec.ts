@@ -18,21 +18,25 @@ describe('AdminListCollaboratorsUseCase', () => {
   );
 
   it('lists people with and without account, with their counters', async () => {
-    collaboratorRepository.findAll.mockResolvedValue([
-      buildCollaborator({
-        id: 'c1',
-        userId: 'user-1',
-        skills: [buildCollaboratorSkill()],
-        experiences: [buildExperience()],
-      }),
-      buildCollaborator({ id: 'c2', userId: null, source: 'IMPORTACION' }),
-    ]);
-    userRepository.findAll.mockResolvedValue([
+    collaboratorRepository.findAll.mockResolvedValue({
+      items: [
+        buildCollaborator({
+          id: 'c1',
+          userId: 'user-1',
+          skills: [buildCollaboratorSkill()],
+          experiences: [buildExperience()],
+        }),
+        buildCollaborator({ id: 'c2', userId: null, source: 'IMPORTACION' }),
+      ],
+      total: 2,
+    });
+    userRepository.findByIds.mockResolvedValue([
       buildUser({ id: 'user-1', fullName: 'Ana Pérez', role: 'COLABORADOR' }),
     ]);
 
-    const { collaborators } = await useCase.execute();
+    const { collaborators, meta } = await useCase.execute({ page: 1, pageSize: 20 });
 
+    expect(userRepository.findByIds).toHaveBeenCalledWith(['user-1']);
     expect(collaborators[0]).toMatchObject({
       id: 'c1',
       skillsCount: 1,
@@ -44,5 +48,6 @@ describe('AdminListCollaboratorsUseCase', () => {
       source: 'IMPORTACION',
       user: null,
     });
+    expect(meta).toEqual({ page: 1, pageSize: 20, total: 2, totalPages: 1 });
   });
 });

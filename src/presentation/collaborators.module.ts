@@ -10,13 +10,19 @@ import { UpdateMyAvailabilityUseCase } from '../application/use-cases/update-my-
 import { UpdateMyCollaboratorProfileUseCase } from '../application/use-cases/update-my-collaborator-profile.use-case';
 import { UpdateMyCollaboratorSkillUseCase } from '../application/use-cases/update-my-collaborator-skill.use-case';
 import { UpdateMyExperienceUseCase } from '../application/use-cases/update-my-experience.use-case';
-import { CollaboratorsController } from './controllers/collaborators.controller';
+import { CollaboratorExperienceController } from './controllers/collaborator-experience.controller';
+import { CollaboratorProfileController } from './controllers/collaborator-profile.controller';
+import { CollaboratorSkillsController } from './controllers/collaborator-skills.controller';
 import { PersistenceModule } from './persistence.module';
 import { SecurityModule } from './security.module';
 
 @Module({
   imports: [PersistenceModule, SecurityModule],
-  controllers: [CollaboratorsController],
+  controllers: [
+    CollaboratorProfileController,
+    CollaboratorSkillsController,
+    CollaboratorExperienceController,
+  ],
   providers: [
     AddMyCollaboratorSkillUseCase,
     CreateMyCollaboratorProfileUseCase,

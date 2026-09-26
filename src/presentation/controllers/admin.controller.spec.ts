@@ -20,18 +20,20 @@ describe('AdminController', () => {
   beforeEach(() => jest.clearAllMocks());
 
   it('delegates the project routes to their use cases', () => {
-    void controller.listProjects();
+    const query = { page: 1, pageSize: 20 };
+    void controller.listProjects(query);
     void controller.getProject('p1');
 
-    expect(listProjects.execute).toHaveBeenCalledTimes(1);
+    expect(listProjects.execute).toHaveBeenCalledWith(query);
     expect(getProject.execute).toHaveBeenCalledWith('p1');
   });
 
   it('delegates the collaborator routes to their use cases', () => {
-    void controller.listCollaborators();
+    const query = { page: 1, pageSize: 20 };
+    void controller.listCollaborators(query);
     void controller.getCollaborator('c1');
 
-    expect(listCollaborators.execute).toHaveBeenCalledTimes(1);
+    expect(listCollaborators.execute).toHaveBeenCalledWith(query);
     expect(getCollaborator.execute).toHaveBeenCalledWith('c1');
   });
 });

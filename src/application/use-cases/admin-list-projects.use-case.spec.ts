@@ -19,22 +19,28 @@ describe('AdminListProjectsUseCase', () => {
     collaboratorRepository,
   );
 
+  const params = { page: 1, pageSize: 20 };
+
   it('returns every project with its leader and the leader technical profile id', async () => {
-    projectRepository.findAll.mockResolvedValue([
-      buildProject({ id: 'p1', leaderId: 'leader-1' }),
-      buildProject({ id: 'p2', leaderId: 'leader-2' }),
-    ]);
-    userRepository.findAll.mockResolvedValue([
+    projectRepository.findAll.mockResolvedValue({
+      items: [
+        buildProject({ id: 'p1', leaderId: 'leader-1' }),
+        buildProject({ id: 'p2', leaderId: 'leader-2' }),
+      ],
+      total: 2,
+    });
+    userRepository.findByIds.mockResolvedValue([
       buildUser({ id: 'leader-1', fullName: 'Laura Méndez', role: 'LIDER' }),
       buildUser({ id: 'leader-2', fullName: 'Mario Quintero', role: 'LIDER' }),
     ]);
-    collaboratorRepository.findAll.mockResolvedValue([
+    collaboratorRepository.findByUserIds.mockResolvedValue([
       buildCollaborator({ id: 'collab-9', userId: 'leader-1' }),
       buildCollaborator({ id: 'collab-10', userId: null }),
     ]);
 
-    const { projects } = await useCase.execute();
+    const { projects, meta } = await useCase.execute(params);
 
+    expect(userRepository.findByIds).toHaveBeenCalledWith(['leader-1', 'leader-2']);
     expect(projects.map((project) => project.id)).toEqual(['p1', 'p2']);
     expect(projects[0].leader).toEqual({
       id: 'leader-1',
@@ -44,14 +50,15 @@ describe('AdminListProjectsUseCase', () => {
       collaboratorId: 'collab-9',
     });
     expect(projects[1].leader?.collaboratorId).toBeNull();
+    expect(meta).toEqual({ page: 1, pageSize: 20, total: 2, totalPages: 1 });
   });
 
   it('returns null as leader when the account no longer exists', async () => {
-    projectRepository.findAll.mockResolvedValue([buildProject()]);
-    userRepository.findAll.mockResolvedValue([]);
-    collaboratorRepository.findAll.mockResolvedValue([]);
+    projectRepository.findAll.mockResolvedValue({ items: [buildProject()], total: 1 });
+    userRepository.findByIds.mockResolvedValue([]);
+    collaboratorRepository.findByUserIds.mockResolvedValue([]);
 
-    const { projects } = await useCase.execute();
+    const { projects } = await useCase.execute(params);
 
     expect(projects[0].leader).toBeNull();
   });

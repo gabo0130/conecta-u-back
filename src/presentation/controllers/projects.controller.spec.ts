@@ -40,8 +40,9 @@ describe('ProjectsController', () => {
   });
 
   it('delegates list to use case', () => {
-    void controller.list(request);
-    expect(listMyProjectsUseCase.execute).toHaveBeenCalledWith('1');
+    const query = { page: 1, pageSize: 20 };
+    void controller.list(request, query);
+    expect(listMyProjectsUseCase.execute).toHaveBeenCalledWith('1', query);
   });
 
   it('delegates getById to use case', () => {

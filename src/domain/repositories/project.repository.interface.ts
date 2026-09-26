@@ -1,3 +1,4 @@
+import type { Page, PageParams } from '../../shared/pagination/pagination.util';
 import type { ProjectStatus } from '../entities/project-status.type';
 import { ProjectEntity } from '../entities/project.entity';
 
@@ -34,9 +35,9 @@ export interface UpdateProjectRepositoryDto {
 
 export interface ProjectRepository {
   findById(id: string): Promise<ProjectEntity | null>;
-  findByLeaderId(leaderId: string): Promise<ProjectEntity[]>;
+  findByLeaderId(leaderId: string, params: PageParams): Promise<Page<ProjectEntity>>;
   /** Todos los proyectos, del más reciente al más antiguo (vista del ADMIN). */
-  findAll(): Promise<ProjectEntity[]>;
+  findAll(params: PageParams): Promise<Page<ProjectEntity>>;
   create(data: CreateProjectRepositoryDto): Promise<ProjectEntity>;
   update(
     id: string,

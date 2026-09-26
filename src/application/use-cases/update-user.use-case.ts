@@ -6,6 +6,7 @@ import {
 } from '@nestjs/common';
 import type { UserRepository } from '../../domain/repositories/user.repository.interface';
 import { USER_REPOSITORY } from '../../shared/interfaces/tokens';
+import { pickDefined } from '../../shared/utils/pick-defined';
 import { UpdateUserDto } from '../dto/update-user.dto';
 
 @Injectable()
@@ -29,14 +30,15 @@ export class UpdateUserUseCase {
       }
     }
 
-    const updated = await this.userRepository.update(userId, {
-      ...(data.fullName !== undefined
-        ? { fullName: data.fullName.trim() }
-        : {}),
-      ...(normalizedEmail !== undefined ? { email: normalizedEmail } : {}),
-      ...(data.role !== undefined ? { role: data.role } : {}),
-      ...(data.active !== undefined ? { active: data.active } : {}),
-    });
+    const updated = await this.userRepository.update(
+      userId,
+      pickDefined({
+        fullName: data.fullName?.trim(),
+        email: normalizedEmail,
+        role: data.role,
+        active: data.active,
+      }),
+    );
 
     if (!updated) {
       throw new NotFoundException({ message: 'Recurso no encontrado' });

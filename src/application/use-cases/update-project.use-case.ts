@@ -17,6 +17,7 @@ import {
   PROJECT_TYPE_REPOSITORY,
   SKILL_REPOSITORY,
 } from '../../shared/interfaces/tokens';
+import { pickDefined } from '../../shared/utils/pick-defined';
 import { UpdateProjectDto } from '../dto/update-project.dto';
 import {
   assertSkillsExist,
@@ -53,21 +54,10 @@ export class UpdateProjectUseCase {
 
     await this.assertReferences(project, data);
 
-    const updated = await this.projectRepository.update(projectId, {
-      ...(data.title !== undefined ? { title: data.title } : {}),
-      ...(data.summary !== undefined ? { summary: data.summary } : {}),
-      ...(data.objectives !== undefined ? { objectives: data.objectives } : {}),
-      ...(data.typeId !== undefined ? { typeId: data.typeId } : {}),
-      ...(data.categoryId !== undefined ? { categoryId: data.categoryId } : {}),
-      ...(data.programId !== undefined ? { programId: data.programId } : {}),
-      ...(data.typeData !== undefined ? { typeData: data.typeData } : {}),
-      ...(data.knownSkillIds !== undefined
-        ? { knownSkillIds: data.knownSkillIds }
-        : {}),
-      ...(data.deliverables !== undefined
-        ? { deliverables: data.deliverables }
-        : {}),
-    });
+    const updated = await this.projectRepository.update(
+      projectId,
+      pickDefined(data),
+    );
 
     if (!updated) {
       throw new NotFoundException({ message: 'Recurso no encontrado' });

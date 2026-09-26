@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 import {
   USER_ROLES,
   type UserRole,
@@ -12,6 +12,9 @@ import {
   type UpdateUserRepositoryDto,
 } from '../../../domain/repositories/user.repository.interface';
 import { UserOrmEntity } from './user.orm-entity';
+import { pickDefined } from '../../../shared/utils/pick-defined';
+import type { Page, PageParams } from '../../../shared/pagination/pagination.util';
+import { toSkip } from '../../../shared/pagination/pagination.util';
 
 @Injectable()
 export class TypeOrmUserRepository implements UserRepository {
@@ -45,9 +48,19 @@ export class TypeOrmUserRepository implements UserRepository {
     return user ? this.toDomain(user) : null;
   }
 
-  async findAll(): Promise<UserEntity[]> {
-    const users = await this.repository.find({ order: { id: 'ASC' } });
+  async findByIds(ids: string[]): Promise<UserEntity[]> {
+    if (ids.length === 0) return [];
+    const users = await this.repository.find({ where: { id: In(ids) } });
     return users.map((user) => this.toDomain(user));
+  }
+
+  async findAll(params: PageParams): Promise<Page<UserEntity>> {
+    const [users, total] = await this.repository.findAndCount({
+      order: { id: 'ASC' },
+      skip: toSkip(params.page, params.pageSize),
+      take: params.pageSize,
+    });
+    return { items: users.map((user) => this.toDomain(user)), total };
   }
 
   async create(data: CreateUserRepositoryDto): Promise<UserEntity> {
@@ -71,12 +84,7 @@ export class TypeOrmUserRepository implements UserRepository {
       return null;
     }
 
-    const merged = this.repository.merge(user, {
-      ...(data.fullName !== undefined ? { fullName: data.fullName } : {}),
-      ...(data.email !== undefined ? { email: data.email } : {}),
-      ...(data.role !== undefined ? { role: data.role } : {}),
-      ...(data.active !== undefined ? { active: data.active } : {}),
-    });
+    const merged = this.repository.merge(user, pickDefined(data));
 
     const saved = await this.repository.save(merged);
     return this.toDomain(saved);

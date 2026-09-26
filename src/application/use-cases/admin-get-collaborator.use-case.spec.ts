@@ -29,9 +29,10 @@ describe('AdminGetCollaboratorUseCase', () => {
     userRepository.findById.mockResolvedValue(
       buildUser({ id: 'leader-1', fullName: 'Laura Méndez', role: 'LIDER' }),
     );
-    projectRepository.findByLeaderId.mockResolvedValue([
-      buildProject({ id: 'p1', title: 'Visitas empresariales' }),
-    ]);
+    projectRepository.findByLeaderId.mockResolvedValue({
+      items: [buildProject({ id: 'p1', title: 'Visitas empresariales' })],
+      total: 1,
+    });
 
     const detail = await useCase.execute('c1');
 

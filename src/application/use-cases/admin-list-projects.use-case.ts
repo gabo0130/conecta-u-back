@@ -7,6 +7,7 @@ import {
   PROJECT_REPOSITORY,
   USER_REPOSITORY,
 } from '../../shared/interfaces/tokens';
+import { toPageMeta, type PageParams } from '../../shared/pagination/pagination.util';
 import {
   indexCollaboratorsByUser,
   indexUsers,
@@ -24,11 +25,14 @@ export class AdminListProjectsUseCase {
     private readonly collaboratorRepository: CollaboratorRepository,
   ) {}
 
-  async execute() {
-    const [projects, users, collaborators] = await Promise.all([
-      this.projectRepository.findAll(),
-      this.userRepository.findAll(),
-      this.collaboratorRepository.findAll(),
+  async execute(params: PageParams) {
+    const { items: projects, total } = await this.projectRepository.findAll(params);
+
+    // Solo se resuelven los líderes que aparecen en esta página, no toda la tabla de usuarios.
+    const leaderIds = [...new Set(projects.map((project) => project.leaderId))];
+    const [users, collaborators] = await Promise.all([
+      this.userRepository.findByIds(leaderIds),
+      this.collaboratorRepository.findByUserIds(leaderIds),
     ]);
     const usersById = indexUsers(users);
     const collaboratorIdByUserId = indexCollaboratorsByUser(collaborators);
@@ -37,6 +41,7 @@ export class AdminListProjectsUseCase {
       projects: projects.map((project) =>
         toAdminProjectResponse(project, usersById, collaboratorIdByUserId),
       ),
+      meta: toPageMeta(params.page, params.pageSize, total),
     };
   }
 }

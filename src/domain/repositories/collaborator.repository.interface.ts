@@ -1,3 +1,4 @@
+import type { Page, PageParams } from '../../shared/pagination/pagination.util';
 import type { AvailabilityStatus } from '../entities/availability-status.type';
 import { CollaboratorEntity } from '../entities/collaborator.entity';
 import type { CollaboratorSource } from '../entities/collaborator-source.type';
@@ -41,8 +42,10 @@ export interface CollaboratorRepository {
   findById(id: string): Promise<CollaboratorEntity | null>;
   findByUserId(userId: string): Promise<CollaboratorEntity | null>;
   findByEmail(email: string): Promise<CollaboratorEntity | null>;
+  /** Perfiles vinculados a cualquiera de estas cuentas (para indexar sin cargar toda la tabla). */
+  findByUserIds(userIds: string[]): Promise<CollaboratorEntity[]>;
   /** Todas las personas con perfil técnico, con o sin usuario (vista del ADMIN). */
-  findAll(): Promise<CollaboratorEntity[]>;
+  findAll(params: PageParams): Promise<Page<CollaboratorEntity>>;
   create(data: CreateCollaboratorRepositoryDto): Promise<CollaboratorEntity>;
   update(
     id: string,

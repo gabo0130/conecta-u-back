@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 import { CollaboratorEntity } from '../../../domain/entities/collaborator.entity';
 import {
   CollaboratorRepository,
@@ -9,6 +9,9 @@ import {
 } from '../../../domain/repositories/collaborator.repository.interface';
 import { CollaboratorOrmEntity } from './collaborator.orm-entity';
 import { toCollaboratorEntity } from './mappers/collaborator.mapper';
+import { pickDefined } from '../../../shared/utils/pick-defined';
+import type { Page, PageParams } from '../../../shared/pagination/pagination.util';
+import { toSkip } from '../../../shared/pagination/pagination.util';
 
 const RELATIONS = [
   'skills',
@@ -40,12 +43,23 @@ export class TypeOrmCollaboratorRepository implements CollaboratorRepository {
     return collaborator ? toCollaboratorEntity(collaborator) : null;
   }
 
-  async findAll(): Promise<CollaboratorEntity[]> {
+  async findByUserIds(userIds: string[]): Promise<CollaboratorEntity[]> {
+    if (userIds.length === 0) return [];
     const collaborators = await this.repository.find({
-      order: { firstName: 'ASC', lastName: 'ASC' },
+      where: { userId: In(userIds) },
       relations: RELATIONS,
     });
     return collaborators.map(toCollaboratorEntity);
+  }
+
+  async findAll(params: PageParams): Promise<Page<CollaboratorEntity>> {
+    const [collaborators, total] = await this.repository.findAndCount({
+      order: { firstName: 'ASC', lastName: 'ASC' },
+      relations: RELATIONS,
+      skip: toSkip(params.page, params.pageSize),
+      take: params.pageSize,
+    });
+    return { items: collaborators.map(toCollaboratorEntity), total };
   }
 
   async findByEmail(email: string): Promise<CollaboratorEntity | null> {
@@ -93,31 +107,7 @@ export class TypeOrmCollaboratorRepository implements CollaboratorRepository {
       return null;
     }
 
-    const merged = this.repository.merge(collaborator, {
-      ...(data.userId !== undefined ? { userId: data.userId } : {}),
-      ...(data.firstName !== undefined ? { firstName: data.firstName } : {}),
-      ...(data.lastName !== undefined ? { lastName: data.lastName } : {}),
-      ...(data.programId !== undefined ? { programId: data.programId } : {}),
-      ...(data.semester !== undefined ? { semester: data.semester } : {}),
-      ...(data.researchGroup !== undefined
-        ? { researchGroup: data.researchGroup }
-        : {}),
-      ...(data.summary !== undefined ? { summary: data.summary } : {}),
-      ...(data.profileUrl !== undefined ? { profileUrl: data.profileUrl } : {}),
-      ...(data.availabilityStatus !== undefined
-        ? { availabilityStatus: data.availabilityStatus }
-        : {}),
-      ...(data.weeklyHours !== undefined
-        ? { weeklyHours: data.weeklyHours }
-        : {}),
-      ...(data.dataConsent !== undefined
-        ? { dataConsent: data.dataConsent }
-        : {}),
-      ...(data.dataConsentAt !== undefined
-        ? { dataConsentAt: data.dataConsentAt }
-        : {}),
-      ...(data.active !== undefined ? { active: data.active } : {}),
-    });
+    const merged = this.repository.merge(collaborator, pickDefined(data));
 
     const saved = await this.repository.save(merged);
     return this.findById(saved.id);

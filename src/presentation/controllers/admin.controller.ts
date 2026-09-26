@@ -1,8 +1,9 @@
-import { Controller, Get, Param, UseGuards } from '@nestjs/common';
+import { Controller, Get, Param, Query, UseGuards } from '@nestjs/common';
 import { AdminGetCollaboratorUseCase } from '../../application/use-cases/admin-get-collaborator.use-case';
 import { AdminGetProjectUseCase } from '../../application/use-cases/admin-get-project.use-case';
 import { AdminListCollaboratorsUseCase } from '../../application/use-cases/admin-list-collaborators.use-case';
 import { AdminListProjectsUseCase } from '../../application/use-cases/admin-list-projects.use-case';
+import { PaginationQueryDto } from '../../application/dto/pagination-query.dto';
 import { Authorize } from '../guards/authorization.decorator';
 import { AuthorizationGuard } from '../guards/authorization.guard';
 import { JwtAuthGuard } from '../guards/jwt-auth.guard';
@@ -21,8 +22,8 @@ export class AdminController {
   ) {}
 
   @Get('projects')
-  listProjects() {
-    return this.adminListProjectsUseCase.execute();
+  listProjects(@Query() query: PaginationQueryDto) {
+    return this.adminListProjectsUseCase.execute(query);
   }
 
   @Get('projects/:id')
@@ -31,8 +32,8 @@ export class AdminController {
   }
 
   @Get('collaborators')
-  listCollaborators() {
-    return this.adminListCollaboratorsUseCase.execute();
+  listCollaborators(@Query() query: PaginationQueryDto) {
+    return this.adminListCollaboratorsUseCase.execute(query);
   }
 
   @Get('collaborators/:id')

@@ -1,5 +1,6 @@
 import { BadRequestException, Inject, Injectable } from '@nestjs/common';
 import { consentFields } from '../../domain/entities/data-consent';
+import type { SkillEntity } from '../../domain/entities/skill.entity';
 import {
   type CollaboratorWorkbook,
   type CollaboratorWorkbookReader,
@@ -35,16 +36,14 @@ import {
   parseSkillRow,
 } from '../import/collaborator-row.parsers';
 import {
+  ImportReport,
+  type RejectedRow,
+  groupByEmail,
+} from '../import/import-report';
+import {
   type SkillProposal,
   resolveOrProposeSkill,
 } from '../support/skill-resolver';
-
-export interface RejectedRow {
-  sheet: string;
-  row: number;
-  email: string;
-  reason: string;
-}
 
 interface ValidRow<T> {
   row: number;
@@ -58,16 +57,27 @@ interface CollaboratorImport {
   programId: string;
   skills: ValidRow<ParsedSkill>[];
   experience: ValidRow<ParsedExperience>[];
+  /** Filas hijas inválidas: se informan solo si el colaborador se guarda. */
+  childRejections: RejectedRow[];
 }
 
-/** Resultado de guardar un colaborador: se aplica al reporte solo si la transacción confirmó. */
-interface SavedCollaborator {
+/** Estado compartido mientras se recorren las filas de la hoja Colaboradores. */
+interface ImportContext {
+  report: ImportReport;
+  seenEmails: Set<string>;
+  skillRows: Map<string, WorkbookRow[]>;
+  experienceRows: Map<string, WorkbookRow[]>;
+}
+
+/** Lo que produce guardar un colaborador dentro de su transacción. */
+interface SaveContext {
+  repositories: TransactionalRepositories;
+  collaboratorId: string;
+  email: string;
   proposedSkills: string[];
   rejected: RejectedRow[];
 }
 
-const UNMATCHED_EMAIL =
-  'El correo no corresponde a un colaborador importado en este archivo';
 const SAVE_FAILED =
   'No se pudo guardar el colaborador ni sus habilidades o experiencia';
 
@@ -96,75 +106,20 @@ export class ImportCollaboratorsUseCase {
   /** @param content el .xlsx subido; su tamaño ya lo limitó la capa HTTP. */
   async execute(content: Uint8Array) {
     const workbook = await this.readWorkbook(content);
-    const skillRows = groupByEmail(workbook.skills);
-    const experienceRows = groupByEmail(workbook.experience);
-    const importedEmails = new Set<string>();
-    const seenEmails = new Set<string>();
-    const rejected: RejectedRow[] = [];
-    const warnings: string[] = [];
+    const context: ImportContext = {
+      report: new ImportReport(),
+      seenEmails: new Set(),
+      skillRows: groupByEmail(workbook.skills),
+      experienceRows: groupByEmail(workbook.experience),
+    };
 
-    for (const { row, values } of workbook.collaborators) {
-      const email = emailOf(values.correo);
-      const reject = (reason: string) =>
-        rejected.push({ sheet: SHEET_COLLABORATORS, row, email, reason });
-
-      if (email && seenEmails.has(email)) {
-        reject('Correo duplicado en el archivo');
-        continue;
-      }
-      seenEmails.add(email);
-
-      const parsed = parseCollaboratorRow(values);
-      if (!parsed.ok) {
-        reject(parsed.reason);
-        continue;
-      }
-
-      const resolved = await this.resolveNewCollaborator(parsed.value);
-      if (!resolved.ok) {
-        reject(resolved.reason);
-        continue;
-      }
-
-      // Los rechazos de filas hijas solo se informan si el colaborador se guarda; si no,
-      // todas sus filas quedan como "sin colaborador importado" al final.
-      const childRejections: RejectedRow[] = [];
-      const saved = await this.save({
-        row,
-        collaborator: parsed.value,
-        programId: resolved.value.programId,
-        skills: this.validRows(
-          skillRows.get(email),
-          parseSkillRow,
-          SHEET_SKILLS,
-          childRejections,
-        ),
-        experience: this.validRows(
-          experienceRows.get(email),
-          parseExperienceRow,
-          SHEET_EXPERIENCE,
-          childRejections,
-        ),
-      });
-      if (!saved) {
-        reject(SAVE_FAILED);
-        continue;
-      }
-      importedEmails.add(email);
-      rejected.push(...childRejections, ...saved.rejected);
-      warnings.push(
-        ...saved.proposedSkills.map(
-          (name) => `Habilidad nueva creada como pendiente: "${name}"`,
-        ),
-      );
+    for (const row of workbook.collaborators) {
+      await this.importRow(row, context);
     }
 
-    rejected.push(
-      ...unmatchedRows(skillRows, importedEmails, SHEET_SKILLS),
-      ...unmatchedRows(experienceRows, importedEmails, SHEET_EXPERIENCE),
-    );
-
-    return { created: importedEmails.size, rejected, warnings };
+    context.report.rejectUnmatched(SHEET_SKILLS, context.skillRows);
+    context.report.rejectUnmatched(SHEET_EXPERIENCE, context.experienceRows);
+    return context.report.toResponse();
   }
 
   private async readWorkbook(
@@ -178,6 +133,71 @@ export class ImportCollaboratorsUseCase {
       }
       throw error;
     }
+  }
+
+  private async importRow(
+    { row, values }: WorkbookRow,
+    context: ImportContext,
+  ): Promise<void> {
+    const email = emailOf(values.correo);
+    const reject = (reason: string) =>
+      context.report.reject({ sheet: SHEET_COLLABORATORS, row, email, reason });
+
+    const prepared = await this.prepare(row, values, email, context);
+    if (!prepared.ok) {
+      reject(prepared.reason);
+      return;
+    }
+
+    const saved = await this.save(prepared.value);
+    if (!saved) {
+      reject(SAVE_FAILED);
+      return;
+    }
+    context.report.reject(...prepared.value.childRejections, ...saved.rejected);
+    context.report.accept(email, saved.proposedSkills);
+  }
+
+  /** Valida la fila y sus filas hijas sin escribir nada. */
+  private async prepare(
+    row: number,
+    values: WorkbookRow['values'],
+    email: string,
+    context: ImportContext,
+  ): Promise<ParseResult<CollaboratorImport>> {
+    if (email && context.seenEmails.has(email)) {
+      return { ok: false, reason: 'Correo duplicado en el archivo' };
+    }
+    context.seenEmails.add(email);
+
+    const parsed = parseCollaboratorRow(values);
+    if (!parsed.ok) return parsed;
+
+    const resolved = await this.resolveNewCollaborator(parsed.value);
+    if (!resolved.ok) return resolved;
+
+    const childRejections: RejectedRow[] = [];
+    return {
+      ok: true,
+      value: {
+        row,
+        collaborator: parsed.value,
+        programId: resolved.value.programId,
+        skills: validRows(
+          context.skillRows.get(email),
+          parseSkillRow,
+          SHEET_SKILLS,
+          childRejections,
+        ),
+        experience: validRows(
+          context.experienceRows.get(email),
+          parseExperienceRow,
+          SHEET_EXPERIENCE,
+          childRejections,
+        ),
+        childRejections,
+      },
+    };
   }
 
   /** Resuelve el programa y confirma que el correo es nuevo antes de abrir la transacción. */
@@ -196,36 +216,20 @@ export class ImportCollaboratorsUseCase {
     return { ok: true, value: { programId: program.id } };
   }
 
-  private validRows<T>(
-    rows: WorkbookRow[] | undefined,
-    parse: (values: WorkbookRow['values']) => ParseResult<T>,
-    sheet: string,
-    rejected: RejectedRow[],
-  ): ValidRow<T>[] {
-    const valid: ValidRow<T>[] = [];
-    for (const { row, values } of rows ?? []) {
-      const parsed = parse(values);
-      if (parsed.ok) {
-        valid.push({ row, value: parsed.value });
-      } else {
-        rejected.push({
-          sheet,
-          row,
-          email: emailOf(values.correo),
-          reason: parsed.reason,
-        });
-      }
-    }
-    return valid;
-  }
-
-  private async save(
-    data: CollaboratorImport,
-  ): Promise<SavedCollaborator | null> {
+  private async save(data: CollaboratorImport): Promise<SaveContext | null> {
     try {
-      return await this.unitOfWork.run((repositories) =>
-        this.saveWith(repositories, data),
-      );
+      return await this.unitOfWork.run(async (repositories) => {
+        const context: SaveContext = {
+          repositories,
+          collaboratorId: await this.createCollaborator(repositories, data),
+          email: data.collaborator.email,
+          proposedSkills: [],
+          rejected: [],
+        };
+        await this.saveSkills(context, data.skills);
+        await this.saveExperience(context, data.experience);
+        return context;
+      });
     } catch (error) {
       this.logger.error('No se pudo importar un colaborador', error, {
         method: 'save',
@@ -235,23 +239,11 @@ export class ImportCollaboratorsUseCase {
     }
   }
 
-  private async saveWith(
+  private async createCollaborator(
     repositories: TransactionalRepositories,
-    { collaborator, programId, skills, experience }: CollaboratorImport,
-  ): Promise<SavedCollaborator> {
-    const result: SavedCollaborator = { proposedSkills: [], rejected: [] };
-    const resolveSkill = async (proposal: SkillProposal) => {
-      const resolved = await resolveOrProposeSkill(
-        repositories.skills,
-        proposal,
-      );
-      if (resolved.proposed) {
-        result.proposedSkills.push(resolved.skill.name);
-      }
-      return resolved.skill;
-    };
-
-    const { id: collaboratorId } = await repositories.collaborators.create({
+    { collaborator, programId }: CollaboratorImport,
+  ): Promise<string> {
+    const { id } = await repositories.collaborators.create({
       email: collaborator.email,
       firstName: collaborator.firstName,
       lastName: collaborator.lastName,
@@ -266,39 +258,52 @@ export class ImportCollaboratorsUseCase {
       ...consentFields(true),
       source: 'IMPORTACION',
     });
+    return id;
+  }
 
+  private async saveSkills(
+    context: SaveContext,
+    skills: ValidRow<ParsedSkill>[],
+  ): Promise<void> {
     const addedSkillIds = new Set<string>();
     for (const { row, value } of skills) {
-      const skill = await resolveSkill(value);
+      const skill = await this.resolveSkill(context, value);
       // "React" y "ReactJS" resuelven a la misma habilidad del catálogo.
       if (addedSkillIds.has(skill.id)) {
-        result.rejected.push({
+        context.rejected.push({
           sheet: SHEET_SKILLS,
           row,
-          email: collaborator.email,
+          email: context.email,
           reason: `Habilidad repetida para este colaborador: ${skill.name}`,
         });
         continue;
       }
       addedSkillIds.add(skill.id);
-      await repositories.collaboratorSkills.create({
-        collaboratorId,
+      await context.repositories.collaboratorSkills.create({
+        collaboratorId: context.collaboratorId,
         skillId: skill.id,
         level: value.level,
         experienceMonths: value.experienceMonths,
         lastUsedYear: value.lastUsedYear,
       });
     }
+  }
 
+  private async saveExperience(
+    context: SaveContext,
+    experience: ValidRow<ParsedExperience>[],
+  ): Promise<void> {
     for (const { value } of experience) {
       const technologyIds = new Set<string>();
       for (const name of value.technologies) {
-        technologyIds.add(
-          (await resolveSkill({ name, type: 'CONOCIMIENTO' })).id,
-        );
+        const skill = await this.resolveSkill(context, {
+          name,
+          type: 'CONOCIMIENTO',
+        });
+        technologyIds.add(skill.id);
       }
-      await repositories.experiences.create({
-        collaboratorId,
+      await context.repositories.experiences.create({
+        collaboratorId: context.collaboratorId,
         type: value.type,
         role: value.role,
         organization: value.organization,
@@ -311,29 +316,42 @@ export class ImportCollaboratorsUseCase {
         skillIds: [...technologyIds],
       });
     }
-
-    return result;
   }
-}
 
-function groupByEmail(rows: WorkbookRow[]): Map<string, WorkbookRow[]> {
-  const groups = new Map<string, WorkbookRow[]>();
-  for (const row of rows) {
-    const email = emailOf(row.values.correo);
-    groups.set(email, [...(groups.get(email) ?? []), row]);
-  }
-  return groups;
-}
-
-/** Filas de Habilidades/Experiencia cuyo correo no quedó importado: se informan, no se pierden. */
-function unmatchedRows(
-  groups: Map<string, WorkbookRow[]>,
-  importedEmails: Set<string>,
-  sheet: string,
-): RejectedRow[] {
-  return [...groups.entries()]
-    .filter(([email]) => !importedEmails.has(email))
-    .flatMap(([email, rows]) =>
-      rows.map(({ row }) => ({ sheet, row, email, reason: UNMATCHED_EMAIL })),
+  private async resolveSkill(
+    context: SaveContext,
+    proposal: SkillProposal,
+  ): Promise<SkillEntity> {
+    const { skill, proposed } = await resolveOrProposeSkill(
+      context.repositories.skills,
+      proposal,
     );
+    if (proposed) {
+      context.proposedSkills.push(skill.name);
+    }
+    return skill;
+  }
+}
+
+function validRows<T>(
+  rows: WorkbookRow[] | undefined,
+  parse: (values: WorkbookRow['values']) => ParseResult<T>,
+  sheet: string,
+  rejected: RejectedRow[],
+): ValidRow<T>[] {
+  const valid: ValidRow<T>[] = [];
+  for (const { row, values } of rows ?? []) {
+    const parsed = parse(values);
+    if (parsed.ok) {
+      valid.push({ row, value: parsed.value });
+    } else {
+      rejected.push({
+        sheet,
+        row,
+        email: emailOf(values.correo),
+        reason: parsed.reason,
+      });
+    }
+  }
+  return valid;
 }

@@ -27,17 +27,21 @@ export class AdminGetCollaboratorUseCase {
       throw new NotFoundException({ message: 'Recurso no encontrado' });
     }
 
-    const [user, ledProjects] = collaborator.userId
+    const [user, ledProjectsPage] = collaborator.userId
       ? await Promise.all([
           this.userRepository.findById(collaborator.userId),
-          this.projectRepository.findByLeaderId(collaborator.userId),
+          // Vista de detalle, no un listado: se acota en vez de paginar de verdad.
+          this.projectRepository.findByLeaderId(collaborator.userId, {
+            page: 1,
+            pageSize: 100,
+          }),
         ])
-      : [null, []];
+      : [null, { items: [] }];
 
     return toAdminCollaboratorDetail(
       collaborator,
       user ?? undefined,
-      ledProjects,
+      ledProjectsPage.items,
     );
   }
 }

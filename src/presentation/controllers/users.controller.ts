@@ -7,9 +7,11 @@ import {
   Param,
   Patch,
   Post,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 import { CreateUserDto } from '../../application/dto/create-user.dto';
+import { PaginationQueryDto } from '../../application/dto/pagination-query.dto';
 import { UpdateUserDto } from '../../application/dto/update-user.dto';
 import { CreateUserUseCase } from '../../application/use-cases/create-user.use-case';
 import { DeleteUserUseCase } from '../../application/use-cases/delete-user.use-case';
@@ -34,8 +36,8 @@ export class UsersController {
   ) {}
 
   @Get()
-  list() {
-    return this.listUsersUseCase.execute();
+  list(@Query() query: PaginationQueryDto) {
+    return this.listUsersUseCase.execute(query);
   }
 
   @Get(':id')
