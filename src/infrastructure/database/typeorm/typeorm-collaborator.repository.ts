@@ -10,7 +10,10 @@ import {
 import { CollaboratorOrmEntity } from './collaborator.orm-entity';
 import { toCollaboratorEntity } from './mappers/collaborator.mapper';
 import { pickDefined } from '../../../shared/utils/pick-defined';
-import type { Page, PageParams } from '../../../shared/pagination/pagination.util';
+import type {
+  Page,
+  PageParams,
+} from '../../../shared/pagination/pagination.util';
 import { toSkip } from '../../../shared/pagination/pagination.util';
 
 const RELATIONS = [

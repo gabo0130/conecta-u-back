@@ -7,7 +7,10 @@ import {
   PROJECT_REPOSITORY,
   USER_REPOSITORY,
 } from '../../shared/interfaces/tokens';
-import { toPageMeta, type PageParams } from '../../shared/pagination/pagination.util';
+import {
+  toPageMeta,
+  type PageParams,
+} from '../../shared/pagination/pagination.util';
 import {
   indexCollaboratorsByUser,
   indexUsers,
@@ -26,7 +29,8 @@ export class AdminListProjectsUseCase {
   ) {}
 
   async execute(params: PageParams) {
-    const { items: projects, total } = await this.projectRepository.findAll(params);
+    const { items: projects, total } =
+      await this.projectRepository.findAll(params);
 
     // Solo se resuelven los líderes que aparecen en esta página, no toda la tabla de usuarios.
     const leaderIds = [...new Set(projects.map((project) => project.leaderId))];

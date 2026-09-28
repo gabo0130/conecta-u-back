@@ -1,7 +1,10 @@
 import { Inject, Injectable } from '@nestjs/common';
 import type { UserRepository } from '../../domain/repositories/user.repository.interface';
 import { USER_REPOSITORY } from '../../shared/interfaces/tokens';
-import { toPageMeta, type PageParams } from '../../shared/pagination/pagination.util';
+import {
+  toPageMeta,
+  type PageParams,
+} from '../../shared/pagination/pagination.util';
 
 @Injectable()
 export class ListUsersUseCase {

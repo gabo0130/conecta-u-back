@@ -92,6 +92,15 @@ describe('UpdateProjectUseCase', () => {
     expect(projectRepository.update).not.toHaveBeenCalled();
   });
 
+  it('removes the program with programId null without looking it up', async () => {
+    await useCase.execute('leader-1', 'project-1', { programId: null });
+
+    expect(programRepository.findById).not.toHaveBeenCalled();
+    expect(projectRepository.update).toHaveBeenCalledWith('project-1', {
+      programId: null,
+    });
+  });
+
   it('rejects a category that does not exist', async () => {
     projectCategoryRepository.findById.mockResolvedValue(null);
 

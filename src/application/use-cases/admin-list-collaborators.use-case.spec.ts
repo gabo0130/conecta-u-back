@@ -34,7 +34,10 @@ describe('AdminListCollaboratorsUseCase', () => {
       buildUser({ id: 'user-1', fullName: 'Ana Pérez', role: 'COLABORADOR' }),
     ]);
 
-    const { collaborators, meta } = await useCase.execute({ page: 1, pageSize: 20 });
+    const { collaborators, meta } = await useCase.execute({
+      page: 1,
+      pageSize: 20,
+    });
 
     expect(userRepository.findByIds).toHaveBeenCalledWith(['user-1']);
     expect(collaborators[0]).toMatchObject({

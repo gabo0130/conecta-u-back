@@ -38,7 +38,7 @@ describe('RegisterUseCase', () => {
     password: 'Secret123*',
     role: 'COLABORADOR',
     collaborator: {
-      firstName: ' Ana ',
+      firstName: 'Ana',
       lastName: 'Pérez',
       personType: 'ESTUDIANTE',
       programId: 'program-1',
@@ -103,6 +103,40 @@ describe('RegisterUseCase', () => {
     );
     expect(repositories.collaborators.create).not.toHaveBeenCalled();
     expect(programRepository.findById).not.toHaveBeenCalled();
+  });
+
+  it('stores the data consent with its date when the new collaborator accepts it', async () => {
+    await useCase.execute({
+      ...colaborador,
+      collaborator: { ...colaborador.collaborator!, dataConsent: true },
+    });
+
+    expect(repositories.collaborators.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        dataConsent: true,
+        dataConsentAt: expect.any(Date) as Date,
+      }),
+    );
+  });
+
+  it('stores the data consent when linking an imported collaborator', async () => {
+    collaboratorRepository.findByEmail.mockResolvedValue(
+      buildCollaborator({ id: 'imported-1', userId: null }),
+    );
+
+    await useCase.execute({
+      ...colaborador,
+      collaborator: { ...colaborador.collaborator!, dataConsent: true },
+    });
+
+    expect(repositories.collaborators.update).toHaveBeenCalledWith(
+      'imported-1',
+      expect.objectContaining({
+        userId: 'user-1',
+        dataConsent: true,
+        dataConsentAt: expect.any(Date) as Date,
+      }),
+    );
   });
 
   it('rejects a program that does not exist before writing anything', async () => {

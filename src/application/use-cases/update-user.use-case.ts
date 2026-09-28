@@ -33,7 +33,7 @@ export class UpdateUserUseCase {
     const updated = await this.userRepository.update(
       userId,
       pickDefined({
-        fullName: data.fullName?.trim(),
+        fullName: data.fullName,
         email: normalizedEmail,
         role: data.role,
         active: data.active,

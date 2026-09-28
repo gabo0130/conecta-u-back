@@ -5,6 +5,7 @@ import {
   Injectable,
 } from '@nestjs/common';
 import type { CollaboratorEntity } from '../../domain/entities/collaborator.entity';
+import { consentFields } from '../../domain/entities/data-consent';
 import type { UserEntity } from '../../domain/entities/user.entity';
 import type { CollaboratorRepository } from '../../domain/repositories/collaborator.repository.interface';
 import type { PasswordHasher } from '../../domain/repositories/password-hasher.interface';
@@ -53,7 +54,7 @@ export class RegisterUseCase {
     // Usuario y perfil se escriben juntos: si falla el perfil no queda una cuenta huérfana.
     const user = await this.unitOfWork.run(async (repositories) => {
       const created = await repositories.users.create({
-        fullName: data.fullName.trim(),
+        fullName: data.fullName,
         email,
         passwordHash,
         role: data.role,
@@ -92,12 +93,17 @@ export class RegisterUseCase {
         message: 'Este correo ya está vinculado a una cuenta',
       });
     }
+    // Solo se toca el consentimiento si el registro lo envía (clientes antiguos no lo mandan).
+    const consent =
+      collaborator.dataConsent !== undefined
+        ? consentFields(collaborator.dataConsent)
+        : {};
     if (existing) {
-      return { kind: 'link', existing };
+      return { kind: 'link', existing, consent };
     }
 
     await findProgramOrFail(this.programRepository, collaborator.programId);
-    return { kind: 'create', email, collaborator };
+    return { kind: 'create', email, collaborator, consent };
   }
 
   private async linkCollaboratorProfile(
@@ -108,6 +114,7 @@ export class RegisterUseCase {
     if (profile.kind === 'link') {
       await repositories.collaborators.update(profile.existing.id, {
         userId: user.id,
+        ...profile.consent,
       });
       return;
     }
@@ -115,15 +122,23 @@ export class RegisterUseCase {
     await repositories.collaborators.create({
       email: profile.email,
       userId: user.id,
-      firstName: profile.collaborator.firstName.trim(),
-      lastName: profile.collaborator.lastName.trim(),
+      firstName: profile.collaborator.firstName,
+      lastName: profile.collaborator.lastName,
       personType: profile.collaborator.personType,
       programId: profile.collaborator.programId,
       source: 'REGISTRO',
+      ...profile.consent,
     });
   }
 }
 
+type ConsentUpdate = ReturnType<typeof consentFields> | Record<string, never>;
+
 type PendingProfile =
-  | { kind: 'link'; existing: CollaboratorEntity }
-  | { kind: 'create'; email: string; collaborator: RegisterCollaboratorDto };
+  | { kind: 'link'; existing: CollaboratorEntity; consent: ConsentUpdate }
+  | {
+      kind: 'create';
+      email: string;
+      collaborator: RegisterCollaboratorDto;
+      consent: ConsentUpdate;
+    };

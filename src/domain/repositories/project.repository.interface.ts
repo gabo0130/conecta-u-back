@@ -35,9 +35,13 @@ export interface UpdateProjectRepositoryDto {
 
 export interface ProjectRepository {
   findById(id: string): Promise<ProjectEntity | null>;
-  findByLeaderId(leaderId: string, params: PageParams): Promise<Page<ProjectEntity>>;
+  findByLeaderId(
+    leaderId: string,
+    params: PageParams,
+  ): Promise<Page<ProjectEntity>>;
   /** Todos los proyectos, del más reciente al más antiguo (vista del ADMIN). */
   findAll(params: PageParams): Promise<Page<ProjectEntity>>;
+  countByLeaderId(leaderId: string): Promise<number>;
   create(data: CreateProjectRepositoryDto): Promise<ProjectEntity>;
   update(
     id: string,

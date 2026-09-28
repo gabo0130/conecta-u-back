@@ -16,6 +16,7 @@ export const PERSON_NAME_MAX_LENGTH = 80;
 export const RESEARCH_GROUP_MAX_LENGTH = 160;
 export const EXPERIENCE_ROLE_MAX_LENGTH = 120;
 export const ORGANIZATION_MAX_LENGTH = 160;
+export const PROFILE_URL_MAX_LENGTH = 300;
 
 export function isIntegerInRange(value: number, range: NumericRange): boolean {
   return Number.isInteger(value) && value >= range.min && value <= range.max;

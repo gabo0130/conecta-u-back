@@ -1,3 +1,4 @@
+import type { AuthenticatedRequest } from '../guards/jwt-auth.guard';
 import { UsersController } from './users.controller';
 import type { CreateUserUseCase } from '../../application/use-cases/create-user.use-case';
 import type { DeleteUserUseCase } from '../../application/use-cases/delete-user.use-case';
@@ -75,8 +76,11 @@ describe('UsersController', () => {
   });
 
   it('delegates delete to use case', () => {
-    void controller.delete('1');
+    void controller.delete(
+      { user: { userId: 'admin', role: 'ADMIN' } } as AuthenticatedRequest,
+      '1',
+    );
 
-    expect(deleteUserUseCase.execute).toHaveBeenCalledWith('1');
+    expect(deleteUserUseCase.execute).toHaveBeenCalledWith('admin', '1');
   });
 });

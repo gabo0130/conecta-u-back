@@ -22,7 +22,7 @@ describe('CreateMyCollaboratorProfileUseCase', () => {
   );
 
   const dto: CreateMyCollaboratorDto = {
-    firstName: ' Mario ',
+    firstName: 'Mario',
     lastName: 'Quintero',
     personType: 'DOCENTE',
     programId: 'program-1',

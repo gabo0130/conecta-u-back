@@ -4,31 +4,32 @@ import {
   IsArray,
   IsObject,
   IsOptional,
-  IsString,
   IsUUID,
-  Length,
-  MaxLength,
   ValidateNested,
 } from 'class-validator';
+import { IsOptionalNonNull } from './validators/is-optional-non-null.decorator';
+import { IsRequiredText } from './validators/text.decorators';
+import {
+  PROJECT_TITLE_LENGTH,
+  DELIVERABLE_NAME_MAX_LENGTH,
+} from '../../domain/entities/field-limits';
 
 export class DeliverableDto {
-  @IsString()
-  @MaxLength(140)
+  @IsRequiredText({ max: DELIVERABLE_NAME_MAX_LENGTH })
   name: string;
 
-  @IsString()
+  @IsRequiredText()
   scope: string;
 }
 
 export class CreateProjectDto {
-  @IsString()
-  @Length(3, 160)
+  @IsRequiredText(PROJECT_TITLE_LENGTH)
   title: string;
 
-  @IsString()
+  @IsRequiredText()
   summary: string;
 
-  @IsString()
+  @IsRequiredText()
   objectives: string;
 
   @IsUUID()
@@ -39,13 +40,13 @@ export class CreateProjectDto {
 
   @IsOptional()
   @IsUUID()
-  programId?: string;
+  programId?: string | null;
 
-  @IsOptional()
+  @IsOptionalNonNull()
   @IsObject()
   typeData?: Record<string, unknown>;
 
-  @IsOptional()
+  @IsOptionalNonNull()
   @IsArray()
   @IsUUID('4', { each: true })
   knownSkillIds?: string[];

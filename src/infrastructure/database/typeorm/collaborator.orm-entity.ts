@@ -60,7 +60,7 @@ export class CollaboratorOrmEntity {
   @Column({ type: 'text', nullable: true })
   summary: string | null;
 
-  @Column({ type: 'varchar', nullable: true })
+  @Column({ type: 'varchar', length: 300, nullable: true })
   profileUrl: string | null;
 
   @Column({

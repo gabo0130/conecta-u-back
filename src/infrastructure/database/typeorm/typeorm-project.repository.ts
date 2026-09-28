@@ -12,7 +12,10 @@ import {
 import { DeliverableOrmEntity } from './deliverable.orm-entity';
 import { toSkillEntity } from './mappers/skill.mapper';
 import { pickDefined } from '../../../shared/utils/pick-defined';
-import type { Page, PageParams } from '../../../shared/pagination/pagination.util';
+import type {
+  Page,
+  PageParams,
+} from '../../../shared/pagination/pagination.util';
 import { toSkip } from '../../../shared/pagination/pagination.util';
 import { ProjectOrmEntity } from './project.orm-entity';
 import { SkillOrmEntity } from './skill.orm-entity';
@@ -34,6 +37,10 @@ export class TypeOrmProjectRepository implements ProjectRepository {
       relations: RELATIONS,
     });
     return project ? this.toDomain(project) : null;
+  }
+
+  countByLeaderId(leaderId: string): Promise<number> {
+    return this.repository.count({ where: { leaderId } });
   }
 
   async findByLeaderId(

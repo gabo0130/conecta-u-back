@@ -103,6 +103,9 @@
       "domain/entities/project-type.entity.ts",
       "presentation/filters/**/*.ts",
       "domain/entities/calendar-date.ts",
+      "presentation/validation/**/*.ts",
+      "domain/entities/profile-url.ts",
+      "domain/entities/text-rules.ts",
       "!**/*.spec.ts"
     ],
     "coverageDirectory": "../coverage",

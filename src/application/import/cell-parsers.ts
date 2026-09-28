@@ -1,4 +1,5 @@
 import { isCalendarDate } from '../../domain/entities/calendar-date';
+import { normalizeText } from '../../domain/entities/text-rules';
 import type { CellValue } from '../../domain/repositories/collaborator-workbook.interface';
 
 // Conversión de celdas del Excel a tipos del dominio. `null` significa "vacía o inválida".
@@ -6,7 +7,7 @@ import type { CellValue } from '../../domain/repositories/collaborator-workbook.
 export function textOf(value: CellValue): string {
   if (value === null) return '';
   if (value instanceof Date) return value.toISOString().slice(0, 10);
-  return String(value).trim();
+  return normalizeText(String(value));
 }
 
 export function optionalTextOf(value: CellValue): string | null {

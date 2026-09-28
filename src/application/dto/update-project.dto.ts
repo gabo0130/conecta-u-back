@@ -4,50 +4,50 @@ import {
   IsArray,
   IsObject,
   IsOptional,
-  IsString,
   IsUUID,
-  Length,
   ValidateNested,
 } from 'class-validator';
 import { DeliverableDto } from './create-project.dto';
+import { IsOptionalNonNull } from './validators/is-optional-non-null.decorator';
+import { IsRequiredText } from './validators/text.decorators';
+import { PROJECT_TITLE_LENGTH } from '../../domain/entities/field-limits';
 
 export class UpdateProjectDto {
-  @IsOptional()
-  @IsString()
-  @Length(3, 160)
+  @IsOptionalNonNull()
+  @IsRequiredText(PROJECT_TITLE_LENGTH)
   title?: string;
 
-  @IsOptional()
-  @IsString()
+  @IsOptionalNonNull()
+  @IsRequiredText()
   summary?: string;
 
-  @IsOptional()
-  @IsString()
+  @IsOptionalNonNull()
+  @IsRequiredText()
   objectives?: string;
 
-  @IsOptional()
+  @IsOptionalNonNull()
   @IsUUID()
   typeId?: string;
 
-  @IsOptional()
+  @IsOptionalNonNull()
   @IsUUID()
   categoryId?: string;
 
   @IsOptional()
   @IsUUID()
-  programId?: string;
+  programId?: string | null;
 
-  @IsOptional()
+  @IsOptionalNonNull()
   @IsObject()
   typeData?: Record<string, unknown>;
 
-  @IsOptional()
+  @IsOptionalNonNull()
   @IsArray()
   @IsUUID('4', { each: true })
   knownSkillIds?: string[];
 
   // RF10: un proyecto conserva al menos un entregable.
-  @IsOptional()
+  @IsOptionalNonNull()
   @IsArray()
   @ArrayMinSize(1)
   @ValidateNested({ each: true })

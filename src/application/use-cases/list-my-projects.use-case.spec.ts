@@ -20,6 +20,11 @@ describe('ListMyProjectsUseCase', () => {
       pageSize: 20,
     });
     expect(result.projects).toHaveLength(1);
-    expect(result.meta).toEqual({ page: 1, pageSize: 20, total: 1, totalPages: 1 });
+    expect(result.meta).toEqual({
+      page: 1,
+      pageSize: 20,
+      total: 1,
+      totalPages: 1,
+    });
   });
 });

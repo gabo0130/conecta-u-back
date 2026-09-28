@@ -84,7 +84,8 @@ export class UpdateProjectUseCase {
         data.categoryId,
       );
     }
-    if (data.programId !== undefined) {
+    // `programId: null` quita el programa del proyecto; solo se valida un id real.
+    if (data.programId) {
       await findProgramOrFail(this.programRepository, data.programId);
     }
     await assertSkillsExist(this.skillRepository, data.knownSkillIds);

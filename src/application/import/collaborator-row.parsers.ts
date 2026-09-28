@@ -14,10 +14,20 @@ import {
 } from '../../domain/entities/collaborator-limits';
 import type { ExperienceType } from '../../domain/entities/experience-type.type';
 import { experiencePeriodError } from '../../domain/entities/experience-period';
+import {
+  PROFILE_URL_ERROR,
+  isProfileUrl,
+} from '../../domain/entities/profile-url';
 import type { Level } from '../../domain/entities/level.type';
 import type { PersonType } from '../../domain/entities/person-type.type';
 import type { SkillCategory } from '../../domain/entities/skill-category.type';
+import { SKILL_NAME_MAX_LENGTH } from '../../domain/entities/field-limits';
 import type { SkillType } from '../../domain/entities/skill-type.type';
+import {
+  type TextLength,
+  maxLengthError,
+  requiredTextError,
+} from '../../domain/entities/text-rules';
 import type { CellValue } from '../../domain/repositories/collaborator-workbook.interface';
 import {
   AVAILABILITY_LABELS,
@@ -72,19 +82,14 @@ export function parseCollaboratorRow(
   if (!email) return reject('Correo obligatorio');
   if (!isEmail(email)) return reject('Correo inválido');
 
-  const firstName = textOf(values.nombres);
-  const lastName = textOf(values.apellidos);
-  if (!firstName || !lastName) {
-    return reject('Nombres y apellidos son obligatorios');
-  }
-  if (
-    firstName.length > PERSON_NAME_MAX_LENGTH ||
-    lastName.length > PERSON_NAME_MAX_LENGTH
-  ) {
-    return reject(
-      `Nombres y apellidos admiten máximo ${PERSON_NAME_MAX_LENGTH} caracteres`,
-    );
-  }
+  const firstName = requiredCell(values, 'nombres', {
+    max: PERSON_NAME_MAX_LENGTH,
+  });
+  if (!firstName.ok) return firstName;
+  const lastName = requiredCell(values, 'apellidos', {
+    max: PERSON_NAME_MAX_LENGTH,
+  });
+  if (!lastName.ok) return lastName;
 
   const personType = labelOf(
     PERSON_TYPE_LABELS,
@@ -92,8 +97,8 @@ export function parseCollaboratorRow(
   );
   if (!personType) return reject('tipo_persona inválido');
 
-  const program = textOf(values.programa);
-  if (!program) return reject('Programa obligatorio');
+  const program = requiredCell(values, 'programa');
+  if (!program.ok) return program;
 
   const semester = integerOf(values.semestre);
   if (textOf(values.semestre) && !isInRange(semester, SEMESTER)) {
@@ -117,25 +122,30 @@ export function parseCollaboratorRow(
     return reject('Debe autorizar el tratamiento de datos');
   }
 
-  const researchGroup = optionalTextOf(values.semillero_o_grupo);
-  if (researchGroup && researchGroup.length > RESEARCH_GROUP_MAX_LENGTH) {
-    return reject(
-      `semillero_o_grupo admite máximo ${RESEARCH_GROUP_MAX_LENGTH} caracteres`,
-    );
+  const profileUrl = optionalTextOf(values.enlace);
+  if (profileUrl && !isProfileUrl(profileUrl)) {
+    return reject(`enlace inválido: ${PROFILE_URL_ERROR}`);
   }
+
+  const researchGroup = optionalCell(
+    values,
+    'semillero_o_grupo',
+    RESEARCH_GROUP_MAX_LENGTH,
+  );
+  if (!researchGroup.ok) return researchGroup;
 
   return {
     ok: true,
     value: {
       email,
-      firstName,
-      lastName,
+      firstName: firstName.value,
+      lastName: lastName.value,
       personType,
-      program,
+      program: program.value,
       semester,
-      researchGroup,
+      researchGroup: researchGroup.value,
       summary: optionalTextOf(values.resumen),
-      profileUrl: optionalTextOf(values.enlace),
+      profileUrl,
       availabilityStatus,
       weeklyHours: weeklyHours!,
     },
@@ -153,8 +163,10 @@ export interface ParsedSkill {
 }
 
 export function parseSkillRow(values: Row): ParseResult<ParsedSkill> {
-  const name = textOf(values.habilidad);
-  if (!name) return reject('habilidad obligatoria');
+  const name = requiredCell(values, 'habilidad', {
+    max: SKILL_NAME_MAX_LENGTH,
+  });
+  if (!name.ok) return name;
 
   const type = labelOf(SKILL_TYPE_LABELS, normalizeLabel(values.tipo));
   if (!type) return reject('tipo de habilidad inválido');
@@ -188,7 +200,7 @@ export function parseSkillRow(values: Row): ParseResult<ParsedSkill> {
   return {
     ok: true,
     value: {
-      name,
+      name: name.value,
       type,
       category,
       level,
@@ -215,19 +227,14 @@ export function parseExperienceRow(values: Row): ParseResult<ParsedExperience> {
   const type = labelOf(EXPERIENCE_TYPE_LABELS, normalizeLabel(values.tipo));
   if (!type) return reject('tipo de experiencia inválido');
 
-  const role = textOf(values.rol);
-  const organization = textOf(values.organizacion);
-  if (!role || !organization) {
-    return reject('rol y organización son obligatorios');
-  }
-  if (
-    role.length > EXPERIENCE_ROLE_MAX_LENGTH ||
-    organization.length > ORGANIZATION_MAX_LENGTH
-  ) {
-    return reject(
-      `rol admite ${EXPERIENCE_ROLE_MAX_LENGTH} caracteres y organización ${ORGANIZATION_MAX_LENGTH}`,
-    );
-  }
+  const role = requiredCell(values, 'rol', {
+    max: EXPERIENCE_ROLE_MAX_LENGTH,
+  });
+  if (!role.ok) return role;
+  const organization = requiredCell(values, 'organizacion', {
+    max: ORGANIZATION_MAX_LENGTH,
+  });
+  if (!organization.ok) return organization;
 
   const startDate = dateOf(values.fecha_inicio);
   if (!startDate) return reject('fecha_inicio inválida (formato AAAA-MM-DD)');
@@ -251,24 +258,53 @@ export function parseExperienceRow(values: Row): ParseResult<ParsedExperience> {
   const level = labelOf(LEVEL_LABELS, normalizeLabel(values.nivel));
   if (!level) return reject('nivel inválido');
 
+  const technologies = textOf(values.tecnologias)
+    .split(',')
+    .map((name) => name.trim())
+    .filter(Boolean);
+  // Cada tecnología puede proponerse como habilidad nueva: mismo límite que su nombre.
+  const technologyError = technologies
+    .map((name) => maxLengthError('tecnologias', name, SKILL_NAME_MAX_LENGTH))
+    .find(Boolean);
+  if (technologyError) return reject(technologyError);
+
   return {
     ok: true,
     value: {
       type,
-      role,
-      organization,
+      role: role.value,
+      organization: organization.value,
       startDate,
       endDate,
       current,
       weeklyHours: weeklyHours!,
       level,
-      technologies: textOf(values.tecnologias)
-        .split(',')
-        .map((name) => name.trim())
-        .filter(Boolean),
+      technologies,
       description: optionalTextOf(values.descripcion),
     },
   };
+}
+
+/** Texto obligatorio de una columna, con la misma regla y mensaje que la API. */
+function requiredCell(
+  values: Row,
+  column: string,
+  length?: TextLength,
+): ParseResult<string> {
+  const text = textOf(values[column]);
+  const error = requiredTextError(column, text, length);
+  return error ? reject(error) : { ok: true, value: text };
+}
+
+/** Texto opcional de una columna: vacío es `null`. */
+function optionalCell(
+  values: Row,
+  column: string,
+  max?: number,
+): ParseResult<string | null> {
+  const text = optionalTextOf(values[column]);
+  const error = text && maxLengthError(column, text, max);
+  return error ? reject(error) : { ok: true, value: text };
 }
 
 function isInRange(

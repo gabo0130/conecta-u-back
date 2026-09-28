@@ -13,7 +13,10 @@ import {
 } from '../../../domain/repositories/user.repository.interface';
 import { UserOrmEntity } from './user.orm-entity';
 import { pickDefined } from '../../../shared/utils/pick-defined';
-import type { Page, PageParams } from '../../../shared/pagination/pagination.util';
+import type {
+  Page,
+  PageParams,
+} from '../../../shared/pagination/pagination.util';
 import { toSkip } from '../../../shared/pagination/pagination.util';
 
 @Injectable()

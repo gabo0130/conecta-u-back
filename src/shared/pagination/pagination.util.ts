@@ -15,7 +15,11 @@ export interface Page<T> {
   total: number;
 }
 
-export function toPageMeta(page: number, pageSize: number, total: number): PageMeta {
+export function toPageMeta(
+  page: number,
+  pageSize: number,
+  total: number,
+): PageMeta {
   return {
     page,
     pageSize,

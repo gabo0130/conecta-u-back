@@ -5,7 +5,10 @@ import {
   COLLABORATOR_REPOSITORY,
   USER_REPOSITORY,
 } from '../../shared/interfaces/tokens';
-import { toPageMeta, type PageParams } from '../../shared/pagination/pagination.util';
+import {
+  toPageMeta,
+  type PageParams,
+} from '../../shared/pagination/pagination.util';
 import {
   indexUsers,
   toAdminCollaboratorSummary,

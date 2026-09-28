@@ -24,7 +24,7 @@ describe('CreateUserUseCase', () => {
     );
 
     const result = await useCase.execute({
-      fullName: '  Ana  ',
+      fullName: 'Ana',
       email: ' ANA@EXAMPLE.COM ',
       password: 'Secret123*',
       role: 'COLABORADOR',

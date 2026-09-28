@@ -4,10 +4,8 @@ import {
   IsIn,
   IsInt,
   IsOptional,
-  IsString,
   IsUUID,
   Max,
-  MaxLength,
   Min,
 } from 'class-validator';
 import {
@@ -20,17 +18,17 @@ import type { ExperienceType } from '../../domain/entities/experience-type.type'
 import { LEVELS } from '../../domain/entities/level.type';
 import { IsCalendarDate } from './validators/is-calendar-date.decorator';
 import type { Level } from '../../domain/entities/level.type';
+import { IsOptionalNonNull } from './validators/is-optional-non-null.decorator';
+import { IsRequiredText, IsOptionalText } from './validators/text.decorators';
 
 export class ExperienceDto {
   @IsIn(EXPERIENCE_TYPES)
   type: ExperienceType;
 
-  @IsString()
-  @MaxLength(EXPERIENCE_ROLE_MAX_LENGTH)
+  @IsRequiredText({ max: EXPERIENCE_ROLE_MAX_LENGTH })
   role: string;
 
-  @IsString()
-  @MaxLength(ORGANIZATION_MAX_LENGTH)
+  @IsRequiredText({ max: ORGANIZATION_MAX_LENGTH })
   organization: string;
 
   @IsCalendarDate()
@@ -38,7 +36,7 @@ export class ExperienceDto {
 
   @IsOptional()
   @IsCalendarDate()
-  endDate?: string;
+  endDate?: string | null;
 
   @IsBoolean()
   current: boolean;
@@ -51,12 +49,11 @@ export class ExperienceDto {
   @IsIn(LEVELS)
   level: Level;
 
-  @IsOptional()
+  @IsOptionalNonNull()
   @IsArray()
   @IsUUID('4', { each: true })
   skillIds?: string[];
 
-  @IsOptional()
-  @IsString()
-  description?: string;
+  @IsOptionalText()
+  description?: string | null;
 }

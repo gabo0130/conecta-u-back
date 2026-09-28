@@ -40,7 +40,10 @@ describe('AdminListProjectsUseCase', () => {
 
     const { projects, meta } = await useCase.execute(params);
 
-    expect(userRepository.findByIds).toHaveBeenCalledWith(['leader-1', 'leader-2']);
+    expect(userRepository.findByIds).toHaveBeenCalledWith([
+      'leader-1',
+      'leader-2',
+    ]);
     expect(projects.map((project) => project.id)).toEqual(['p1', 'p2']);
     expect(projects[0].leader).toEqual({
       id: 'leader-1',
@@ -54,7 +57,10 @@ describe('AdminListProjectsUseCase', () => {
   });
 
   it('returns null as leader when the account no longer exists', async () => {
-    projectRepository.findAll.mockResolvedValue({ items: [buildProject()], total: 1 });
+    projectRepository.findAll.mockResolvedValue({
+      items: [buildProject()],
+      total: 1,
+    });
     userRepository.findByIds.mockResolvedValue([]);
     collaboratorRepository.findByUserIds.mockResolvedValue([]);
 

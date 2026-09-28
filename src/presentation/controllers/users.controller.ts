@@ -8,6 +8,7 @@ import {
   Patch,
   Post,
   Query,
+  Req,
   UseGuards,
 } from '@nestjs/common';
 import { CreateUserDto } from '../../application/dto/create-user.dto';
@@ -20,6 +21,7 @@ import { ListUsersUseCase } from '../../application/use-cases/list-users.use-cas
 import { UpdateUserUseCase } from '../../application/use-cases/update-user.use-case';
 import { Authorize } from '../guards/authorization.decorator';
 import { AuthorizationGuard } from '../guards/authorization.guard';
+import type { AuthenticatedRequest } from '../guards/jwt-auth.guard';
 import { JwtAuthGuard } from '../guards/jwt-auth.guard';
 import { UuidParamPipe } from '../pipes/uuid-param.pipe';
 
@@ -60,7 +62,10 @@ export class UsersController {
 
   @HttpCode(204)
   @Delete(':id')
-  delete(@Param('id', UuidParamPipe) id: string) {
-    return this.deleteUserUseCase.execute(id);
+  delete(
+    @Req() request: AuthenticatedRequest,
+    @Param('id', UuidParamPipe) id: string,
+  ) {
+    return this.deleteUserUseCase.execute(request.user!.userId, id);
   }
 }

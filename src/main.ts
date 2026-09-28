@@ -1,7 +1,8 @@
 import { NestFactory } from '@nestjs/core';
-import { HttpStatus, ValidationPipe } from '@nestjs/common';
+import { ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app.module';
+import { validationExceptionFactory } from './presentation/validation/validation-exception.factory';
 import { HttpExceptionFilter } from './shared/exceptions/http-exception.filter';
 import { AppLoggerService } from './shared/logging/logger.service';
 
@@ -38,7 +39,7 @@ async function bootstrap() {
       whitelist: true,
       transform: true,
       forbidNonWhitelisted: true,
-      errorHttpStatusCode: HttpStatus.UNPROCESSABLE_ENTITY,
+      exceptionFactory: validationExceptionFactory,
     }),
   );
 

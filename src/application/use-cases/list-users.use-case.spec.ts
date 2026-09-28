@@ -19,7 +19,10 @@ describe('ListUsersUseCase', () => {
 
     const result = await useCase.execute({ page: 1, pageSize: 20 });
 
-    expect(userRepository.findAll).toHaveBeenCalledWith({ page: 1, pageSize: 20 });
+    expect(userRepository.findAll).toHaveBeenCalledWith({
+      page: 1,
+      pageSize: 20,
+    });
     expect(result).toEqual({
       users: [
         {

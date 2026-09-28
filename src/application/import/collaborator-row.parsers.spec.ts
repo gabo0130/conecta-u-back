@@ -103,18 +103,20 @@ describe('parseCollaboratorRow', () => {
   it.each([
     [{ correo: null }, 'Correo obligatorio'],
     [{ correo: 'ana-at-example' }, 'Correo inválido'],
-    [{ apellidos: null }, 'Nombres y apellidos son obligatorios'],
-    [
-      { nombres: 'x'.repeat(81) },
-      'Nombres y apellidos admiten máximo 80 caracteres',
-    ],
+    [{ apellidos: null }, 'apellidos es obligatorio'],
+    [{ nombres: '   ' }, 'nombres es obligatorio'],
+    [{ nombres: 'x'.repeat(81) }, 'nombres admite máximo 80 caracteres'],
     [{ tipo_persona: 'Egresado' }, 'tipo_persona inválido'],
-    [{ programa: null }, 'Programa obligatorio'],
+    [{ programa: null }, 'programa es obligatorio'],
     [{ semestre: 40 }, 'semestre debe ser un entero entre 1 y 12'],
     [{ disponibilidad: 'A veces' }, 'disponibilidad inválida'],
     [{ horas_semana: 100 }, 'horas_semana debe ser un entero entre 0 y 60'],
     [{ horas_semana: null }, 'horas_semana debe ser un entero entre 0 y 60'],
     [{ autoriza_datos: 'No' }, 'Debe autorizar el tratamiento de datos'],
+    [
+      { enlace: 'javascript:alert(1)' },
+      'enlace inválido: El enlace debe empezar por http:// o https:// y tener máximo 300 caracteres',
+    ],
     [
       { semillero_o_grupo: 'g'.repeat(161) },
       'semillero_o_grupo admite máximo 160 caracteres',
@@ -142,7 +144,8 @@ describe('parseSkillRow', () => {
   });
 
   it.each([
-    [{ habilidad: null }, 'habilidad obligatoria'],
+    [{ habilidad: null }, 'habilidad es obligatorio'],
+    [{ habilidad: 'h'.repeat(81) }, 'habilidad admite máximo 80 caracteres'],
     [{ tipo: 'Otra' }, 'tipo de habilidad inválido'],
     [{ categoria: 'Cocina' }, 'categoria inválida'],
     [{ nivel: 'Maestro' }, 'nivel inválido'],
@@ -182,10 +185,14 @@ describe('parseExperienceRow', () => {
 
   it.each([
     [{ tipo: 'Hobby' }, 'tipo de experiencia inválido'],
-    [{ rol: null }, 'rol y organización son obligatorios'],
+    [{ rol: '  ' }, 'rol es obligatorio'],
     [
       { organizacion: 'o'.repeat(161) },
-      'rol admite 120 caracteres y organización 160',
+      'organizacion admite máximo 160 caracteres',
+    ],
+    [
+      { tecnologias: `Python, ${'t'.repeat(81)}` },
+      'tecnologias admite máximo 80 caracteres',
     ],
     [{ fecha_inicio: 'ayer' }, 'fecha_inicio inválida (formato AAAA-MM-DD)'],
     [

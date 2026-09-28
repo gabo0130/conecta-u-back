@@ -39,7 +39,10 @@ export class ProjectsController {
   }
 
   @Get()
-  list(@Req() request: AuthenticatedRequest, @Query() query: PaginationQueryDto) {
+  list(
+    @Req() request: AuthenticatedRequest,
+    @Query() query: PaginationQueryDto,
+  ) {
     return this.listMyProjectsUseCase.execute(request.user!.userId, query);
   }
 

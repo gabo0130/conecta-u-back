@@ -1,11 +1,11 @@
 import { Type } from 'class-transformer';
 import {
+  IsBoolean,
   IsDefined,
   IsIn,
   IsEmail,
   IsString,
   IsUUID,
-  MaxLength,
   MinLength,
   ValidateIf,
   ValidateNested,
@@ -15,16 +15,15 @@ import { PERSON_TYPES } from '../../domain/entities/person-type.type';
 import type { PersonType } from '../../domain/entities/person-type.type';
 import { REGISTERABLE_ROLES } from '../../domain/entities/user-role.type';
 import type { RegisterableRole } from '../../domain/entities/user-role.type';
+import { IsOptionalNonNull } from './validators/is-optional-non-null.decorator';
+import { IsRequiredText } from './validators/text.decorators';
+import { USER_FULL_NAME_LENGTH } from '../../domain/entities/field-limits';
 
 export class RegisterCollaboratorDto {
-  @IsString()
-  @MinLength(1)
-  @MaxLength(PERSON_NAME_MAX_LENGTH)
+  @IsRequiredText({ max: PERSON_NAME_MAX_LENGTH })
   firstName: string;
 
-  @IsString()
-  @MinLength(1)
-  @MaxLength(PERSON_NAME_MAX_LENGTH)
+  @IsRequiredText({ max: PERSON_NAME_MAX_LENGTH })
   lastName: string;
 
   @IsIn(PERSON_TYPES)
@@ -32,12 +31,15 @@ export class RegisterCollaboratorDto {
 
   @IsUUID()
   programId: string;
+
+  // Autorización de tratamiento de datos (Ley 1581): se guarda con su fecha en el perfil.
+  @IsOptionalNonNull()
+  @IsBoolean({ message: 'La autorización de datos debe ser verdadero o falso' })
+  dataConsent?: boolean;
 }
 
 export class RegisterDto {
-  @IsString()
-  @MinLength(2)
-  @MaxLength(120)
+  @IsRequiredText(USER_FULL_NAME_LENGTH)
   fullName: string;
 
   @IsEmail({}, { message: 'Formato de email inválido' })

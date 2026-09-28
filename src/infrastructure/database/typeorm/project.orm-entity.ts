@@ -69,7 +69,8 @@ export class ProjectOrmEntity {
   })
   deliverables: DeliverableOrmEntity[];
 
-  @ManyToOne(() => UserOrmEntity, { onDelete: 'CASCADE' })
+  // RESTRICT: borrar a un líder no puede arrastrar sus proyectos (se bloquea en DeleteUserUseCase).
+  @ManyToOne(() => UserOrmEntity, { onDelete: 'RESTRICT' })
   @JoinColumn({ name: 'leaderId' })
   leader: UserOrmEntity;
 

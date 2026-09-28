@@ -3,10 +3,8 @@ import {
   IsIn,
   IsInt,
   IsOptional,
-  IsString,
   IsUUID,
   Max,
-  MaxLength,
   Min,
 } from 'class-validator';
 import {
@@ -16,14 +14,15 @@ import {
 } from '../../domain/entities/collaborator-limits';
 import { PERSON_TYPES } from '../../domain/entities/person-type.type';
 import type { PersonType } from '../../domain/entities/person-type.type';
+import { IsOptionalNonNull } from './validators/is-optional-non-null.decorator';
+import { IsProfileUrl } from './validators/is-profile-url.decorator';
+import { IsRequiredText, IsOptionalText } from './validators/text.decorators';
 
 export class CreateMyCollaboratorDto {
-  @IsString()
-  @MaxLength(PERSON_NAME_MAX_LENGTH)
+  @IsRequiredText({ max: PERSON_NAME_MAX_LENGTH })
   firstName: string;
 
-  @IsString()
-  @MaxLength(PERSON_NAME_MAX_LENGTH)
+  @IsRequiredText({ max: PERSON_NAME_MAX_LENGTH })
   lastName: string;
 
   @IsIn(PERSON_TYPES)
@@ -36,22 +35,19 @@ export class CreateMyCollaboratorDto {
   @IsInt()
   @Min(SEMESTER.min)
   @Max(SEMESTER.max)
-  semester?: number;
+  semester?: number | null;
+
+  @IsOptionalText(RESEARCH_GROUP_MAX_LENGTH)
+  researchGroup?: string | null;
+
+  @IsOptionalText()
+  summary?: string | null;
 
   @IsOptional()
-  @IsString()
-  @MaxLength(RESEARCH_GROUP_MAX_LENGTH)
-  researchGroup?: string;
+  @IsProfileUrl()
+  profileUrl?: string | null;
 
-  @IsOptional()
-  @IsString()
-  summary?: string;
-
-  @IsOptional()
-  @IsString()
-  profileUrl?: string;
-
-  @IsOptional()
+  @IsOptionalNonNull()
   @IsBoolean()
   dataConsent?: boolean;
 }

@@ -73,8 +73,8 @@ export class CreateMyCollaboratorProfileUseCase {
     return this.collaboratorRepository.create({
       email,
       userId,
-      firstName: data.firstName.trim(),
-      lastName: data.lastName.trim(),
+      firstName: data.firstName,
+      lastName: data.lastName,
       personType: data.personType,
       programId: data.programId,
       semester: data.semester,

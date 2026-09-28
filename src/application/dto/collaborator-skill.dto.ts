@@ -18,5 +18,5 @@ export class CollaboratorSkillDto {
 
   @IsOptional()
   @IsValidLastUsedYear()
-  lastUsedYear?: number;
+  lastUsedYear?: number | null;
 }
