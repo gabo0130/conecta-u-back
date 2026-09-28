@@ -49,6 +49,7 @@ describe('AdminListProjectsUseCase', () => {
       id: 'leader-1',
       fullName: 'Laura Méndez',
       email: 'ana@example.com',
+      role: 'LIDER',
       active: true,
       collaboratorId: 'collab-9',
     });

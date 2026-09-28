@@ -1,8 +1,10 @@
 import { Inject, Injectable, NotFoundException } from '@nestjs/common';
-import { getMenuByRole } from '../../domain/entities/menu-catalog';
 import type { UserRepository } from '../../domain/repositories/user.repository.interface';
 import { USER_REPOSITORY } from '../../shared/interfaces/tokens';
-import { UserResponseDto } from '../dto/user-response.dto';
+import {
+  type SessionUserResponse,
+  toSessionUserResponse,
+} from '../mappers/user-response.mapper';
 
 @Injectable()
 export class GetMeUseCase {
@@ -10,19 +12,13 @@ export class GetMeUseCase {
     @Inject(USER_REPOSITORY) private readonly userRepository: UserRepository,
   ) {}
 
-  async execute(userId: string): Promise<UserResponseDto> {
+  async execute(userId: string): Promise<SessionUserResponse> {
     const user = await this.userRepository.findById(userId);
 
     if (!user) {
       throw new NotFoundException({ message: 'Usuario no encontrado' });
     }
 
-    return {
-      id: user.id,
-      fullName: user.fullName,
-      email: user.email,
-      role: user.role,
-      menu: getMenuByRole(user.role),
-    };
+    return toSessionUserResponse(user);
   }
 }

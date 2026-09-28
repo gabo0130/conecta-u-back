@@ -1,15 +1,8 @@
-import type { MenuItem } from '../../domain/entities/menu-catalog';
-import type { UserRole } from '../../domain/entities/user-role.type';
+import type { SessionUserResponse } from '../mappers/user-response.mapper';
 
 export interface LoginResponseDto {
   access_token: string;
   refresh_token: string;
   expires_in: number;
-  user: {
-    id: string;
-    fullName: string;
-    email: string;
-    role: UserRole;
-    menu: MenuItem[];
-  };
+  user: SessionUserResponse;
 }

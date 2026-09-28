@@ -1,5 +1,4 @@
 import { Inject, Injectable, UnauthorizedException } from '@nestjs/common';
-import { getMenuByRole } from '../../domain/entities/menu-catalog';
 import type { PasswordHasher } from '../../domain/repositories/password-hasher.interface';
 import type { TokenService } from '../../domain/repositories/token-service.interface';
 import type { UserRepository } from '../../domain/repositories/user.repository.interface';
@@ -10,6 +9,7 @@ import {
 } from '../../shared/interfaces/tokens';
 import { LoginResponseDto } from '../dto/login-response.dto';
 import { LoginDto } from '../dto/login.dto';
+import { toSessionUserResponse } from '../mappers/user-response.mapper';
 
 @Injectable()
 export class LoginUseCase {
@@ -48,13 +48,7 @@ export class LoginUseCase {
       access_token: accessToken,
       refresh_token: refreshToken,
       expires_in: this.tokenService.expiresInSeconds(accessToken),
-      user: {
-        id: user.id,
-        fullName: user.fullName,
-        email: user.email,
-        role: user.role,
-        menu: getMenuByRole(user.role),
-      },
+      user: toSessionUserResponse(user),
     };
   }
 }

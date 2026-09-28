@@ -26,6 +26,7 @@ import {
   findProjectTypeOrFail,
 } from '../support/catalog-references';
 import { assertValidTypeData } from '../support/project-references';
+import { toProjectResponse } from '../mappers/project-response.mapper';
 
 @Injectable()
 export class UpdateProjectUseCase {
@@ -63,7 +64,7 @@ export class UpdateProjectUseCase {
       throw new NotFoundException({ message: 'Recurso no encontrado' });
     }
 
-    return updated;
+    return toProjectResponse(updated);
   }
 
   /** Verifica solo las referencias que cambian; el resto ya fue validado al crear. */

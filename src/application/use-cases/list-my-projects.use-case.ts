@@ -5,6 +5,7 @@ import {
   toPageMeta,
   type PageParams,
 } from '../../shared/pagination/pagination.util';
+import { toProjectResponse } from '../mappers/project-response.mapper';
 
 @Injectable()
 export class ListMyProjectsUseCase {
@@ -16,6 +17,9 @@ export class ListMyProjectsUseCase {
   async execute(leaderId: string, params: PageParams) {
     const { items: projects, total } =
       await this.projectRepository.findByLeaderId(leaderId, params);
-    return { projects, meta: toPageMeta(params.page, params.pageSize, total) };
+    return {
+      projects: projects.map(toProjectResponse),
+      meta: toPageMeta(params.page, params.pageSize, total),
+    };
   }
 }

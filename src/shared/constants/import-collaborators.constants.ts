@@ -5,6 +5,7 @@ import type { PersonType } from '../../domain/entities/person-type.type';
 import type { SkillCategory } from '../../domain/entities/skill-category.type';
 import type { SkillType } from '../../domain/entities/skill-type.type';
 
+export const SHEET_GUIDE = 'Guía';
 export const SHEET_COLLABORATORS = 'Colaboradores';
 export const SHEET_SKILLS = 'Habilidades';
 export const SHEET_EXPERIENCE = 'Experiencia';
@@ -112,6 +113,61 @@ export const EXPERIENCE_TYPE_LABELS: Record<string, ExperienceType> = {
 
 // Se comparan contra `normalizeLabel`, que ya quitó las tildes.
 export const YES_LABELS = new Set(['si', 'yes', 'true', '1']);
+
+// Etiquetas legibles (con tildes) para mostrar al usuario: guía del Excel, listas desplegables
+// de la plantilla y mensajes del frontend. Son la contraparte de los `*_LABELS` de arriba
+// (normalizados, sin tildes, para comparar), nunca se usan para validar.
+export const PERSON_TYPE_DISPLAY: Record<PersonType, string> = {
+  ESTUDIANTE: 'Estudiante',
+  DOCENTE: 'Docente',
+};
+
+export const AVAILABILITY_DISPLAY: Record<AvailabilityStatus, string> = {
+  DISPONIBLE: 'Disponible',
+  PARCIAL: 'Parcial',
+  NO_DISPONIBLE: 'No disponible',
+};
+
+export const LEVEL_DISPLAY: Record<Level, string> = {
+  BASICO: 'Básico',
+  INTERMEDIO: 'Intermedio',
+  AVANZADO: 'Avanzado',
+  EXPERTO: 'Experto',
+};
+
+export const SKILL_TYPE_DISPLAY: Record<SkillType, string> = {
+  CONOCIMIENTO: 'Conocimiento',
+  COMPETENCIA: 'Competencia',
+  HABILIDAD_BLANDA: 'Habilidad blanda',
+};
+
+export const SKILL_CATEGORY_DISPLAY: Record<SkillCategory, string> = {
+  LENGUAJE: 'Lenguaje',
+  FRAMEWORK: 'Framework',
+  BASE_DATOS: 'Base de datos',
+  NUBE_DEVOPS: 'Nube y DevOps',
+  DATOS_IA: 'Datos e IA',
+  DISENO_UX: 'Diseño UX',
+  HERRAMIENTA: 'Herramienta',
+  METODOLOGIA: 'Metodología',
+  GESTION: 'Gestión',
+  COMUNICACION: 'Comunicación',
+  TRABAJO_EQUIPO: 'Trabajo en equipo',
+  LIDERAZGO: 'Liderazgo',
+  OTRA: 'Otra',
+};
+
+export const EXPERIENCE_TYPE_DISPLAY: Record<ExperienceType, string> = {
+  LABORAL: 'Laboral',
+  PRACTICA: 'Práctica',
+  PROYECTO_ACADEMICO: 'Proyecto académico',
+  SEMILLERO_INVESTIGACION: 'Semillero de investigación',
+  PROYECTO_PERSONAL: 'Proyecto personal',
+  VOLUNTARIADO: 'Voluntariado',
+  DOCENCIA: 'Docencia',
+};
+
+export const YES_DISPLAY = 'Sí';
 
 export const MAX_IMPORT_FILE_SIZE_MB = 5;
 export const MAX_IMPORT_FILE_SIZE_BYTES = MAX_IMPORT_FILE_SIZE_MB * 1024 * 1024;

@@ -7,6 +7,7 @@ import {
   InvalidWorkbookError,
 } from '../../domain/repositories/collaborator-workbook.interface';
 import type { CollaboratorRepository } from '../../domain/repositories/collaborator.repository.interface';
+import type { ImportRunRepository } from '../../domain/repositories/import-run.repository.interface';
 import type { ProgramRepository } from '../../domain/repositories/program.repository.interface';
 import type { AppLoggerService } from '../../shared/logging/logger.service';
 import {
@@ -80,6 +81,7 @@ describe('ImportCollaboratorsUseCase', () => {
   const workbookReader = createMock<CollaboratorWorkbookReader>();
   const collaboratorRepository = createMock<CollaboratorRepository>();
   const programRepository = createMock<ProgramRepository>();
+  const importRunRepository = createMock<ImportRunRepository>();
   const { unitOfWork, repositories } = createFakeUnitOfWork();
   const contextLogger = { error: jest.fn() };
   const appLogger = {
@@ -90,11 +92,15 @@ describe('ImportCollaboratorsUseCase', () => {
     workbookReader,
     collaboratorRepository,
     programRepository,
+    importRunRepository,
     unitOfWork,
     appLogger,
   );
 
   const file = Buffer.from('xlsx');
+  const importedByUserId = 'admin-1';
+  const execute = () =>
+    useCase.execute(file, 'colaboradores.xlsx', importedByUserId);
   const givenWorkbook = (workbook: Partial<CollaboratorWorkbook>) =>
     workbookReader.read.mockResolvedValue({
       collaborators: [],
@@ -107,6 +113,18 @@ describe('ImportCollaboratorsUseCase', () => {
     jest.clearAllMocks();
     programRepository.findByCodeOrName.mockResolvedValue(buildProgram());
     collaboratorRepository.findByEmail.mockResolvedValue(null);
+    importRunRepository.create.mockImplementation((data) =>
+      Promise.resolve({
+        id: 'run-1',
+        fileName: data.fileName,
+        importedByUserId: data.importedByUserId,
+        createdCount: data.createdCount,
+        rejectedCount: data.rejected.length,
+        rejected: data.rejected,
+        warnings: data.warnings,
+        createdAt: new Date('2026-01-01'),
+      }),
+    );
     repositories.collaborators.create.mockResolvedValue(buildCollaborator());
     repositories.skills.findByNormalizedNameOrSynonym.mockImplementation(
       (normalized) =>
@@ -132,10 +150,18 @@ describe('ImportCollaboratorsUseCase', () => {
       experience: [experienceRow(2)],
     });
 
-    const result = await useCase.execute(file);
+    const result = await execute();
 
     expect(result).toEqual({
+      id: 'run-1',
       created: 1,
+      rejected: [],
+      warnings: ['Habilidad nueva creada como pendiente: "Docker"'],
+    });
+    expect(importRunRepository.create).toHaveBeenCalledWith({
+      fileName: 'colaboradores.xlsx',
+      importedByUserId,
+      createdCount: 1,
       rejected: [],
       warnings: ['Habilidad nueva creada como pendiente: "Docker"'],
     });
@@ -169,7 +195,7 @@ describe('ImportCollaboratorsUseCase', () => {
       ],
     });
 
-    const result = await useCase.execute(file);
+    const result = await execute();
 
     expect(result.created).toBe(1);
     expect(result.rejected).toEqual([
@@ -202,7 +228,7 @@ describe('ImportCollaboratorsUseCase', () => {
       Promise.resolve(value === '%' ? null : buildProgram()),
     );
 
-    const result = await useCase.execute(file);
+    const result = await execute();
 
     expect(result.created).toBe(0);
     expect(result.rejected.map(({ reason }) => reason)).toEqual([
@@ -223,7 +249,7 @@ describe('ImportCollaboratorsUseCase', () => {
       new Error('smallint out of range'),
     );
 
-    const result = await useCase.execute(file);
+    const result = await execute();
 
     expect(result.created).toBe(1);
     expect(result.rejected).toEqual([
@@ -249,7 +275,7 @@ describe('ImportCollaboratorsUseCase', () => {
       skills: [skillRow(2, { habilidad: 'Rust', categoria: 'Lenguaje' })],
     });
 
-    await useCase.execute(file);
+    await execute();
 
     expect(repositories.skills.create).toHaveBeenCalledWith(
       expect.objectContaining({ name: 'Rust', category: 'LENGUAJE' }),
@@ -262,7 +288,7 @@ describe('ImportCollaboratorsUseCase', () => {
       skills: [skillRow(2), skillRow(3, { habilidad: 'ReactJS' })],
     });
 
-    const result = await useCase.execute(file);
+    const result = await execute();
 
     expect(repositories.collaboratorSkills.create).toHaveBeenCalledTimes(1);
     expect(result.rejected).toEqual([
@@ -285,7 +311,7 @@ describe('ImportCollaboratorsUseCase', () => {
       experience: [experienceRow(2, { fecha_fin: new Date('2024-06-01') })],
     });
 
-    const result = await useCase.execute(file);
+    const result = await execute();
 
     expect(result.created).toBe(1);
     expect(result.rejected).toEqual([
@@ -314,7 +340,7 @@ describe('ImportCollaboratorsUseCase', () => {
       new InvalidWorkbookError('Falta la hoja "Habilidades"'),
     );
 
-    await expect(useCase.execute(file)).rejects.toBeInstanceOf(
+    await expect(execute()).rejects.toBeInstanceOf(
       BadRequestException,
     );
   });
@@ -322,6 +348,6 @@ describe('ImportCollaboratorsUseCase', () => {
   it('propagates unexpected reader errors', async () => {
     workbookReader.read.mockRejectedValue(new Error('disk'));
 
-    await expect(useCase.execute(file)).rejects.toThrow('disk');
+    await expect(execute()).rejects.toThrow('disk');
   });
 });

@@ -5,6 +5,7 @@ import {
   toPageMeta,
   type PageParams,
 } from '../../shared/pagination/pagination.util';
+import { toUserResponse } from '../mappers/user-response.mapper';
 
 @Injectable()
 export class ListUsersUseCase {
@@ -16,13 +17,7 @@ export class ListUsersUseCase {
     const { items: users, total } = await this.userRepository.findAll(params);
 
     return {
-      users: users.map((user) => ({
-        id: user.id,
-        fullName: user.fullName,
-        email: user.email,
-        role: user.role,
-        active: user.active,
-      })),
+      users: users.map(toUserResponse),
       meta: toPageMeta(params.page, params.pageSize, total),
     };
   }

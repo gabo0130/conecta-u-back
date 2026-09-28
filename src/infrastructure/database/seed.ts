@@ -31,12 +31,37 @@ interface SeedProgram {
   faculty: string;
 }
 
+// Catálogo oficial de pregrado (https://ww2.ufps.edu.co/universidad/perfiles/aspirantes/952).
+// `DGR` (Diseño Gráfico) y `EST` (Estadística) ya estaban sembrados pero no aparecen en esa
+// fuente; se conservan tal cual (no se borran datos) en lugar de asumir que están mal.
 const PROGRAMS: SeedProgram[] = [
   { code: 'ISI', name: 'Ingeniería de Sistemas', faculty: 'Ingeniería' },
   { code: 'IEL', name: 'Ingeniería Electrónica', faculty: 'Ingeniería' },
   { code: 'IIN', name: 'Ingeniería Industrial', faculty: 'Ingeniería' },
   { code: 'DGR', name: 'Diseño Gráfico', faculty: 'Artes' },
   { code: 'EST', name: 'Estadística', faculty: 'Ciencias Básicas' },
+  { code: 'ARQ', name: 'Arquitectura', faculty: 'Ingeniería' },
+  { code: 'IAM', name: 'Ingeniería Ambiental', faculty: 'Ingeniería' },
+  { code: 'IBT', name: 'Ingeniería Biotecnológica', faculty: 'Ingeniería' },
+  { code: 'ICI', name: 'Ingeniería Civil', faculty: 'Ingeniería' },
+  { code: 'IMI', name: 'Ingeniería de Minas', faculty: 'Ingeniería' },
+  { code: 'IEM', name: 'Ingeniería Electromecánica', faculty: 'Ingeniería' },
+  { code: 'IME', name: 'Ingeniería Mecánica', faculty: 'Ingeniería' },
+  { code: 'IAG', name: 'Ingeniería Agroindustrial', faculty: 'Ciencias Agrarias y del Ambiente' },
+  { code: 'IAN', name: 'Ingeniería Agronómica', faculty: 'Ciencias Agrarias y del Ambiente' },
+  { code: 'ZOO', name: 'Zootecnia', faculty: 'Ciencias Agrarias y del Ambiente' },
+  { code: 'LMA', name: 'Licenciatura en Matemáticas', faculty: 'Ciencias Básicas' },
+  { code: 'LCN', name: 'Licenciatura en Ciencias Naturales y Educación Ambiental', faculty: 'Ciencias Básicas' },
+  { code: 'QIN', name: 'Química Industrial', faculty: 'Ciencias Básicas' },
+  { code: 'ADE', name: 'Administración de Empresas', faculty: 'Ciencias Empresariales' },
+  { code: 'CIN', name: 'Comercio Internacional', faculty: 'Ciencias Empresariales' },
+  { code: 'CPU', name: 'Contaduría Pública', faculty: 'Ciencias Empresariales' },
+  { code: 'ENF', name: 'Enfermería', faculty: 'Ciencias de la Salud' },
+  { code: 'SST', name: 'Seguridad y Salud en el Trabajo', faculty: 'Ciencias de la Salud' },
+  { code: 'TSO', name: 'Trabajo Social', faculty: 'Ciencias de la Salud' },
+  { code: 'CSO', name: 'Comunicación Social', faculty: 'Educación, Artes y Humanidades' },
+  { code: 'LEI', name: 'Licenciatura en Educación Infantil', faculty: 'Educación, Artes y Humanidades' },
+  { code: 'DER', name: 'Derecho', faculty: 'Educación, Artes y Humanidades' },
 ];
 
 interface SeedSkill {

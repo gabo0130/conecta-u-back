@@ -2,18 +2,14 @@ import type { CollaboratorSkillEntity } from '../../domain/entities/collaborator
 import type { CollaboratorEntity } from '../../domain/entities/collaborator.entity';
 import type { ExperienceEntity } from '../../domain/entities/experience.entity';
 import { computeDurationMonths } from '../../shared/utils/compute-duration-months';
+import { toSkillSummary } from './skill-response.mapper';
 
 // Única forma de respuesta del perfil técnico: la usan GET, POST y PATCH de /collaborators/me*.
 
 export function toCollaboratorSkillResponse(entry: CollaboratorSkillEntity) {
   return {
     id: entry.id,
-    skill: {
-      id: entry.skill.id,
-      name: entry.skill.name,
-      type: entry.skill.type,
-      category: entry.skill.category,
-    },
+    skill: toSkillSummary(entry.skill),
     level: entry.level,
     experienceMonths: entry.experienceMonths,
     lastUsedYear: entry.lastUsedYear,

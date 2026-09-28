@@ -1,22 +1,17 @@
 import type { CollaboratorEntity } from '../../domain/entities/collaborator.entity';
+import type { ImportRunEntity } from '../../domain/entities/import-run.entity';
 import type { ProjectEntity } from '../../domain/entities/project.entity';
 import type { UserEntity } from '../../domain/entities/user.entity';
 import { toCollaboratorProfileResponse } from './collaborator-response.mapper';
+import { toProjectResponse } from './project-response.mapper';
+import { toUserResponse } from './user-response.mapper';
 
 // Respuestas de las rutas /admin/*: agregan al proyecto o al perfil los datos que solo ve el ADMIN
 // (líder, cuenta vinculada, proyectos que lidera).
 
 /** Cuenta vinculada a un perfil técnico (null si la persona no tiene usuario). */
 export function toLinkedUser(user: UserEntity | undefined) {
-  return user
-    ? {
-        id: user.id,
-        fullName: user.fullName,
-        email: user.email,
-        role: user.role,
-        active: user.active,
-      }
-    : null;
+  return user ? toUserResponse(user) : null;
 }
 
 /** Líder del proyecto y, si lo tiene, el id de su perfil técnico. */
@@ -26,10 +21,7 @@ export function toLeaderSummary(
 ) {
   if (!user) return null;
   return {
-    id: user.id,
-    fullName: user.fullName,
-    email: user.email,
-    active: user.active,
+    ...toUserResponse(user),
     collaboratorId: collaboratorIdByUserId.get(user.id) ?? null,
   };
 }
@@ -40,7 +32,7 @@ export function toAdminProjectResponse(
   collaboratorIdByUserId: Map<string, string>,
 ) {
   return {
-    ...project,
+    ...toProjectResponse(project),
     leader: toLeaderSummary(
       usersById.get(project.leaderId),
       collaboratorIdByUserId,
@@ -87,6 +79,37 @@ export function toAdminCollaboratorDetail(
       title: project.title,
       status: project.status,
     })),
+  };
+}
+
+export function toImportRunSummary(
+  run: ImportRunEntity,
+  usersById: Map<string, UserEntity>,
+) {
+  return {
+    id: run.id,
+    fileName: run.fileName,
+    createdAt: run.createdAt,
+    importedBy: toLinkedUser(
+      run.importedByUserId ? usersById.get(run.importedByUserId) : undefined,
+    ),
+    created: run.createdCount,
+    rejectedCount: run.rejectedCount,
+  };
+}
+
+export function toImportRunDetail(
+  run: ImportRunEntity,
+  user: UserEntity | undefined,
+) {
+  return {
+    id: run.id,
+    fileName: run.fileName,
+    createdAt: run.createdAt,
+    importedBy: toLinkedUser(user),
+    created: run.createdCount,
+    rejected: run.rejected,
+    warnings: run.warnings,
   };
 }
 

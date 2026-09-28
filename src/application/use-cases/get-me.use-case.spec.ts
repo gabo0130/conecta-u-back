@@ -25,6 +25,7 @@ describe('GetMeUseCase', () => {
       fullName: 'Juan',
       email: 'juan@example.com',
       role: 'COLABORADOR',
+      active: true,
       menu: [
         {
           id: 'dashboard',

@@ -6,6 +6,7 @@ import {
 } from '@nestjs/common';
 import type { ProjectRepository } from '../../domain/repositories/project.repository.interface';
 import { PROJECT_REPOSITORY } from '../../shared/interfaces/tokens';
+import { toProjectResponse } from '../mappers/project-response.mapper';
 
 @Injectable()
 export class GetProjectByIdUseCase {
@@ -24,6 +25,6 @@ export class GetProjectByIdUseCase {
       throw new ForbiddenException({ message: 'Prohibido' });
     }
 
-    return project;
+    return toProjectResponse(project);
   }
 }

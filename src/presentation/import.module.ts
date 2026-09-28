@@ -1,4 +1,6 @@
 import { Module } from '@nestjs/common';
+import { AdminGetImportRunUseCase } from '../application/use-cases/admin-get-import-run.use-case';
+import { AdminListImportRunsUseCase } from '../application/use-cases/admin-list-import-runs.use-case';
 import { GenerateCollaboratorsTemplateUseCase } from '../application/use-cases/generate-collaborators-template.use-case';
 import { ImportCollaboratorsUseCase } from '../application/use-cases/import-collaborators.use-case';
 import { ExcelJsCollaboratorWorkbook } from '../infrastructure/excel/exceljs-collaborator-workbook';
@@ -16,6 +18,8 @@ import { SecurityModule } from './security.module';
   providers: [
     GenerateCollaboratorsTemplateUseCase,
     ImportCollaboratorsUseCase,
+    AdminListImportRunsUseCase,
+    AdminGetImportRunUseCase,
     ExcelJsCollaboratorWorkbook,
     {
       provide: COLLABORATOR_WORKBOOK_READER,

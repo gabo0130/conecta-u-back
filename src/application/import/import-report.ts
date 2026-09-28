@@ -1,12 +1,8 @@
+import type { ImportRejectedRow } from '../../domain/entities/import-run.entity';
 import type { WorkbookRow } from '../../domain/repositories/collaborator-workbook.interface';
 import { emailOf } from './cell-parsers';
 
-export interface RejectedRow {
-  sheet: string;
-  row: number;
-  email: string;
-  reason: string;
-}
+export type RejectedRow = ImportRejectedRow;
 
 const UNMATCHED_EMAIL =
   'El correo no corresponde a un colaborador importado en este archivo';

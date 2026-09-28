@@ -8,6 +8,7 @@ import type { UserRepository } from '../../domain/repositories/user.repository.i
 import { USER_REPOSITORY } from '../../shared/interfaces/tokens';
 import { pickDefined } from '../../shared/utils/pick-defined';
 import { UpdateUserDto } from '../dto/update-user.dto';
+import { toUserResponse } from '../mappers/user-response.mapper';
 
 @Injectable()
 export class UpdateUserUseCase {
@@ -44,12 +45,6 @@ export class UpdateUserUseCase {
       throw new NotFoundException({ message: 'Recurso no encontrado' });
     }
 
-    return {
-      id: updated.id,
-      fullName: updated.fullName,
-      email: updated.email,
-      role: updated.role,
-      active: updated.active,
-    };
+    return toUserResponse(updated);
   }
 }

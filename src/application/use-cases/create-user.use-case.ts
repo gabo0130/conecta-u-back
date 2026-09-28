@@ -6,6 +6,7 @@ import {
   PASSWORD_HASHER,
 } from '../../shared/interfaces/tokens';
 import { CreateUserDto } from '../dto/create-user.dto';
+import { toUserResponse } from '../mappers/user-response.mapper';
 
 @Injectable()
 export class CreateUserUseCase {
@@ -32,12 +33,6 @@ export class CreateUserUseCase {
       role,
     });
 
-    return {
-      id: user.id,
-      fullName: user.fullName,
-      email: user.email,
-      role: user.role,
-      active: user.active,
-    };
+    return toUserResponse(user);
   }
 }

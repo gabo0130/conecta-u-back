@@ -6,6 +6,7 @@ import {
   EXPERIENCE_HEADERS,
   SHEET_COLLABORATORS,
   SHEET_EXPERIENCE,
+  SHEET_GUIDE,
   SHEET_SKILLS,
   SKILL_HEADERS,
 } from '../../shared/constants/import-collaborators.constants';
@@ -31,7 +32,7 @@ function templateWorkbook(skip?: string): ExcelJS.Workbook {
 describe('ExcelJsCollaboratorWorkbook', () => {
   const adapter = new ExcelJsCollaboratorWorkbook();
 
-  it('writes a template with the three sheets and their headers', async () => {
+  it('writes a template with a guide sheet and the three data sheets with their headers', async () => {
     const workbook = new ExcelJS.Workbook();
     await workbook.xlsx.load(
       (await adapter.write()) as unknown as ExcelJS.Buffer,
@@ -43,10 +44,37 @@ describe('ExcelJsCollaboratorWorkbook', () => {
       ).slice(1),
     ).toEqual([...SKILL_HEADERS]);
     expect(workbook.worksheets.map((sheet) => sheet.name)).toEqual([
+      SHEET_GUIDE,
       SHEET_COLLABORATORS,
       SHEET_SKILLS,
       SHEET_EXPERIENCE,
     ]);
+  });
+
+  it('adds a dropdown data validation to enum columns of the data sheets', async () => {
+    const workbook = new ExcelJS.Workbook();
+    await workbook.xlsx.load(
+      (await adapter.write()) as unknown as ExcelJS.Buffer,
+    );
+
+    const collaborators = workbook.getWorksheet(SHEET_COLLABORATORS)!;
+    const disponibilidadColumn =
+      COLLABORATOR_HEADERS.indexOf('disponibilidad') + 1;
+    const validation = collaborators.getCell(2, disponibilidadColumn)
+      .dataValidation;
+    expect(validation?.type).toBe('list');
+    expect(validation?.formulae?.[0]).toContain('Disponible');
+    expect(validation?.allowBlank).toBeFalsy();
+  });
+
+  it('keeps reading the three data sheets by name, ignoring the guide sheet', async () => {
+    const buffer = await toBuffer(templateWorkbook());
+
+    const result = await adapter.read(buffer);
+
+    expect(result.collaborators).toEqual([]);
+    expect(result.skills).toEqual([]);
+    expect(result.experience).toEqual([]);
   });
 
   it('reads rows as primitives keyed by header, skipping empty rows', async () => {

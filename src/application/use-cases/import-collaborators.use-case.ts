@@ -8,6 +8,7 @@ import {
   type WorkbookRow,
 } from '../../domain/repositories/collaborator-workbook.interface';
 import type { CollaboratorRepository } from '../../domain/repositories/collaborator.repository.interface';
+import type { ImportRunRepository } from '../../domain/repositories/import-run.repository.interface';
 import type { ProgramRepository } from '../../domain/repositories/program.repository.interface';
 import type {
   TransactionalRepositories,
@@ -21,6 +22,7 @@ import {
 import {
   COLLABORATOR_REPOSITORY,
   COLLABORATOR_WORKBOOK_READER,
+  IMPORT_RUN_REPOSITORY,
   PROGRAM_REPOSITORY,
   UNIT_OF_WORK,
 } from '../../shared/interfaces/tokens';
@@ -97,14 +99,24 @@ export class ImportCollaboratorsUseCase {
     private readonly collaboratorRepository: CollaboratorRepository,
     @Inject(PROGRAM_REPOSITORY)
     private readonly programRepository: ProgramRepository,
+    @Inject(IMPORT_RUN_REPOSITORY)
+    private readonly importRunRepository: ImportRunRepository,
     @Inject(UNIT_OF_WORK) private readonly unitOfWork: UnitOfWork,
     appLogger: AppLoggerService,
   ) {
     this.logger = appLogger.forContext(ImportCollaboratorsUseCase.name);
   }
 
-  /** @param content el .xlsx subido; su tamaño ya lo limitó la capa HTTP. */
-  async execute(content: Uint8Array) {
+  /**
+   * @param content el .xlsx subido; su tamaño ya lo limitó la capa HTTP.
+   * @param fileName nombre original del archivo, para el historial de importaciones.
+   * @param importedByUserId admin que ejecuta la carga, para el historial.
+   */
+  async execute(
+    content: Uint8Array,
+    fileName: string,
+    importedByUserId: string,
+  ) {
     const workbook = await this.readWorkbook(content);
     const context: ImportContext = {
       report: new ImportReport(),
@@ -119,7 +131,17 @@ export class ImportCollaboratorsUseCase {
 
     context.report.rejectUnmatched(SHEET_SKILLS, context.skillRows);
     context.report.rejectUnmatched(SHEET_EXPERIENCE, context.experienceRows);
-    return context.report.toResponse();
+    const response = context.report.toResponse();
+
+    const run = await this.importRunRepository.create({
+      fileName,
+      importedByUserId,
+      createdCount: response.created,
+      rejected: response.rejected,
+      warnings: response.warnings,
+    });
+
+    return { id: run.id, ...response };
   }
 
   private async readWorkbook(

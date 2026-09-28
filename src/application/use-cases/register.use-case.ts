@@ -24,6 +24,7 @@ import {
 } from '../../shared/interfaces/tokens';
 import { RegisterCollaboratorDto, RegisterDto } from '../dto/register.dto';
 import { findProgramOrFail } from '../support/catalog-references';
+import { toUserResponse } from '../mappers/user-response.mapper';
 
 @Injectable()
 export class RegisterUseCase {
@@ -65,12 +66,7 @@ export class RegisterUseCase {
       return created;
     });
 
-    return {
-      id: user.id,
-      fullName: user.fullName,
-      email: user.email,
-      role: user.role,
-    };
+    return toUserResponse(user);
   }
 
   /**

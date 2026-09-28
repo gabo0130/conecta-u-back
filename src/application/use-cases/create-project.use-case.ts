@@ -19,6 +19,7 @@ import {
   findProjectTypeOrFail,
 } from '../support/catalog-references';
 import { assertValidTypeData } from '../support/project-references';
+import { toProjectResponse } from '../mappers/project-response.mapper';
 
 @Injectable()
 export class CreateProjectUseCase {
@@ -51,7 +52,7 @@ export class CreateProjectUseCase {
     }
     await assertSkillsExist(this.skillRepository, data.knownSkillIds);
 
-    return this.projectRepository.create({
+    const project = await this.projectRepository.create({
       title: data.title,
       summary: data.summary,
       objectives: data.objectives,
@@ -63,5 +64,6 @@ export class CreateProjectUseCase {
       deliverables: data.deliverables,
       leaderId,
     });
+    return toProjectResponse(project);
   }
 }

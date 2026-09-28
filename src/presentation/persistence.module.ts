@@ -4,6 +4,7 @@ import { CollaboratorSkillOrmEntity } from '../infrastructure/database/typeorm/c
 import { CollaboratorOrmEntity } from '../infrastructure/database/typeorm/collaborator.orm-entity';
 import { DeliverableOrmEntity } from '../infrastructure/database/typeorm/deliverable.orm-entity';
 import { ExperienceOrmEntity } from '../infrastructure/database/typeorm/experience.orm-entity';
+import { ImportRunOrmEntity } from '../infrastructure/database/typeorm/import-run.orm-entity';
 import { ProgramOrmEntity } from '../infrastructure/database/typeorm/program.orm-entity';
 import { ProjectCategoryOrmEntity } from '../infrastructure/database/typeorm/project-category.orm-entity';
 import { ProjectTypeOrmEntity } from '../infrastructure/database/typeorm/project-type.orm-entity';
@@ -12,6 +13,7 @@ import { SkillOrmEntity } from '../infrastructure/database/typeorm/skill.orm-ent
 import { TypeOrmCollaboratorSkillRepository } from '../infrastructure/database/typeorm/typeorm-collaborator-skill.repository';
 import { TypeOrmCollaboratorRepository } from '../infrastructure/database/typeorm/typeorm-collaborator.repository';
 import { TypeOrmExperienceRepository } from '../infrastructure/database/typeorm/typeorm-experience.repository';
+import { TypeOrmImportRunRepository } from '../infrastructure/database/typeorm/typeorm-import-run.repository';
 import { TypeOrmProgramRepository } from '../infrastructure/database/typeorm/typeorm-program.repository';
 import { TypeOrmProjectCategoryRepository } from '../infrastructure/database/typeorm/typeorm-project-category.repository';
 import { TypeOrmProjectTypeRepository } from '../infrastructure/database/typeorm/typeorm-project-type.repository';
@@ -24,6 +26,7 @@ import {
   COLLABORATOR_REPOSITORY,
   COLLABORATOR_SKILL_REPOSITORY,
   EXPERIENCE_REPOSITORY,
+  IMPORT_RUN_REPOSITORY,
   PROGRAM_REPOSITORY,
   PROJECT_CATEGORY_REPOSITORY,
   PROJECT_REPOSITORY,
@@ -49,6 +52,7 @@ const REPOSITORY_BINDINGS = [
     provide: PROJECT_CATEGORY_REPOSITORY,
     useClass: TypeOrmProjectCategoryRepository,
   },
+  { provide: IMPORT_RUN_REPOSITORY, useClass: TypeOrmImportRunRepository },
   { provide: UNIT_OF_WORK, useClass: TypeOrmUnitOfWork },
 ];
 
@@ -66,6 +70,7 @@ const REPOSITORY_BINDINGS = [
       ProjectCategoryOrmEntity,
       ProjectOrmEntity,
       DeliverableOrmEntity,
+      ImportRunOrmEntity,
     ]),
   ],
   providers: REPOSITORY_BINDINGS,
