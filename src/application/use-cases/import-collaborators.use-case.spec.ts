@@ -340,9 +340,7 @@ describe('ImportCollaboratorsUseCase', () => {
       new InvalidWorkbookError('Falta la hoja "Habilidades"'),
     );
 
-    await expect(execute()).rejects.toBeInstanceOf(
-      BadRequestException,
-    );
+    await expect(execute()).rejects.toBeInstanceOf(BadRequestException);
   });
 
   it('propagates unexpected reader errors', async () => {

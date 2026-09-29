@@ -4,14 +4,25 @@ import type { ImportRunRepository } from '../../domain/repositories/import-run.r
 import type { UserRepository } from '../../domain/repositories/user.repository.interface';
 import { buildUser, createMock } from '../../testing/test-doubles.testing';
 
-const buildRun = (overrides: Partial<{ id: string; importedByUserId: string | null }> = {}) =>
+const buildRun = (
+  overrides: Partial<{ id: string; importedByUserId: string | null }> = {},
+) =>
   new ImportRunEntity(
     overrides.id ?? 'run-1',
     'colaboradores.xlsx',
-    'importedByUserId' in overrides ? (overrides.importedByUserId as string | null) : 'admin-1',
+    'importedByUserId' in overrides
+      ? (overrides.importedByUserId as string | null)
+      : 'admin-1',
     2,
     1,
-    [{ sheet: 'Colaboradores', row: 2, email: 'a@b.co', reason: 'disponibilidad inválida' }],
+    [
+      {
+        sheet: 'Colaboradores',
+        row: 2,
+        email: 'a@b.co',
+        reason: 'disponibilidad inválida',
+      },
+    ],
     [],
     new Date('2026-01-01'),
   );
@@ -19,7 +30,10 @@ const buildRun = (overrides: Partial<{ id: string; importedByUserId: string | nu
 describe('AdminListImportRunsUseCase', () => {
   const importRunRepository = createMock<ImportRunRepository>();
   const userRepository = createMock<UserRepository>();
-  const useCase = new AdminListImportRunsUseCase(importRunRepository, userRepository);
+  const useCase = new AdminListImportRunsUseCase(
+    importRunRepository,
+    userRepository,
+  );
 
   beforeEach(() => jest.clearAllMocks());
 
@@ -40,7 +54,10 @@ describe('AdminListImportRunsUseCase', () => {
           id: 'run-1',
           fileName: 'colaboradores.xlsx',
           createdAt: new Date('2026-01-01'),
-          importedBy: expect.objectContaining({ id: 'admin-1', fullName: 'Rita Admin' }),
+          importedBy: expect.objectContaining({
+            id: 'admin-1',
+            fullName: 'Rita Admin',
+          }),
           created: 2,
           rejectedCount: 1,
         },

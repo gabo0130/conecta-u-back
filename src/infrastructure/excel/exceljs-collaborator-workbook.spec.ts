@@ -60,8 +60,10 @@ describe('ExcelJsCollaboratorWorkbook', () => {
     const collaborators = workbook.getWorksheet(SHEET_COLLABORATORS)!;
     const disponibilidadColumn =
       COLLABORATOR_HEADERS.indexOf('disponibilidad') + 1;
-    const validation = collaborators.getCell(2, disponibilidadColumn)
-      .dataValidation;
+    const validation = collaborators.getCell(
+      2,
+      disponibilidadColumn,
+    ).dataValidation;
     expect(validation?.type).toBe('list');
     expect(validation?.formulae?.[0]).toContain('Disponible');
     expect(validation?.allowBlank).toBeFalsy();

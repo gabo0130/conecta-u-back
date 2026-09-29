@@ -2,7 +2,12 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { ProgramEntity } from '../../../domain/entities/program.entity';
+import type {
+  CreateProgramRepositoryDto,
+  UpdateProgramRepositoryDto,
+} from '../../../domain/repositories/program.repository.interface';
 import { ProgramRepository } from '../../../domain/repositories/program.repository.interface';
+import { pickDefined } from '../../../shared/utils/pick-defined';
 import { ProgramOrmEntity } from './program.orm-entity';
 
 @Injectable()
@@ -33,6 +38,28 @@ export class TypeOrmProgramRepository implements ProgramRepository {
       .orWhere('LOWER(program.name) = LOWER(:value)', { value })
       .getOne();
     return program ? this.toDomain(program) : null;
+  }
+
+  async create(data: CreateProgramRepositoryDto): Promise<ProgramEntity> {
+    const program = this.repository.create({
+      code: data.code,
+      name: data.name,
+      faculty: data.faculty ?? null,
+    });
+    const saved = await this.repository.save(program);
+    return this.toDomain(saved);
+  }
+
+  async update(
+    id: string,
+    data: UpdateProgramRepositoryDto,
+  ): Promise<ProgramEntity | null> {
+    const program = await this.repository.findOne({ where: { id } });
+    if (!program) return null;
+
+    const merged = this.repository.merge(program, pickDefined(data));
+    const saved = await this.repository.save(merged);
+    return this.toDomain(saved);
   }
 
   private toDomain(program: ProgramOrmEntity): ProgramEntity {

@@ -4,9 +4,17 @@ import { In, Repository } from 'typeorm';
 import { SkillEntity } from '../../../domain/entities/skill.entity';
 import {
   CreateSkillRepositoryDto,
+  SkillAdminFilter,
   SkillRepository,
   SkillSearchFilter,
+  UpdateSkillRepositoryDto,
 } from '../../../domain/repositories/skill.repository.interface';
+import type {
+  Page,
+  PageParams,
+} from '../../../shared/pagination/pagination.util';
+import { toSkip } from '../../../shared/pagination/pagination.util';
+import { pickDefined } from '../../../shared/utils/pick-defined';
 import { toSkillEntity } from './mappers/skill.mapper';
 import { SkillOrmEntity } from './skill.orm-entity';
 
@@ -73,6 +81,37 @@ export class TypeOrmSkillRepository implements SkillRepository {
     return skills.map(toSkillEntity);
   }
 
+  async findAllPaged(
+    params: PageParams,
+    filter: SkillAdminFilter = {},
+  ): Promise<Page<SkillEntity>> {
+    const query = this.repository.createQueryBuilder('skill');
+
+    if (filter.normalizedQuery) {
+      const like = `%${filter.normalizedQuery}%`;
+      query.andWhere(
+        '(skill.normalizedName LIKE :like OR EXISTS (SELECT 1 FROM unnest(skill.synonyms) s WHERE s LIKE :like))',
+        { like },
+      );
+    }
+    if (filter.type)
+      query.andWhere('skill.type = :type', { type: filter.type });
+    if (filter.category)
+      query.andWhere('skill.category = :category', {
+        category: filter.category,
+      });
+    if (filter.status)
+      query.andWhere('skill.status = :status', { status: filter.status });
+
+    query
+      .orderBy('skill.name', 'ASC')
+      .skip(toSkip(params.page, params.pageSize))
+      .take(params.pageSize);
+
+    const [skills, total] = await query.getManyAndCount();
+    return { items: skills.map(toSkillEntity), total };
+  }
+
   async create(data: CreateSkillRepositoryDto): Promise<SkillEntity> {
     const skill = this.repository.create({
       name: data.name,
@@ -84,6 +123,18 @@ export class TypeOrmSkillRepository implements SkillRepository {
     });
 
     const saved = await this.repository.save(skill);
+    return toSkillEntity(saved);
+  }
+
+  async update(
+    id: string,
+    data: UpdateSkillRepositoryDto,
+  ): Promise<SkillEntity | null> {
+    const skill = await this.repository.findOne({ where: { id } });
+    if (!skill) return null;
+
+    const merged = this.repository.merge(skill, pickDefined(data));
+    const saved = await this.repository.save(merged);
     return toSkillEntity(saved);
   }
 }
