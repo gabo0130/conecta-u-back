@@ -7,11 +7,12 @@ import { ListUsersUseCase } from '../application/use-cases/list-users.use-case';
 import { UpdateUserUseCase } from '../application/use-cases/update-user.use-case';
 import { AccessController } from './controllers/access.controller';
 import { UsersController } from './controllers/users.controller';
+import { MailModule } from './mail.module';
 import { PersistenceModule } from './persistence.module';
 import { SecurityModule } from './security.module';
 
 @Module({
-  imports: [PersistenceModule, SecurityModule],
+  imports: [PersistenceModule, SecurityModule, MailModule],
   controllers: [AccessController, UsersController],
   providers: [
     CreateUserUseCase,

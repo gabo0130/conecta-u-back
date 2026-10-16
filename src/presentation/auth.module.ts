@@ -4,11 +4,12 @@ import { LoginUseCase } from '../application/use-cases/login.use-case';
 import { RefreshTokenUseCase } from '../application/use-cases/refresh-token.use-case';
 import { RegisterUseCase } from '../application/use-cases/register.use-case';
 import { AuthController } from './controllers/auth.controller';
+import { MailModule } from './mail.module';
 import { PersistenceModule } from './persistence.module';
 import { SecurityModule } from './security.module';
 
 @Module({
-  imports: [PersistenceModule, SecurityModule],
+  imports: [PersistenceModule, SecurityModule, MailModule],
   controllers: [AuthController],
   providers: [GetMeUseCase, LoginUseCase, RefreshTokenUseCase, RegisterUseCase],
 })

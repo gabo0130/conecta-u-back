@@ -21,3 +21,6 @@ export const COLLABORATOR_TEMPLATE_WRITER = Symbol(
   'COLLABORATOR_TEMPLATE_WRITER',
 );
 export const IMPORT_RUN_REPOSITORY = Symbol('IMPORT_RUN_REPOSITORY');
+export const MAIL_SENDER = Symbol('MAIL_SENDER');
+/** URL pública del frontend, para los enlaces de los correos. */
+export const APP_URL = Symbol('APP_URL');

@@ -4,6 +4,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { RegisterUseCase } from './register.use-case';
+import type { SendWelcomeEmailUseCase } from './send-welcome-email.use-case';
 import type { CollaboratorRepository } from '../../domain/repositories/collaborator.repository.interface';
 import type { PasswordHasher } from '../../domain/repositories/password-hasher.interface';
 import type { ProgramRepository } from '../../domain/repositories/program.repository.interface';
@@ -23,6 +24,7 @@ describe('RegisterUseCase', () => {
   const programRepository = createMock<ProgramRepository>();
   const passwordHasher = createMock<PasswordHasher>();
   const { unitOfWork, repositories } = createFakeUnitOfWork();
+  const sendWelcomeEmail = createMock<SendWelcomeEmailUseCase>();
 
   const useCase = new RegisterUseCase(
     userRepository,
@@ -30,6 +32,7 @@ describe('RegisterUseCase', () => {
     programRepository,
     passwordHasher,
     unitOfWork,
+    sendWelcomeEmail,
   );
 
   const colaborador: RegisterDto = {
@@ -67,6 +70,34 @@ describe('RegisterUseCase', () => {
     expect(result.role).toBe('LIDER');
     expect(collaboratorRepository.findByEmail).not.toHaveBeenCalled();
     expect(repositories.collaborators.create).not.toHaveBeenCalled();
+  });
+
+  it('sends the welcome email once the account is created', async () => {
+    repositories.users.create.mockResolvedValue(
+      buildUser({
+        fullName: 'Ana Pérez',
+        email: 'ana@example.com',
+        role: 'COLABORADOR',
+      }),
+    );
+
+    await useCase.execute(colaborador);
+
+    expect(sendWelcomeEmail.execute).toHaveBeenCalledWith({
+      fullName: 'Ana Pérez',
+      email: 'ana@example.com',
+      role: 'COLABORADOR',
+    });
+  });
+
+  it('does not send the email when the registration is rejected', async () => {
+    userRepository.findByEmail.mockResolvedValue(buildUser());
+
+    await expect(useCase.execute(colaborador)).rejects.toBeInstanceOf(
+      ConflictException,
+    );
+
+    expect(sendWelcomeEmail.execute).not.toHaveBeenCalled();
   });
 
   it('creates user and collaborator inside the same unit of work', async () => {

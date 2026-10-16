@@ -101,6 +101,8 @@ npm install
 cp .env.example .env
 ```
 
+> **Correo de bienvenida.** Al crear una cuenta (registro propio o alta por el ADMIN) se envía un correo según el rol. Se configura con `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE`, `SMTP_USER`, `SMTP_PASS`, `MAIL_FROM` y `APP_URL` (enlace del botón). Sin `SMTP_HOST` la API funciona igual y solo registra en el log que no se envió. Un fallo del SMTP nunca hace fallar el registro.
+
 3. Corre las migraciones:
 
 ```bash

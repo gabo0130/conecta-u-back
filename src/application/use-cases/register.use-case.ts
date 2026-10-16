@@ -25,6 +25,7 @@ import {
 import { RegisterCollaboratorDto, RegisterDto } from '../dto/register.dto';
 import { findProgramOrFail } from '../support/catalog-references';
 import { toUserResponse } from '../mappers/user-response.mapper';
+import { SendWelcomeEmailUseCase } from './send-welcome-email.use-case';
 
 @Injectable()
 export class RegisterUseCase {
@@ -36,6 +37,7 @@ export class RegisterUseCase {
     private readonly programRepository: ProgramRepository,
     @Inject(PASSWORD_HASHER) private readonly passwordHasher: PasswordHasher,
     @Inject(UNIT_OF_WORK) private readonly unitOfWork: UnitOfWork,
+    private readonly sendWelcomeEmail: SendWelcomeEmailUseCase,
   ) {}
 
   async execute(data: RegisterDto) {
@@ -64,6 +66,13 @@ export class RegisterUseCase {
         await this.linkCollaboratorProfile(repositories, created, profile);
       }
       return created;
+    });
+
+    // Sin await: el correo no debe retrasar la respuesta ni hacerla fallar (el caso de uso no lanza).
+    void this.sendWelcomeEmail.execute({
+      fullName: user.fullName,
+      email: user.email,
+      role: user.role,
     });
 
     return toUserResponse(user);

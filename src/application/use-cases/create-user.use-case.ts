@@ -7,12 +7,14 @@ import {
 } from '../../shared/interfaces/tokens';
 import { CreateUserDto } from '../dto/create-user.dto';
 import { toUserResponse } from '../mappers/user-response.mapper';
+import { SendWelcomeEmailUseCase } from './send-welcome-email.use-case';
 
 @Injectable()
 export class CreateUserUseCase {
   constructor(
     @Inject(USER_REPOSITORY) private readonly userRepository: UserRepository,
     @Inject(PASSWORD_HASHER) private readonly passwordHasher: PasswordHasher,
+    private readonly sendWelcomeEmail: SendWelcomeEmailUseCase,
   ) {}
 
   async execute(data: CreateUserDto) {
@@ -31,6 +33,13 @@ export class CreateUserUseCase {
       email,
       passwordHash,
       role,
+    });
+
+    // Sin await: el correo no debe retrasar la respuesta ni hacerla fallar (el caso de uso no lanza).
+    void this.sendWelcomeEmail.execute({
+      fullName: user.fullName,
+      email: user.email,
+      role: user.role,
     });
 
     return toUserResponse(user);
