@@ -12,6 +12,7 @@ import {
 import { AVAILABILITY_STATUSES } from '../../../domain/entities/availability-status.type';
 import { COLLABORATOR_SOURCES } from '../../../domain/entities/collaborator-source.type';
 import { PERSON_TYPES } from '../../../domain/entities/person-type.type';
+import { EMBEDDING_COLUMN_DIMENSIONS } from './required-profile.orm-entity';
 import { CollaboratorSkillOrmEntity } from './collaborator-skill.orm-entity';
 import { ExperienceOrmEntity } from './experience.orm-entity';
 import { ProgramOrmEntity } from './program.orm-entity';
@@ -88,6 +89,22 @@ export class CollaboratorOrmEntity {
 
   @Column({ default: true })
   active: boolean;
+
+  // Embedding del perfil para el matchmaking semántico (RF15). `select: false`: solo lo lee el matchmaking.
+  @Column({
+    type: 'vector',
+    length: EMBEDDING_COLUMN_DIMENSIONS,
+    nullable: true,
+    select: false,
+  })
+  profileEmbedding?: number[] | null;
+
+  @Column({ type: 'timestamptz', nullable: true })
+  embeddingUpdatedAt: Date | null;
+
+  /** Modelo que generó `profileEmbedding`: si no es el actual, el embedding está desactualizado. */
+  @Column({ type: 'varchar', length: 80, nullable: true })
+  embeddingModel: string | null;
 
   @OneToMany(() => CollaboratorSkillOrmEntity, (skill) => skill.collaborator, {
     cascade: true,

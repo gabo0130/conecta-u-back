@@ -225,7 +225,269 @@ const SKILLS: SeedSkill[] = [
     category: 'GESTION',
   },
   { name: 'Creatividad', type: 'HABILIDAD_BLANDA', category: 'OTRA' },
-  { name: 'Adaptabilidad', type: 'HABILIDAD_BLANDA', category: 'OTRA' },
+  { name: 'Adaptabilidad', type: 'HABILIDAD_BLANDA', category: 'OTRA' }, // Ampliación del catálogo (Iteración 2): más vocabulario para que el análisis con IA mapee sus habilidades.
+  {
+    name: 'C#',
+    type: 'CONOCIMIENTO',
+    category: 'LENGUAJE',
+    synonyms: ['csharp', 'c sharp'],
+  },
+  { name: 'PHP', type: 'CONOCIMIENTO', category: 'LENGUAJE' },
+  {
+    name: 'C++',
+    type: 'CONOCIMIENTO',
+    category: 'LENGUAJE',
+    synonyms: ['cpp'],
+  },
+  {
+    name: 'Angular',
+    type: 'CONOCIMIENTO',
+    category: 'FRAMEWORK',
+    synonyms: ['angularjs'],
+  },
+  {
+    name: 'Vue.js',
+    type: 'CONOCIMIENTO',
+    category: 'FRAMEWORK',
+    synonyms: ['vue', 'vuejs'],
+  },
+  { name: 'Django', type: 'CONOCIMIENTO', category: 'FRAMEWORK' },
+  { name: 'Laravel', type: 'CONOCIMIENTO', category: 'FRAMEWORK' },
+  {
+    name: '.NET',
+    type: 'CONOCIMIENTO',
+    category: 'FRAMEWORK',
+    synonyms: ['dotnet', 'asp.net'],
+  },
+  {
+    name: 'Flutter',
+    type: 'CONOCIMIENTO',
+    category: 'FRAMEWORK',
+    synonyms: ['dart'],
+  },
+  {
+    name: 'SQL Server',
+    type: 'CONOCIMIENTO',
+    category: 'BASE_DATOS',
+    synonyms: ['sqlserver', 'mssql', 'microsoft sql server'],
+  },
+  { name: 'Firebase', type: 'CONOCIMIENTO', category: 'BASE_DATOS' },
+  {
+    name: 'Linux',
+    type: 'CONOCIMIENTO',
+    category: 'NUBE_DEVOPS',
+    synonyms: ['ubuntu', 'debian'],
+  },
+  {
+    name: 'Kubernetes',
+    type: 'CONOCIMIENTO',
+    category: 'NUBE_DEVOPS',
+    synonyms: ['k8s'],
+  },
+  {
+    name: 'CI/CD',
+    type: 'CONOCIMIENTO',
+    category: 'NUBE_DEVOPS',
+    synonyms: ['cicd', 'integración continua', 'despliegue continuo'],
+  },
+  {
+    name: 'Estadística',
+    type: 'CONOCIMIENTO',
+    category: 'DATOS_IA',
+    synonyms: ['estadistica'],
+  },
+  {
+    name: 'Inteligencia artificial',
+    type: 'CONOCIMIENTO',
+    category: 'DATOS_IA',
+    synonyms: ['ia', 'ai'],
+  },
+  {
+    name: 'TensorFlow',
+    type: 'CONOCIMIENTO',
+    category: 'DATOS_IA',
+    synonyms: ['keras'],
+  },
+  { name: 'Tableau', type: 'CONOCIMIENTO', category: 'DATOS_IA' },
+  {
+    name: 'Machine Learning',
+    type: 'CONOCIMIENTO',
+    category: 'DATOS_IA',
+    synonyms: ['aprendizaje automático', 'ml'],
+  },
+  {
+    name: 'GitHub',
+    type: 'CONOCIMIENTO',
+    category: 'HERRAMIENTA',
+    synonyms: ['gitlab'],
+  },
+  {
+    name: 'Raspberry Pi',
+    type: 'CONOCIMIENTO',
+    category: 'HERRAMIENTA',
+    synonyms: ['raspberrypi'],
+  },
+  {
+    name: 'Diseño de interfaces',
+    type: 'CONOCIMIENTO',
+    category: 'DISENO_UX',
+    synonyms: ['ui', 'diseño ui'],
+  },
+  {
+    name: 'Investigación de usuarios',
+    type: 'CONOCIMIENTO',
+    category: 'DISENO_UX',
+    synonyms: ['user research', 'ux research'],
+  },
+  {
+    name: 'Metodologías ágiles',
+    type: 'CONOCIMIENTO',
+    category: 'METODOLOGIA',
+    synonyms: ['agile', 'agiles', 'kanban'],
+  },
+  {
+    name: 'Design Thinking',
+    type: 'CONOCIMIENTO',
+    category: 'METODOLOGIA',
+    synonyms: ['pensamiento de diseño'],
+  },
+  {
+    name: 'Metodología de la investigación',
+    type: 'CONOCIMIENTO',
+    category: 'METODOLOGIA',
+    synonyms: ['investigación científica', 'método científico'],
+  },
+  {
+    name: 'Ciberseguridad',
+    type: 'CONOCIMIENTO',
+    category: 'OTRA',
+    synonyms: ['seguridad informática', 'seguridad de la información'],
+  },
+  {
+    name: 'Redes de computadores',
+    type: 'CONOCIMIENTO',
+    category: 'OTRA',
+    synonyms: ['redes', 'networking'],
+  },
+  {
+    name: 'APIs REST',
+    type: 'CONOCIMIENTO',
+    category: 'OTRA',
+    synonyms: ['rest', 'api rest', 'restful', 'web services'],
+  },
+  {
+    name: 'Desarrollo de software',
+    type: 'COMPETENCIA',
+    category: 'OTRA',
+    synonyms: ['programación', 'ingeniería de software'],
+  },
+  {
+    name: 'Desarrollo web',
+    type: 'COMPETENCIA',
+    category: 'OTRA',
+    synonyms: ['frontend', 'backend', 'full stack', 'fullstack'],
+  },
+  {
+    name: 'Desarrollo móvil',
+    type: 'COMPETENCIA',
+    category: 'OTRA',
+    synonyms: ['apps móviles', 'aplicaciones móviles', 'android', 'ios'],
+  },
+  {
+    name: 'Análisis de requisitos',
+    type: 'COMPETENCIA',
+    category: 'OTRA',
+    synonyms: ['levantamiento de requisitos', 'ingeniería de requisitos'],
+  },
+  {
+    name: 'Pruebas de software',
+    type: 'COMPETENCIA',
+    category: 'OTRA',
+    synonyms: ['testing', 'qa', 'aseguramiento de calidad'],
+  },
+  {
+    name: 'Arquitectura de software',
+    type: 'COMPETENCIA',
+    category: 'OTRA',
+    synonyms: ['microservicios', 'arquitectura de sistemas'],
+  },
+  {
+    name: 'Diseño de bases de datos',
+    type: 'COMPETENCIA',
+    category: 'OTRA',
+    synonyms: ['modelado de datos', 'modelo entidad relación'],
+  },
+  {
+    name: 'Documentación técnica',
+    type: 'COMPETENCIA',
+    category: 'OTRA',
+    synonyms: ['documentación', 'manuales técnicos'],
+  },
+  {
+    name: 'Redacción académica',
+    type: 'COMPETENCIA',
+    category: 'OTRA',
+    synonyms: [
+      'escritura académica',
+      'artículos científicos',
+      'redacción científica',
+    ],
+  },
+  {
+    name: 'Capacitación y docencia',
+    type: 'COMPETENCIA',
+    category: 'OTRA',
+    synonyms: ['docencia', 'enseñanza', 'capacitación', 'tutoría'],
+  },
+  { name: 'Pensamiento crítico', type: 'HABILIDAD_BLANDA', category: 'OTRA' },
+  {
+    name: 'Empatía',
+    type: 'HABILIDAD_BLANDA',
+    category: 'TRABAJO_EQUIPO',
+    synonyms: ['empatia'],
+  },
+  {
+    name: 'Iniciativa',
+    type: 'HABILIDAD_BLANDA',
+    category: 'LIDERAZGO',
+    synonyms: ['proactividad'],
+  },
+  {
+    name: 'Responsabilidad',
+    type: 'HABILIDAD_BLANDA',
+    category: 'OTRA',
+    synonyms: ['compromiso'],
+  },
+  { name: 'Negociación', type: 'HABILIDAD_BLANDA', category: 'COMUNICACION' },
+  {
+    name: 'Manejo de conflictos',
+    type: 'HABILIDAD_BLANDA',
+    category: 'TRABAJO_EQUIPO',
+    synonyms: ['resolución de conflictos'],
+  },
+  {
+    name: 'Hablar en público',
+    type: 'HABILIDAD_BLANDA',
+    category: 'COMUNICACION',
+    synonyms: ['oratoria', 'presentaciones orales'],
+  },
+  {
+    name: 'Aprendizaje autónomo',
+    type: 'HABILIDAD_BLANDA',
+    category: 'OTRA',
+    synonyms: ['autoaprendizaje', 'aprendizaje continuo'],
+  },
+  {
+    name: 'Orientación al detalle',
+    type: 'HABILIDAD_BLANDA',
+    category: 'GESTION',
+    synonyms: ['atención al detalle'],
+  },
+  {
+    name: 'Escucha activa',
+    type: 'HABILIDAD_BLANDA',
+    category: 'COMUNICACION',
+  },
 ];
 
 interface SeedProjectType {
@@ -887,6 +1149,7 @@ async function seed() {
   for (const skill of SKILLS) {
     const normalizedName = normalizeSkillName(skill.name);
     let entity = await skills.findOne({ where: { normalizedName } });
+    const synonyms = (skill.synonyms ?? []).map(normalizeSkillName);
     if (!entity) {
       entity = await skills.save(
         skills.create({
@@ -894,12 +1157,18 @@ async function seed() {
           normalizedName,
           type: skill.type,
           category: skill.category,
-          synonyms: [
-            ...new Set((skill.synonyms ?? []).map(normalizeSkillName)),
-          ],
+          synonyms: [...new Set(synonyms)],
           status: 'ACTIVA',
         }),
       );
+      counters.skills++;
+    } else if (entity.status === 'PENDIENTE') {
+      // Una propuesta de un usuario que el catálogo oficial ya incluye: se adopta como ACTIVA.
+      entity.status = 'ACTIVA';
+      entity.type = skill.type;
+      entity.category = skill.category;
+      entity.synonyms = [...new Set([...entity.synonyms, ...synonyms])];
+      entity = await skills.save(entity);
       counters.skills++;
     }
     skillIdByName.set(skill.name, entity.id);

@@ -767,6 +767,444 @@
       ]
     },
     {
+      "name": "AI Analysis (Líder)",
+      "item": [
+        {
+          "name": "Request Analysis (RF12)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/projects/{{projectId}}/analysis",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "projects",
+                "{{projectId}}",
+                "analysis"
+              ]
+            },
+            "description": "Pide el análisis con IA del proyecto (solo su LIDER dueño). Es síncrono: con Gemini tarda entre 10 y 45 s, así que sube el timeout de Postman (Settings > Request timeout) a 60000 ms. 201 con el análisis y sus perfiles; 403 si no eres el dueño; 409 si ya hay un análisis en curso o llegaste a 5 por día; 422 si faltan título, resumen u objetivos; 503 si la IA no está disponible (el proyecto vuelve a su estado anterior). Con AI_PROVIDER=fake responde al instante."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Request Analysis responde 201', function () {",
+                  "  pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "if (pm.response.code === 201) {",
+                  "  const profiles = pm.response.json().profiles || [];",
+                  "  if (profiles.length) pm.environment.set('requiredProfileId', profiles[0].id);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Latest Analysis (RF13-RF14)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/projects/{{projectId}}/analysis",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "projects",
+                "{{projectId}}",
+                "analysis"
+              ]
+            },
+            "description": "Último análisis COMPLETADO con sus perfiles activos (los de la IA y los manuales), cada uno con `source` (IA|MANUAL), justificación y habilidades (`catalogued:false` = no está en el catálogo). `outdated:true` si el proyecto cambió desde el análisis. LIDER dueño o ADMIN. 404 si el proyecto aún no tiene análisis."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Get Latest Analysis responde 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "List Analyses",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/projects/{{projectId}}/analyses?page=1&pageSize=20",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "projects",
+                "{{projectId}}",
+                "analyses?page=1&pageSize=20"
+              ]
+            },
+            "description": "Historial de análisis del proyecto (fecha, estado, proveedor, modelo, versión del prompt, tokens y duración). LIDER dueño o ADMIN."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('List Analyses responde 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create Required Profile (RF13)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/projects/{{projectId}}/required-profiles",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "projects",
+                "{{projectId}}",
+                "required-profiles"
+              ]
+            },
+            "description": "Agrega un perfil MANUAL (solo el LIDER dueño). `skills` (1 a 8) salen del catálogo ACTIVO: corre Catalogs > Search Skills antes (guarda skillId). description y justification son opcionales. 201; 404 si una habilidad no existe; 422 si hay habilidades repetidas o el cuerpo es inválido.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Diseñador de interfaces\",\n  \"description\": \"Prototipa y diseña las pantallas del sistema.\",\n  \"justification\": \"El entregable principal es una aplicación web que necesita diseño de interfaz.\",\n  \"quantity\": 1,\n  \"priority\": \"MEDIA\",\n  \"minWeeklyHours\": 6,\n  \"skills\": [\n    {\n      \"skillId\": \"{{skillId}}\",\n      \"minLevel\": \"INTERMEDIO\",\n      \"importance\": \"ALTA\"\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Create Required Profile responde 201', function () {",
+                  "  pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "if (pm.response.code === 201) {",
+                  "  pm.environment.set('requiredProfileId', pm.response.json().id);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Update Required Profile (RF13)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/projects/{{projectId}}/required-profiles/{{requiredProfileId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "projects",
+                "{{projectId}}",
+                "required-profiles",
+                "{{requiredProfileId}}"
+              ]
+            },
+            "description": "Edita un perfil (de la IA o manual). Todos los campos son opcionales; `skills` reemplaza la lista completa. `{ \"active\": false }` descarta el perfil. 404 si el perfil no es de este proyecto.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"quantity\": 2,\n  \"skills\": [\n    {\n      \"skillId\": \"{{skillId}}\",\n      \"minLevel\": \"AVANZADO\",\n      \"importance\": \"ALTA\"\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Update Required Profile responde 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Discard Required Profile",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/projects/{{projectId}}/required-profiles/{{requiredProfileId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "projects",
+                "{{projectId}}",
+                "required-profiles",
+                "{{requiredProfileId}}"
+              ]
+            },
+            "description": "Descarta el perfil: deja de aparecer en el análisis.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"active\": false\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Discard Required Profile responde 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Recommendations (Líder)",
+      "item": [
+        {
+          "name": "Generate Recommendations (RF15-RF16)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/projects/{{projectId}}/recommendations",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "projects",
+                "{{projectId}}",
+                "recommendations"
+              ]
+            },
+            "description": "Calcula y guarda las mejores personas por perfil requerido (solo el LIDER dueño). Necesita un análisis previo (409 si no hay). Reemplaza las recomendaciones anteriores del proyecto. Excluye al propio líder, a quien no dio consentimiento y, por defecto, a quien figura NO_DISPONIBLE. Tarda 1-3 s (más si hay embeddings pendientes): usa timeout de 60000 ms.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"includeUnavailable\": false\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Generate Recommendations responde 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "if (pm.response.code === 200) {",
+                  "  const profiles = pm.response.json().profiles || [];",
+                  "  const first = profiles.flatMap(p => p.recommendations)[0];",
+                  "  if (first) pm.environment.set('recommendationId', first.id);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "List Recommendations (RF16)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/projects/{{projectId}}/recommendations?includeUnavailable=false",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "projects",
+                "{{projectId}}",
+                "recommendations?includeUnavailable=false"
+              ]
+            },
+            "description": "Lista ordenada por perfil (LIDER dueño o ADMIN). Opcional: profileId=<uuid> para un solo perfil e includeUnavailable=true|false. Sin correo, teléfono ni enlaces de las personas. Guarda recommendationId de la primera recomendación."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('List Recommendations responde 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "if (pm.response.code === 200) {",
+                  "  const first = (pm.response.json().profiles || []).flatMap(p => p.recommendations)[0];",
+                  "  if (first) pm.environment.set('recommendationId', first.id);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Recommendation Detail (RF17)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/projects/{{projectId}}/recommendations/{{recommendationId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "projects",
+                "{{projectId}}",
+                "recommendations",
+                "{{recommendationId}}"
+              ]
+            },
+            "description": "Desglose del puntaje de una recomendación: habilidades que coinciden y faltantes, experiencia relevante, disponibilidad, similitud semántica y pesos aplicados. LIDER dueño o ADMIN. 404 si no existe o es de otro proyecto."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Get Recommendation Detail responde 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Embeddings (Admin)",
+      "item": [
+        {
+          "name": "Rebuild Embeddings",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/embeddings/rebuild",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "embeddings",
+                "rebuild"
+              ]
+            },
+            "description": "Recalcula los embeddings de las personas activas y con consentimiento cuyo embedding falta, quedó desactualizado (cambia su resumen, habilidades o experiencias) o lo generó otro modelo, y los de los perfiles requeridos activos en la misma situación. Respuesta: `{ processed, skipped, failed, remaining }` de personas + `requiredProfiles: { processed, failed, remaining }`. `force:true` invalida todos (personas y perfiles) antes de recalcular; al cambiar de modelo no hace falta, los de otro modelo ya se regeneran. `limit` (1-500, por defecto 200) acota cada llamada; si algún `remaining` > 0, vuelve a llamar. Solo ADMIN.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"force\": false,\n  \"limit\": 200\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Rebuild Embeddings responde 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
       "name": "Import (Admin)",
       "description": "RF23-RF24. Requiere estar logueado como ADMIN (corre Auth > Login - Admin primero).",
       "item": [

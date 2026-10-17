@@ -24,3 +24,18 @@ export const IMPORT_RUN_REPOSITORY = Symbol('IMPORT_RUN_REPOSITORY');
 export const MAIL_SENDER = Symbol('MAIL_SENDER');
 /** URL pública del frontend, para los enlaces de los correos. */
 export const APP_URL = Symbol('APP_URL');
+export const PROJECT_ANALYZER = Symbol('PROJECT_ANALYZER');
+export const EMBEDDING_PROVIDER = Symbol('EMBEDDING_PROVIDER');
+export const PROJECT_ANALYSIS_REPOSITORY = Symbol(
+  'PROJECT_ANALYSIS_REPOSITORY',
+);
+export const REQUIRED_PROFILE_REPOSITORY = Symbol(
+  'REQUIRED_PROFILE_REPOSITORY',
+);
+export const COLLABORATOR_EMBEDDING_REPOSITORY = Symbol(
+  'COLLABORATOR_EMBEDDING_REPOSITORY',
+);
+export const RECOMMENDATION_REPOSITORY = Symbol('RECOMMENDATION_REPOSITORY');
+/** Pesos del puntaje y tamaño de la lista de recomendaciones (`MATCH_WEIGHTS`, `MATCH_TOP_N`). */
+export const MATCH_SETTINGS = Symbol('MATCH_SETTINGS');
+export const ANALYSIS_TIMEOUTS = Symbol('ANALYSIS_TIMEOUTS');

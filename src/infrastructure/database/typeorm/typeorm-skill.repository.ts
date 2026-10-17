@@ -38,6 +38,14 @@ export class TypeOrmSkillRepository implements SkillRepository {
     return skills.map(toSkillEntity);
   }
 
+  async findAllActive(): Promise<SkillEntity[]> {
+    const skills = await this.repository.find({
+      where: { status: 'ACTIVA' },
+      order: { name: 'ASC' },
+    });
+    return skills.map(toSkillEntity);
+  }
+
   async findByNormalizedNameOrSynonym(
     normalized: string,
   ): Promise<SkillEntity | null> {

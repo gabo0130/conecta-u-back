@@ -1,17 +1,14 @@
 import { NestFactory } from '@nestjs/core';
-import { ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app.module';
-import { validationExceptionFactory } from './presentation/validation/validation-exception.factory';
-import { HttpExceptionFilter } from './shared/exceptions/http-exception.filter';
+import { configureApp } from './presentation/configure-app';
 import { AppLoggerService } from './shared/logging/logger.service';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, { bufferLogs: true });
 
-  const logger = app.get(AppLoggerService);
-  app.useLogger(logger);
-  app.setGlobalPrefix('api');
+  app.useLogger(app.get(AppLoggerService));
+  configureApp(app);
 
   const swaggerConfig = new DocumentBuilder()
     .setTitle('Conecta U API')
@@ -33,19 +30,6 @@ async function bootstrap() {
     allowedHeaders: ['Content-Type', 'Authorization'],
     optionsSuccessStatus: 204,
   });
-
-  app.useGlobalPipes(
-    new ValidationPipe({
-      whitelist: true,
-      transform: true,
-      forbidNonWhitelisted: true,
-      exceptionFactory: validationExceptionFactory,
-    }),
-  );
-
-  app.useGlobalFilters(
-    new HttpExceptionFilter(logger.forContext(HttpExceptionFilter.name)),
-  );
 
   await app.listen(process.env.PORT ?? 4000);
 }

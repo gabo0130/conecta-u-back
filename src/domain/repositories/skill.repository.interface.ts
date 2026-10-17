@@ -42,6 +42,8 @@ export interface SkillRepository {
   findByNormalizedNameOrSynonym(
     normalized: string,
   ): Promise<SkillEntity | null>;
+  /** Catálogo completo de habilidades ACTIVAS (para el prompt del análisis con IA). */
+  findAllActive(): Promise<SkillEntity[]>;
   /** Autocompletar (capado, sin paginar): lo usa el `SkillPicker`. */
   search(filter: SkillSearchFilter): Promise<SkillEntity[]>;
   /** Listado paginado con filtros, para la pantalla de administración (RF22). */
