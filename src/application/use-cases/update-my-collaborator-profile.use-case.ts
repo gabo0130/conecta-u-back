@@ -1,5 +1,15 @@
-import { Inject, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ForbiddenException,
+  Inject,
+  Injectable,
+  NotFoundException,
+  UnprocessableEntityException,
+} from '@nestjs/common';
 import { consentFields } from '../../domain/entities/data-consent';
+import {
+  ALTERNATE_EMAIL_SAME_ERROR,
+  isSameEmail,
+} from '../../domain/entities/person-identification';
 import type { CollaboratorRepository } from '../../domain/repositories/collaborator.repository.interface';
 import type { ProgramRepository } from '../../domain/repositories/program.repository.interface';
 import {
@@ -10,6 +20,7 @@ import { pickDefined } from '../../shared/utils/pick-defined';
 import { UpdateCollaboratorDto } from '../dto/update-collaborator.dto';
 import { toCollaboratorProfileResponse } from '../mappers/collaborator-response.mapper';
 import { findProgramOrFail } from '../support/catalog-references';
+import { assertDocumentChange } from '../support/person-document';
 import {
   COLLABORATOR_PROFILE_NOT_FOUND,
   findMyCollaboratorOrFail,
@@ -30,6 +41,20 @@ export class UpdateMyCollaboratorProfileUseCase {
       userId,
     );
 
+    if (isSameEmail(data.alternateEmail, collaborator.email)) {
+      throw new UnprocessableEntityException({
+        message: ALTERNATE_EMAIL_SAME_ERROR,
+      });
+    }
+    const changesDocument = await assertDocumentChange(
+      this.collaboratorRepository,
+      collaborator,
+      data,
+    );
+    // Completar un documento que falta sí; cambiar uno guardado, solo el ADMIN (evita suplantación).
+    if (changesDocument && collaborator.documentNumber) {
+      throw new ForbiddenException({ message: DOCUMENT_CHANGE_FORBIDDEN });
+    }
     if (data.programId !== undefined) {
       await findProgramOrFail(this.programRepository, data.programId);
     }
@@ -47,3 +72,6 @@ export class UpdateMyCollaboratorProfileUseCase {
     return toCollaboratorProfileResponse(updated);
   }
 }
+
+export const DOCUMENT_CHANGE_FORBIDDEN =
+  'Solo el administrador puede cambiar tu documento. Escríbele si hay un error.';

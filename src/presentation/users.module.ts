@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { PersonAccountService } from '../application/support/person-account.service';
 import { CreateUserUseCase } from '../application/use-cases/create-user.use-case';
 import { DeleteUserUseCase } from '../application/use-cases/delete-user.use-case';
 import { GetUserByIdUseCase } from '../application/use-cases/get-user-by-id.use-case';
@@ -16,6 +17,7 @@ import { SecurityModule } from './security.module';
   controllers: [AccessController, UsersController],
   providers: [
     CreateUserUseCase,
+    PersonAccountService,
     DeleteUserUseCase,
     GetUserByIdUseCase,
     ListRolesUseCase,

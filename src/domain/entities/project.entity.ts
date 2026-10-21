@@ -14,6 +14,8 @@ export interface ProjectProps {
   knownSkills: SkillEntity[];
   deliverables: DeliverableEntity[];
   leaderId: string;
+  /** Quién lo registró: el líder o el ADMIN a su nombre (null en proyectos anteriores a v2.1). */
+  createdById?: string | null;
   status: ProjectStatus;
   createdAt?: Date;
   updatedAt?: Date;
@@ -31,6 +33,7 @@ export class ProjectEntity {
   readonly knownSkills: SkillEntity[];
   readonly deliverables: DeliverableEntity[];
   readonly leaderId: string;
+  readonly createdById: string | null;
   readonly status: ProjectStatus;
   readonly createdAt?: Date;
   readonly updatedAt?: Date;
@@ -47,6 +50,7 @@ export class ProjectEntity {
     this.knownSkills = props.knownSkills;
     this.deliverables = props.deliverables;
     this.leaderId = props.leaderId;
+    this.createdById = props.createdById ?? null;
     this.status = props.status;
     this.createdAt = props.createdAt;
     this.updatedAt = props.updatedAt;

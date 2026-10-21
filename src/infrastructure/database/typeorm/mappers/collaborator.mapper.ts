@@ -60,6 +60,13 @@ export function toCollaboratorEntity(
     dataConsentAt: collaborator.dataConsentAt,
     source: collaborator.source as CollaboratorEntity['source'],
     active: collaborator.active,
+    documentType:
+      collaborator.documentType as CollaboratorEntity['documentType'],
+    documentNumber: collaborator.documentNumber,
+    phone: collaborator.phone,
+    nationality: collaborator.nationality,
+    alternateEmail: collaborator.alternateEmail,
+    institutionalCode: collaborator.institutionalCode,
     skills: (collaborator.skills ?? []).map(toCollaboratorSkillEntity),
     experiences: (collaborator.experiences ?? []).map(toExperienceEntity),
   });

@@ -51,13 +51,13 @@ Los casos de uso dependen de interfaces (`UserRepository`, `CollaboratorReposito
 
 | Método | Ruta | RF | Rol | Notas |
 |---|---|---|---|---|
-| POST | `/api/auth/register` | RF1 | público | `LIDER`\|`COLABORADOR`; si es `COLABORADOR`, vincula o crea el colaborador por correo |
+| POST | `/api/auth/register` | RF1 | público | `LIDER`\|`COLABORADOR`; v2.1: toda cuenta trae `collaborator` con documento, teléfono y nacionalidad; vincula por documento, luego por correo, o crea la persona; 409 si el documento ya tiene cuenta |
 | POST | `/api/auth/login` | RF2 | público | rechaza usuarios inactivos; devuelve `access_token`, `refresh_token`, `user` |
 | POST | `/api/auth/refresh` | — | público | renueva el access token |
 | POST | `/api/auth/logout` | — | JWT | |
 | GET | `/api/auth/me` | — | JWT | |
-| POST | `/api/collaborators/me` | RF3 | LIDER sin perfil | crea/vincula el perfil técnico propio |
-| GET/PATCH | `/api/collaborators/me` | RF3 | COLABORADOR, LIDER con perfil | |
+| POST | `/api/collaborators/me` | RF3 | cuenta sin persona | crea/vincula el perfil propio (con identificación v2.1) |
+| GET/PATCH | `/api/collaborators/me` | RF3 | COLABORADOR, LIDER con perfil | incluye identificación; el PATCH corrige teléfono, nacionalidad, correo alterno y código (el documento solo lo cambia el ADMIN) |
 | GET/POST | `/api/collaborators/me/skills` | RF4 | ídem | contra el catálogo de habilidades |
 | PATCH/DELETE | `/api/collaborators/me/skills/:id` | RF4 | ídem | solo el dueño |
 | POST | `/api/collaborators/me/experience` | RF5 | ídem | respuesta con `durationMonths` |
@@ -67,7 +67,7 @@ Los casos de uso dependen de interfaces (`UserRepository`, `CollaboratorReposito
 | GET | `/api/catalogs/skills?q=&type=` | RF4, RF5, RF8 | JWT | búsqueda con sinónimos |
 | POST | `/api/catalogs/skills` | RF4 | JWT | propone una habilidad (`status: PENDIENTE`) |
 | GET | `/api/catalogs/project-types`, `/api/catalogs/project-categories` | RF7, RF9 | LIDER | |
-| POST | `/api/projects` | RF7–RF10 | LIDER | valida `typeData` contra la plantilla del tipo |
+| POST | `/api/projects` | RF7–RF10 | LIDER, ADMIN | valida `typeData` contra la plantilla del tipo (incluye `tags` y `currency`, v2.1); el ADMIN envía `leaderId` (líder activo) y el proyecto queda de ese líder (A5) |
 | GET | `/api/projects` | RF11 | LIDER | solo sus proyectos |
 | GET/PATCH | `/api/projects/:id` | RF11 | LIDER (dueño) | |
 | POST | `/api/projects/:id/analysis` | RF12 | LIDER (dueño) | análisis con IA, síncrono (15–45 s con Gemini); 409 en curso o 5/día, 422 proyecto incompleto, 503 IA caída |
@@ -78,7 +78,8 @@ Los casos de uso dependen de interfaces (`UserRepository`, `CollaboratorReposito
 | GET | `/api/projects/:id/recommendations?profileId=&includeUnavailable=` | RF16 | LIDER (dueño), ADMIN | lista ordenada por perfil; sin correo ni teléfono |
 | GET | `/api/projects/:id/recommendations/:recommendationId` | RF17 | LIDER (dueño), ADMIN | desglose del puntaje (`breakdown`) |
 | POST | `/api/admin/embeddings/rebuild` | RF15 | ADMIN | recalcula embeddings de personas y de perfiles requeridos; `{force?, limit?}` |
-| GET | `/api/admin/import/collaborators/template` | RF23 | ADMIN | descarga la plantilla .xlsx |
+| PATCH | `/api/admin/collaborators/:id` | RF21 | ADMIN | v2.1: corrige identificación y contacto, incluido el documento (409 si es de otra persona) |
+| GET | `/api/admin/import/collaborators/template` | RF23 | ADMIN | descarga la plantilla .xlsx (v2.1: columnas de identificación) |
 | POST | `/api/admin/import/collaborators` | RF23–RF24 | ADMIN | multipart .xlsx, máx. 5 MB |
 | GET | `/api/users`, `/api/users/:id` | — | ADMIN | gestión de usuarios |
 | POST/PATCH/DELETE | `/api/users/:id` | — | ADMIN | |
@@ -108,6 +109,8 @@ npm install
 ```bash
 cp .env.example .env
 ```
+
+> **Ajustes v2.1 (cliente, 19/10/2026).** Cada persona tiene `documentType` (`CC`, `TI`, `CE`, `PPT`, `PA`) + `documentNumber` únicos (índice parcial; la PK sigue siendo el uuid), `phone`, `nationality`, `alternateEmail` e `institutionalCode` (migración `AddPersonIdentification`). En la base son `NULL` para las personas anteriores; los DTO de registro, alta de usuario, perfil propio e importación los exigen. Solo los ven la propia persona y el ADMIN (`identificationComplete` marca a quien le faltan); nunca salen en recomendaciones ni en vistas del líder. La plantilla Excel agrega `tipo_documento`, `numero_documento`, `telefono`, `nacionalidad`, `correo_alterno` y `codigo`; las hojas Habilidades y Experiencia se asocian por `numero_documento` o, si está vacío, por `correo`. Contrato: [`notes/ajustes-cliente-v2.1.md`](notes/ajustes-cliente-v2.1.md).
 
 > **Correo de bienvenida.** Al crear una cuenta (registro propio o alta por el ADMIN) se envía un correo según el rol. Se configura con `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE`, `SMTP_USER`, `SMTP_PASS`, `MAIL_FROM` y `APP_URL` (enlace del botón). Sin `SMTP_HOST` la API funciona igual y solo registra en el log que no se envió. Un fallo del SMTP nunca hace fallar el registro.
 

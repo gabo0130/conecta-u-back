@@ -1,5 +1,6 @@
 import type { AvailabilityStatus } from '../../domain/entities/availability-status.type';
 import type { ExperienceType } from '../../domain/entities/experience-type.type';
+import type { DocumentType } from '../../domain/entities/person-identification';
 import type { Level } from '../../domain/entities/level.type';
 import type { PersonType } from '../../domain/entities/person-type.type';
 import type { SkillCategory } from '../../domain/entities/skill-category.type';
@@ -14,6 +15,13 @@ export const COLLABORATOR_HEADERS = [
   'correo',
   'nombres',
   'apellidos',
+  // v2.1 (A1–A4): identificación y contacto.
+  'tipo_documento',
+  'numero_documento',
+  'telefono',
+  'nacionalidad',
+  'correo_alterno',
+  'codigo',
   'tipo_persona',
   'programa',
   'semestre',
@@ -25,7 +33,9 @@ export const COLLABORATOR_HEADERS = [
   'autoriza_datos',
 ] as const;
 
+// Las hojas hijas se asocian a la persona por documento o, si viene vacío, por correo.
 export const SKILL_HEADERS = [
+  'numero_documento',
   'correo',
   'habilidad',
   'tipo',
@@ -36,6 +46,7 @@ export const SKILL_HEADERS = [
 ] as const;
 
 export const EXPERIENCE_HEADERS = [
+  'numero_documento',
   'correo',
   'tipo',
   'rol',
@@ -63,6 +74,20 @@ export function normalizeLabel(
 export const PERSON_TYPE_LABELS: Record<string, PersonType> = {
   estudiante: 'ESTUDIANTE',
   docente: 'DOCENTE',
+};
+
+// Se acepta la sigla o el nombre completo ("CC" o "Cédula de ciudadanía").
+export const DOCUMENT_TYPE_LABELS: Record<string, DocumentType> = {
+  cc: 'CC',
+  'cedula de ciudadania': 'CC',
+  ti: 'TI',
+  'tarjeta de identidad': 'TI',
+  ce: 'CE',
+  'cedula de extranjeria': 'CE',
+  ppt: 'PPT',
+  'permiso por proteccion temporal': 'PPT',
+  pa: 'PA',
+  pasaporte: 'PA',
 };
 
 export const AVAILABILITY_LABELS: Record<string, AvailabilityStatus> = {

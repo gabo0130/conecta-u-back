@@ -2,6 +2,7 @@ import {
   Column,
   CreateDateColumn,
   Entity,
+  Index,
   JoinColumn,
   ManyToOne,
   OneToMany,
@@ -19,6 +20,11 @@ import { ProgramOrmEntity } from './program.orm-entity';
 import { UserOrmEntity } from './user.orm-entity';
 
 @Entity({ name: 'collaborators' })
+// Documento de identidad = clave única de negocio (v2.1, A1); la PK técnica sigue siendo el uuid.
+@Index('UQ_collaborators_document', ['documentType', 'documentNumber'], {
+  unique: true,
+  where: '"documentNumber" IS NOT NULL',
+})
 export class CollaboratorOrmEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
@@ -89,6 +95,25 @@ export class CollaboratorOrmEntity {
 
   @Column({ default: true })
   active: boolean;
+
+  // Identificación y contacto (v2.1, A1–A4). NULL en personas anteriores; los DTO las exigen.
+  @Column({ type: 'varchar', length: 4, nullable: true })
+  documentType: string | null;
+
+  @Column({ type: 'varchar', length: 20, nullable: true })
+  documentNumber: string | null;
+
+  @Column({ type: 'varchar', length: 20, nullable: true })
+  phone: string | null;
+
+  @Column({ type: 'varchar', length: 60, nullable: true })
+  nationality: string | null;
+
+  @Column({ type: 'varchar', length: 254, nullable: true })
+  alternateEmail: string | null;
+
+  @Column({ type: 'varchar', length: 20, nullable: true })
+  institutionalCode: string | null;
 
   // Embedding del perfil para el matchmaking semántico (RF15). `select: false`: solo lo lee el matchmaking.
   @Column({

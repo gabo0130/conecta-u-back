@@ -124,8 +124,18 @@ function withoutContactData(project: ProjectInput): ProjectInput {
   };
 }
 
-/** Los campos de plantilla guardan texto, números o booleanos; cualquier otra cosa se ignora. */
+/**
+ * Los campos de plantilla guardan texto, números, booleanos o listas de palabras clave
+ * (v2.1); cualquier otra cosa se ignora.
+ */
 function scalarText(value: unknown): string {
+  if (Array.isArray(value)) {
+    return value
+      .filter((item): item is string => typeof item === 'string')
+      .map((item) => item.trim())
+      .filter(Boolean)
+      .join(', ');
+  }
   return typeof value === 'string' ||
     typeof value === 'number' ||
     typeof value === 'boolean'

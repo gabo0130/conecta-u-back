@@ -14,6 +14,10 @@ export const EMAILS = {
 } as const;
 
 export interface Scenario {
+  programId: string;
+  typeId: string;
+  categoryId: string;
+  ownerId: string;
   projectId: string;
   incompleteProjectId: string;
   skillIds: Record<'python' | 'databases' | 'management' | 'teamwork', string>;
@@ -97,14 +101,18 @@ export async function seedScenario(app: INestApplication): Promise<Scenario> {
   );
   const incompleteProjectId = await project('Proyecto sin objetivos', '');
 
+  let nextDocument = 1;
   const collaborator = async (
     firstName: string,
     options: { availability: string; consent: boolean; userId?: string },
   ) => {
+    // v2.1: identificación ficticia; la usan las pruebas de privacidad (nunca debe salir al líder).
+    const document = `99000000${String(nextDocument++).padStart(2, '0')}`;
     const id = await insert(
       `INSERT INTO collaborators (email, "firstName", "lastName", "personType", "programId", "availabilityStatus",
-         "weeklyHours", "dataConsent", summary, "userId")
-       VALUES ($1, $2, 'Prueba', 'ESTUDIANTE', $3, $4, 10, $5, 'Desarrollo en Python y bases de datos.', $6)`,
+         "weeklyHours", "dataConsent", summary, "userId", "documentType", "documentNumber", phone, nationality)
+       VALUES ($1, $2, 'Prueba', 'ESTUDIANTE', $3, $4, 10, $5, 'Desarrollo en Python y bases de datos.', $6,
+         'CC', $7, '3000000099', 'Colombiana')`,
       [
         `${firstName.toLowerCase()}@prueba.test`,
         firstName,
@@ -112,6 +120,7 @@ export async function seedScenario(app: INestApplication): Promise<Scenario> {
         options.availability,
         options.consent,
         options.userId ?? null,
+        document,
       ],
     );
     await ds.query(
@@ -123,6 +132,10 @@ export async function seedScenario(app: INestApplication): Promise<Scenario> {
   };
 
   return {
+    programId,
+    typeId,
+    categoryId,
+    ownerId,
     projectId,
     incompleteProjectId,
     skillIds,

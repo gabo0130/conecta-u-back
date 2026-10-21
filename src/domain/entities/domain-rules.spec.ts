@@ -145,3 +145,58 @@ describe('ProjectTypeEntity.validateTypeData', () => {
     ]);
   });
 });
+
+describe('ProjectTypeEntity.validateTypeData — palabras clave y pesos (v2.1, A6)', () => {
+  const type = new ProjectTypeEntity('t1', 'INV', 'Investigación', [
+    {
+      key: 'palabrasClave',
+      label: 'Palabras clave',
+      kind: 'tags',
+      required: true,
+      minItems: 3,
+      maxItems: 5,
+    },
+    { key: 'costo', label: 'Costo', kind: 'currency', required: false },
+  ]);
+
+  it('accepts 3 to 5 distinct keywords and a non negative integer amount', () => {
+    expect(
+      type.validateTypeData({
+        palabrasClave: ['IoT', 'Sensores', 'Alimentos'],
+        costo: 15000000,
+      }),
+    ).toEqual([]);
+  });
+
+  it.each([
+    [{ palabrasClave: [] }, 'Falta el campo obligatorio: Palabras clave'],
+    [
+      { palabrasClave: ['IoT', 'Datos'] },
+      'Palabras clave necesita entre 3 y 5 palabras clave',
+    ],
+    [
+      { palabrasClave: ['a', 'b', 'c', 'd', 'e', 'f'] },
+      'Palabras clave necesita entre 3 y 5 palabras clave',
+    ],
+    [
+      { palabrasClave: ['IoT', 'iot', 'Datos'] },
+      'Hay palabras clave repetidas en Palabras clave',
+    ],
+    [
+      { palabrasClave: 'IoT, Datos, Agua' },
+      'Valor inválido para el campo: Palabras clave',
+    ],
+    [
+      { palabrasClave: ['IoT', ' ', 'Agua'] },
+      'Valor inválido para el campo: Palabras clave',
+    ],
+  ])('rejects keywords %p', (data, error) => {
+    expect(type.validateTypeData(data)).toEqual([error]);
+  });
+
+  it.each([-1, 10.5, '1000'])('rejects the amount %p', (costo) => {
+    expect(
+      type.validateTypeData({ palabrasClave: ['a', 'b', 'c'], costo }),
+    ).toEqual(['Valor inválido para el campo: Costo']);
+  });
+});

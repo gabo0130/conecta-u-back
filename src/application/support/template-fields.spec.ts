@@ -40,4 +40,45 @@ describe('validateTemplateFields', () => {
       'El campo "Nivel" es de tipo lista y necesita al menos una opción',
     ]);
   });
+
+  it('accepts keyword lists with limits and currency fields (v2.1)', () => {
+    expect(
+      validateTemplateFields([
+        {
+          key: 'palabras',
+          label: 'Palabras clave',
+          kind: 'tags',
+          required: true,
+          minItems: 3,
+          maxItems: 5,
+        },
+        { key: 'costo', label: 'Costo', kind: 'currency', required: false },
+      ]),
+    ).toEqual([]);
+  });
+
+  it('reports inverted keyword limits and limits on other kinds', () => {
+    expect(
+      validateTemplateFields([
+        {
+          key: 'palabras',
+          label: 'Palabras clave',
+          kind: 'tags',
+          required: true,
+          minItems: 5,
+          maxItems: 3,
+        },
+        {
+          key: 'nota',
+          label: 'Nota',
+          kind: 'text',
+          required: false,
+          minItems: 2,
+        },
+      ]),
+    ).toEqual([
+      'En "Palabras clave" el mínimo de palabras clave no puede superar el máximo',
+      '"Nota": mínimo y máximo de palabras clave solo aplican a una lista de palabras clave',
+    ]);
+  });
 });

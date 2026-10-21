@@ -4,7 +4,8 @@ import { validateSync } from 'class-validator';
 import { CollaboratorSkillDto } from './collaborator-skill.dto';
 import { CreateProjectDto } from './create-project.dto';
 import { ExperienceDto } from './experience.dto';
-import { RegisterDto } from './register.dto';
+import { UpdateIdentificationDto } from './person-identification.dto';
+import { RegisterCollaboratorDto, RegisterDto } from './register.dto';
 import { SearchSkillsQueryDto } from './search-skills-query.dto';
 import { UpdateCollaboratorDto } from './update-collaborator.dto';
 import { UpdateProjectDto } from './update-project.dto';
@@ -23,14 +24,75 @@ describe('DTO validation', () => {
     password: 'Secret123*',
   };
 
-  it('requires collaborator data when registering a COLABORADOR', () => {
-    expect(
-      errorsOf(RegisterDto, { ...register, role: 'COLABORADOR' }),
-    ).toContain('Los datos del colaborador son obligatorios');
-  });
+  it.each(['COLABORADOR', 'LIDER'])(
+    'requires the person data when registering a %s (v2.1)',
+    (role) => {
+      expect(errorsOf(RegisterDto, { ...register, role })).toContain(
+        'Los datos de la persona son obligatorios',
+      );
+    },
+  );
 
-  it('does not require collaborator data for a LIDER', () => {
-    expect(errorsOf(RegisterDto, { ...register, role: 'LIDER' })).toEqual([]);
+  describe('identificación (v2.1, A1–A4)', () => {
+    const person = {
+      firstName: 'Ana',
+      lastName: 'Pérez',
+      personType: 'ESTUDIANTE',
+      programId: '3f1c2a8e-1b2c-4d5e-8f90-123456789abc',
+      documentType: 'CC',
+      documentNumber: ' 1.090.123.456 ',
+      phone: '(+57) 300 123-4567',
+      nationality: 'Colombiana',
+    };
+
+    it('normalizes the document and the phone before validating', () => {
+      const dto = plainToInstance(RegisterCollaboratorDto, person);
+      expect(validateSync(dto)).toEqual([]);
+      expect(dto.documentNumber).toBe('1090123456');
+      expect(dto.phone).toBe('+573001234567');
+    });
+
+    it.each([
+      [
+        { documentType: 'NIT' },
+        'documentType debe ser uno de: CC, TI, CE, PPT, PA',
+      ],
+      [
+        { documentNumber: 'AB123' },
+        'El número de cédula de ciudadanía debe tener solo dígitos (entre 5 y 15)',
+      ],
+      [
+        { phone: '123' },
+        'El teléfono debe tener entre 7 y 15 dígitos (puede empezar con +)',
+      ],
+      [{ nationality: '  ' }, 'nationality es obligatorio'],
+      [{ alternateEmail: 'no-correo' }, 'Formato de correo alterno inválido'],
+    ])('rejects %p', (override, message) => {
+      expect(
+        errorsOf(RegisterCollaboratorDto, { ...person, ...override }),
+      ).toContain(message);
+    });
+
+    it('accepts alphanumeric passports and empty optional contact fields', () => {
+      expect(
+        errorsOf(RegisterCollaboratorDto, {
+          ...person,
+          documentType: 'PA',
+          documentNumber: 'ab-123456',
+          alternateEmail: '',
+          institutionalCode: '',
+        }),
+      ).toEqual([]);
+    });
+
+    it('lets the admin send only part of the identification', () => {
+      expect(
+        errorsOf(UpdateIdentificationDto, { phone: '3001234567' }),
+      ).toEqual([]);
+      expect(
+        errorsOf(UpdateIdentificationDto, { documentType: null }),
+      ).toContain('documentType no puede ser nulo');
+    });
   });
 
   it('keeps at least one deliverable when updating a project', () => {
