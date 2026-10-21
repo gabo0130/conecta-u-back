@@ -19,6 +19,19 @@ import {
   isProfileUrl,
 } from '../../domain/entities/profile-url';
 import type { Level } from '../../domain/entities/level.type';
+import {
+  ALTERNATE_EMAIL_SAME_ERROR,
+  type DocumentType,
+  INSTITUTIONAL_CODE_ERROR,
+  NATIONALITY_MAX_LENGTH,
+  PHONE_ERROR,
+  documentNumberError,
+  isSameEmail,
+  isValidInstitutionalCode,
+  isValidPhone,
+  normalizeDocumentNumber,
+  normalizePhone,
+} from '../../domain/entities/person-identification';
 import type { PersonType } from '../../domain/entities/person-type.type';
 import type { SkillCategory } from '../../domain/entities/skill-category.type';
 import { SKILL_NAME_MAX_LENGTH } from '../../domain/entities/field-limits';
@@ -31,6 +44,7 @@ import {
 import type { CellValue } from '../../domain/repositories/collaborator-workbook.interface';
 import {
   AVAILABILITY_LABELS,
+  DOCUMENT_TYPE_LABELS,
   EXPERIENCE_TYPE_LABELS,
   LEVEL_LABELS,
   PERSON_TYPE_LABELS,
@@ -65,6 +79,12 @@ export interface ParsedCollaborator {
   email: string;
   firstName: string;
   lastName: string;
+  documentType: DocumentType;
+  documentNumber: string;
+  phone: string;
+  nationality: string;
+  alternateEmail: string | null;
+  institutionalCode: string | null;
   personType: PersonType;
   program: string;
   semester: number | null;
@@ -90,6 +110,9 @@ export function parseCollaboratorRow(
     max: PERSON_NAME_MAX_LENGTH,
   });
   if (!lastName.ok) return lastName;
+
+  const identification = parseIdentification(values, email);
+  if (!identification.ok) return identification;
 
   const personType = labelOf(
     PERSON_TYPE_LABELS,
@@ -140,6 +163,7 @@ export function parseCollaboratorRow(
       email,
       firstName: firstName.value,
       lastName: lastName.value,
+      ...identification.value,
       personType,
       program: program.value,
       semester,
@@ -150,6 +174,73 @@ export function parseCollaboratorRow(
       weeklyHours: weeklyHours!,
     },
   };
+}
+
+type ParsedIdentification = Pick<
+  ParsedCollaborator,
+  | 'documentType'
+  | 'documentNumber'
+  | 'phone'
+  | 'nationality'
+  | 'alternateEmail'
+  | 'institutionalCode'
+>;
+
+/** v2.1 (A1–A4): mismas reglas que la API (`PersonIdentificationDto`). */
+function parseIdentification(
+  values: Row,
+  email: string,
+): ParseResult<ParsedIdentification> {
+  const documentType = labelOf(
+    DOCUMENT_TYPE_LABELS,
+    normalizeLabel(values.tipo_documento),
+  );
+  if (!documentType) {
+    return reject('tipo_documento inválido (CC, TI, CE, PPT o PA)');
+  }
+
+  const documentNumber = documentNumberOf(values.numero_documento);
+  const documentError = documentNumberError(documentType, documentNumber);
+  if (documentError) return reject(`numero_documento: ${documentError}`);
+
+  const phone = normalizePhone(textOf(values.telefono));
+  if (!phone) return reject('telefono es obligatorio');
+  if (!isValidPhone(phone)) return reject(`telefono: ${PHONE_ERROR}`);
+
+  const nationality = requiredCell(values, 'nacionalidad', {
+    max: NATIONALITY_MAX_LENGTH,
+  });
+  if (!nationality.ok) return nationality;
+
+  const alternateEmail = emailOf(values.correo_alterno) || null;
+  if (alternateEmail && !isEmail(alternateEmail)) {
+    return reject('correo_alterno inválido');
+  }
+  if (isSameEmail(alternateEmail, email)) {
+    return reject(ALTERNATE_EMAIL_SAME_ERROR);
+  }
+
+  const institutionalCode = optionalTextOf(values.codigo);
+  if (institutionalCode && !isValidInstitutionalCode(institutionalCode)) {
+    return reject(`codigo: ${INSTITUTIONAL_CODE_ERROR}`);
+  }
+
+  return {
+    ok: true,
+    value: {
+      documentType,
+      documentNumber,
+      phone,
+      nationality: nationality.value,
+      alternateEmail,
+      institutionalCode,
+    },
+  };
+}
+
+/** Número de documento de una celda: Excel puede entregarlo como número; se normaliza igual que en la API. */
+export function documentNumberOf(value: CellValue): string {
+  return normalizeDocumentNumber(textOf(value));
 }
 
 export interface ParsedSkill {

@@ -77,6 +77,14 @@ export class ProjectOrmEntity {
   @Column('uuid')
   leaderId: string;
 
+  // Quién registró el proyecto (v2.1, A5): el líder o el ADMIN a su nombre.
+  @ManyToOne(() => UserOrmEntity, { nullable: true, onDelete: 'SET NULL' })
+  @JoinColumn({ name: 'createdById' })
+  createdBy: UserOrmEntity | null;
+
+  @Column('uuid', { nullable: true })
+  createdById: string | null;
+
   @Column({ type: 'enum', enum: [...PROJECT_STATUSES], default: 'BORRADOR' })
   status: string;
 

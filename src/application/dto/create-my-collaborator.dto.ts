@@ -14,11 +14,12 @@ import {
 } from '../../domain/entities/collaborator-limits';
 import { PERSON_TYPES } from '../../domain/entities/person-type.type';
 import type { PersonType } from '../../domain/entities/person-type.type';
+import { PersonIdentificationDto } from './person-identification.dto';
 import { IsOptionalNonNull } from './validators/is-optional-non-null.decorator';
 import { IsProfileUrl } from './validators/is-profile-url.decorator';
 import { IsRequiredText, IsOptionalText } from './validators/text.decorators';
 
-export class CreateMyCollaboratorDto {
+export class CreateMyCollaboratorDto extends PersonIdentificationDto {
   @IsRequiredText({ max: PERSON_NAME_MAX_LENGTH })
   firstName: string;
 

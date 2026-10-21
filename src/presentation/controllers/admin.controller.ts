@@ -1,8 +1,18 @@
-import { Controller, Get, Param, Query, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Patch,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import { AdminGetCollaboratorUseCase } from '../../application/use-cases/admin-get-collaborator.use-case';
 import { AdminGetProjectUseCase } from '../../application/use-cases/admin-get-project.use-case';
 import { AdminListCollaboratorsUseCase } from '../../application/use-cases/admin-list-collaborators.use-case';
 import { AdminListProjectsUseCase } from '../../application/use-cases/admin-list-projects.use-case';
+import { AdminUpdateCollaboratorIdentificationUseCase } from '../../application/use-cases/admin-update-collaborator-identification.use-case';
+import { UpdateIdentificationDto } from '../../application/dto/person-identification.dto';
 import { PaginationQueryDto } from '../../application/dto/pagination-query.dto';
 import { Authorize } from '../guards/authorization.decorator';
 import { AuthorizationGuard } from '../guards/authorization.guard';
@@ -19,6 +29,7 @@ export class AdminController {
     private readonly adminGetProjectUseCase: AdminGetProjectUseCase,
     private readonly adminListCollaboratorsUseCase: AdminListCollaboratorsUseCase,
     private readonly adminGetCollaboratorUseCase: AdminGetCollaboratorUseCase,
+    private readonly adminUpdateIdentificationUseCase: AdminUpdateCollaboratorIdentificationUseCase,
   ) {}
 
   @Get('projects')
@@ -39,5 +50,14 @@ export class AdminController {
   @Get('collaborators/:id')
   getCollaborator(@Param('id', UuidParamPipe) id: string) {
     return this.adminGetCollaboratorUseCase.execute(id);
+  }
+
+  /** v2.1: identificación y contacto de una persona; el documento solo lo cambia el ADMIN. */
+  @Patch('collaborators/:id')
+  updateCollaboratorIdentification(
+    @Param('id', UuidParamPipe) id: string,
+    @Body() body: UpdateIdentificationDto,
+  ) {
+    return this.adminUpdateIdentificationUseCase.execute(id, body);
   }
 }

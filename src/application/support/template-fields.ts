@@ -15,6 +15,24 @@ export function validateTemplateFields(fields: TemplateField[]): string[] {
     }
     seenKeys.add(field.key);
 
+    if (
+      field.kind === 'tags' &&
+      field.minItems !== undefined &&
+      field.maxItems !== undefined &&
+      field.minItems > field.maxItems
+    ) {
+      errors.push(
+        `En "${field.label}" el mínimo de palabras clave no puede superar el máximo`,
+      );
+    }
+    if (
+      field.kind !== 'tags' &&
+      (field.minItems ?? field.maxItems) !== undefined
+    ) {
+      errors.push(
+        `"${field.label}": mínimo y máximo de palabras clave solo aplican a una lista de palabras clave`,
+      );
+    }
     if (field.kind === 'select' && (field.options ?? []).length === 0) {
       errors.push(
         `El campo "${field.label}" es de tipo lista y necesita al menos una opción`,

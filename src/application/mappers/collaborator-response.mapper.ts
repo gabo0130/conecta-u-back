@@ -1,10 +1,12 @@
 import type { CollaboratorSkillEntity } from '../../domain/entities/collaborator-skill.entity';
 import type { CollaboratorEntity } from '../../domain/entities/collaborator.entity';
 import type { ExperienceEntity } from '../../domain/entities/experience.entity';
+import { isIdentificationComplete } from '../../domain/entities/person-identification';
 import { computeDurationMonths } from '../../shared/utils/compute-duration-months';
 import { toSkillSummary } from './skill-response.mapper';
 
-// Única forma de respuesta del perfil técnico: la usan GET, POST y PATCH de /collaborators/me*.
+// Única forma de respuesta del perfil técnico: la usan GET, POST y PATCH de /collaborators/me* y el
+// detalle del ADMIN. Incluye identificación y contacto: NUNCA usarla en respuestas para el líder.
 
 export function toCollaboratorSkillResponse(entry: CollaboratorSkillEntity) {
   return {
@@ -57,7 +59,21 @@ export function toCollaboratorProfileResponse(
     weeklyHours: collaborator.weeklyHours,
     dataConsent: collaborator.dataConsent,
     source: collaborator.source,
+    ...toIdentificationResponse(collaborator),
     skills: collaborator.skills.map(toCollaboratorSkillResponse),
     experiences: collaborator.experiences.map(toExperienceResponse),
+  };
+}
+
+/** Identificación y contacto (v2.1): solo para la propia persona y el ADMIN (RNF5, Ley 1581). */
+export function toIdentificationResponse(collaborator: CollaboratorEntity) {
+  return {
+    documentType: collaborator.documentType,
+    documentNumber: collaborator.documentNumber,
+    phone: collaborator.phone,
+    nationality: collaborator.nationality,
+    alternateEmail: collaborator.alternateEmail,
+    institutionalCode: collaborator.institutionalCode,
+    identificationComplete: isIdentificationComplete(collaborator),
   };
 }

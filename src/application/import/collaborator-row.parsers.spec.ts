@@ -17,6 +17,13 @@ const collaborator = (overrides: Record<string, CellValue> = {}) => ({
   correo: ' ANA@Example.com ',
   nombres: 'Ana',
   apellidos: 'Pérez',
+  tipo_documento: 'Cédula de ciudadanía',
+  // Excel entrega el documento y el teléfono como número si la celda no es de texto.
+  numero_documento: 1090123456,
+  telefono: '(+57) 300-123 4567',
+  nacionalidad: 'Colombiana',
+  correo_alterno: null,
+  codigo: null,
   tipo_persona: 'Estudiante',
   programa: '115',
   semestre: null,
@@ -30,6 +37,7 @@ const collaborator = (overrides: Record<string, CellValue> = {}) => ({
 });
 
 const skill = (overrides: Record<string, CellValue> = {}) => ({
+  numero_documento: null,
   correo: 'ana@example.com',
   habilidad: 'React',
   tipo: 'Habilidad blanda',
@@ -41,6 +49,7 @@ const skill = (overrides: Record<string, CellValue> = {}) => ({
 });
 
 const experience = (overrides: Record<string, CellValue> = {}) => ({
+  numero_documento: null,
   correo: 'ana@example.com',
   tipo: 'Semillero de investigación',
   rol: 'Investigadora',
@@ -81,6 +90,16 @@ describe('cell parsers', () => {
 });
 
 describe('parseCollaboratorRow', () => {
+  it('accepts the document type by its code and alphanumeric documents for PPT/PA', () => {
+    const result = parseCollaboratorRow(
+      collaborator({ tipo_documento: 'pa', numero_documento: 'ab 12.345' }),
+    );
+    expect(result).toMatchObject({
+      ok: true,
+      value: { documentType: 'PA', documentNumber: 'AB12345' },
+    });
+  });
+
   it('maps a valid row to domain values', () => {
     expect(parseCollaboratorRow(collaborator())).toEqual({
       ok: true,
@@ -88,6 +107,12 @@ describe('parseCollaboratorRow', () => {
         email: 'ana@example.com',
         firstName: 'Ana',
         lastName: 'Pérez',
+        documentType: 'CC',
+        documentNumber: '1090123456',
+        phone: '+573001234567',
+        nationality: 'Colombiana',
+        alternateEmail: null,
+        institutionalCode: null,
         personType: 'ESTUDIANTE',
         program: '115',
         semester: null,
@@ -120,6 +145,34 @@ describe('parseCollaboratorRow', () => {
     [
       { semillero_o_grupo: 'g'.repeat(161) },
       'semillero_o_grupo admite máximo 160 caracteres',
+    ],
+    // v2.1 (A1–A4)
+    [
+      { tipo_documento: 'NIT' },
+      'tipo_documento inválido (CC, TI, CE, PPT o PA)',
+    ],
+    [
+      { numero_documento: null },
+      'numero_documento: El número de documento es obligatorio',
+    ],
+    [
+      { numero_documento: '10-90A' },
+      'numero_documento: El número de cédula de ciudadanía debe tener solo dígitos (entre 5 y 15)',
+    ],
+    [{ telefono: null }, 'telefono es obligatorio'],
+    [
+      { telefono: '12345' },
+      'telefono: El teléfono debe tener entre 7 y 15 dígitos (puede empezar con +)',
+    ],
+    [{ nacionalidad: ' ' }, 'nacionalidad es obligatorio'],
+    [{ correo_alterno: 'no-es-correo' }, 'correo_alterno inválido'],
+    [
+      { correo_alterno: 'ana@example.com' },
+      'El correo alterno debe ser distinto del correo principal',
+    ],
+    [
+      { codigo: 'con espacios' },
+      'codigo: El código institucional admite hasta 20 letras, dígitos o guiones',
     ],
   ])('rejects %p', (overrides, reason) => {
     expect(reasonOf(parseCollaboratorRow(collaborator(overrides)))).toBe(

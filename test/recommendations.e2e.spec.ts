@@ -110,7 +110,7 @@ describe('Recomendaciones (integración)', () => {
         .auth(owner, { type: 'bearer' })
         .expect(200);
       expect(JSON.stringify(response.body)).not.toMatch(
-        /@prueba\.test|"email"|"phone"|"profileUrl"/,
+        /@prueba\.test|"email"|"phone"|"profileUrl"|"document|9900000|3000000099|"nationality"|"alternateEmail"/,
       );
     });
 

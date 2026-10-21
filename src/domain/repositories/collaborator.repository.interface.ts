@@ -2,6 +2,7 @@ import type { Page, PageParams } from '../../shared/pagination/pagination.util';
 import type { AvailabilityStatus } from '../entities/availability-status.type';
 import { CollaboratorEntity } from '../entities/collaborator.entity';
 import type { CollaboratorSource } from '../entities/collaborator-source.type';
+import type { DocumentType } from '../entities/person-identification';
 import type { PersonType } from '../entities/person-type.type';
 
 export interface CreateCollaboratorRepositoryDto {
@@ -20,6 +21,12 @@ export interface CreateCollaboratorRepositoryDto {
   dataConsent?: boolean;
   dataConsentAt?: Date | null;
   source?: CollaboratorSource;
+  documentType?: DocumentType | null;
+  documentNumber?: string | null;
+  phone?: string | null;
+  nationality?: string | null;
+  alternateEmail?: string | null;
+  institutionalCode?: string | null;
 }
 
 export interface UpdateCollaboratorRepositoryDto {
@@ -36,12 +43,23 @@ export interface UpdateCollaboratorRepositoryDto {
   dataConsent?: boolean;
   dataConsentAt?: Date | null;
   active?: boolean;
+  documentType?: DocumentType | null;
+  documentNumber?: string | null;
+  phone?: string | null;
+  nationality?: string | null;
+  alternateEmail?: string | null;
+  institutionalCode?: string | null;
 }
 
 export interface CollaboratorRepository {
   findById(id: string): Promise<CollaboratorEntity | null>;
   findByUserId(userId: string): Promise<CollaboratorEntity | null>;
   findByEmail(email: string): Promise<CollaboratorEntity | null>;
+  /** La persona con ese documento (tipo + número normalizado), con o sin cuenta. */
+  findByDocument(
+    documentType: DocumentType,
+    documentNumber: string,
+  ): Promise<CollaboratorEntity | null>;
   /** Perfiles vinculados a cualquiera de estas cuentas (para indexar sin cargar toda la tabla). */
   findByUserIds(userIds: string[]): Promise<CollaboratorEntity[]>;
   /** Todas las personas con perfil técnico, con o sin usuario (vista del ADMIN). */

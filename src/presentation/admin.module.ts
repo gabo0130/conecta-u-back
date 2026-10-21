@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { AdminUpdateCollaboratorIdentificationUseCase } from '../application/use-cases/admin-update-collaborator-identification.use-case';
 import { AdminGetCollaboratorUseCase } from '../application/use-cases/admin-get-collaborator.use-case';
 import { AdminGetProjectUseCase } from '../application/use-cases/admin-get-project.use-case';
 import { AdminListCollaboratorsUseCase } from '../application/use-cases/admin-list-collaborators.use-case';
@@ -15,6 +16,7 @@ import { SecurityModule } from './security.module';
     AdminGetProjectUseCase,
     AdminListCollaboratorsUseCase,
     AdminGetCollaboratorUseCase,
+    AdminUpdateCollaboratorIdentificationUseCase,
   ],
 })
 export class AdminModule {}

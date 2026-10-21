@@ -19,6 +19,7 @@ export function toProjectResponse(project: ProjectEntity) {
       scope: deliverable.scope,
     })),
     leaderId: project.leaderId,
+    createdById: project.createdById,
     status: project.status,
     createdAt: project.createdAt,
     updatedAt: project.updatedAt,

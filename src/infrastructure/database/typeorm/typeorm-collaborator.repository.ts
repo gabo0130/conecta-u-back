@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, Repository } from 'typeorm';
 import { CollaboratorEntity } from '../../../domain/entities/collaborator.entity';
+import type { DocumentType } from '../../../domain/entities/person-identification';
 import {
   CollaboratorRepository,
   CreateCollaboratorRepositoryDto,
@@ -74,6 +75,17 @@ export class TypeOrmCollaboratorRepository implements CollaboratorRepository {
     return collaborator ? toCollaboratorEntity(collaborator) : null;
   }
 
+  async findByDocument(
+    documentType: DocumentType,
+    documentNumber: string,
+  ): Promise<CollaboratorEntity | null> {
+    const collaborator = await this.repository.findOne({
+      where: { documentType, documentNumber },
+      relations: RELATIONS,
+    });
+    return collaborator ? toCollaboratorEntity(collaborator) : null;
+  }
+
   async create(
     data: CreateCollaboratorRepositoryDto,
   ): Promise<CollaboratorEntity> {
@@ -93,6 +105,12 @@ export class TypeOrmCollaboratorRepository implements CollaboratorRepository {
       dataConsent: data.dataConsent ?? false,
       dataConsentAt: data.dataConsentAt ?? null,
       source: data.source ?? 'REGISTRO',
+      documentType: data.documentType ?? null,
+      documentNumber: data.documentNumber ?? null,
+      phone: data.phone ?? null,
+      nationality: data.nationality ?? null,
+      alternateEmail: data.alternateEmail ?? null,
+      institutionalCode: data.institutionalCode ?? null,
     });
 
     const saved = await this.repository.save(collaborator);

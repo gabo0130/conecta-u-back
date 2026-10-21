@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { PersonAccountService } from '../application/support/person-account.service';
 import { AddMyCollaboratorSkillUseCase } from '../application/use-cases/add-my-collaborator-skill.use-case';
 import { CreateMyCollaboratorProfileUseCase } from '../application/use-cases/create-my-collaborator-profile.use-case';
 import { CreateMyExperienceUseCase } from '../application/use-cases/create-my-experience.use-case';
@@ -26,6 +27,7 @@ import { SecurityModule } from './security.module';
   providers: [
     AddMyCollaboratorSkillUseCase,
     CreateMyCollaboratorProfileUseCase,
+    PersonAccountService,
     CreateMyExperienceUseCase,
     DeleteMyCollaboratorSkillUseCase,
     DeleteMyExperienceUseCase,

@@ -5,7 +5,7 @@ import type { DeleteUserUseCase } from '../../application/use-cases/delete-user.
 import type { GetUserByIdUseCase } from '../../application/use-cases/get-user-by-id.use-case';
 import type { ListUsersUseCase } from '../../application/use-cases/list-users.use-case';
 import type { UpdateUserUseCase } from '../../application/use-cases/update-user.use-case';
-import { createMock } from '../../testing/test-doubles.testing';
+import { IDENTITY, createMock } from '../../testing/test-doubles.testing';
 
 describe('UsersController', () => {
   const listUsersUseCase = createMock<ListUsersUseCase>();
@@ -60,6 +60,13 @@ describe('UsersController', () => {
       email: 'ana@example.com',
       password: 'Secret123*',
       role: 'COLABORADOR' as const,
+      collaborator: {
+        firstName: 'Ana',
+        lastName: 'Pérez',
+        personType: 'DOCENTE' as const,
+        programId: 'program-1',
+        ...IDENTITY,
+      },
     };
 
     void controller.create(dto);

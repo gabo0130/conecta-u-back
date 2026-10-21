@@ -29,6 +29,13 @@ const collaboratorRow = (
     correo: 'ana@example.com',
     nombres: 'Ana',
     apellidos: 'Pérez',
+    tipo_documento: 'CC',
+    // Documento distinto por fila para no chocar con la regla de "duplicado en el archivo".
+    numero_documento: `99000000${row}`,
+    telefono: '3001234567',
+    nacionalidad: 'Colombiana',
+    correo_alterno: null,
+    codigo: null,
     tipo_persona: 'Estudiante',
     programa: '115',
     semestre: 7,
@@ -45,6 +52,7 @@ const collaboratorRow = (
 const skillRow = (row: number, overrides: Record<string, CellValue> = {}) => ({
   row,
   values: {
+    numero_documento: null,
     correo: 'ana@example.com',
     habilidad: 'React',
     tipo: 'Conocimiento',
@@ -62,6 +70,7 @@ const experienceRow = (
 ) => ({
   row,
   values: {
+    numero_documento: null,
     correo: 'ana@example.com',
     tipo: 'Laboral',
     rol: 'Desarrolladora',
@@ -113,6 +122,7 @@ describe('ImportCollaboratorsUseCase', () => {
     jest.clearAllMocks();
     programRepository.findByCodeOrName.mockResolvedValue(buildProgram());
     collaboratorRepository.findByEmail.mockResolvedValue(null);
+    collaboratorRepository.findByDocument.mockResolvedValue(null);
     importRunRepository.create.mockImplementation((data) =>
       Promise.resolve({
         id: 'run-1',
@@ -263,7 +273,7 @@ describe('ImportCollaboratorsUseCase', () => {
         sheet: 'Habilidades',
         row: 5,
         reason:
-          'El correo no corresponde a un colaborador importado en este archivo',
+          'El documento o el correo no corresponde a un colaborador importado en este archivo',
       }),
     ]);
     expect(contextLogger.error).toHaveBeenCalled();
@@ -330,9 +340,72 @@ describe('ImportCollaboratorsUseCase', () => {
         row: 3,
         email: 'nadie@example.com',
         reason:
-          'El correo no corresponde a un colaborador importado en este archivo',
+          'El documento o el correo no corresponde a un colaborador importado en este archivo',
       }),
     ]);
+  });
+
+  describe('documento de identidad (v2.1, A1)', () => {
+    it('saves the identification and rejects a document repeated in the file', async () => {
+      givenWorkbook({
+        collaborators: [
+          collaboratorRow(2, { numero_documento: '1.090.123.456' }),
+          collaboratorRow(3, {
+            correo: 'otra@example.com',
+            numero_documento: 1090123456,
+          }),
+        ],
+      });
+
+      const result = await execute();
+
+      expect(repositories.collaborators.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          documentType: 'CC',
+          documentNumber: '1090123456',
+          phone: '3001234567',
+          nationality: 'Colombiana',
+        }),
+      );
+      expect(result.rejected).toEqual([
+        {
+          sheet: 'Colaboradores',
+          row: 3,
+          email: 'otra@example.com',
+          reason: 'Documento duplicado en el archivo',
+        },
+      ]);
+    });
+
+    it('rejects a document already registered in the database', async () => {
+      collaboratorRepository.findByDocument.mockResolvedValue(
+        buildCollaborator({ id: 'existing' }),
+      );
+      givenWorkbook({ collaborators: [collaboratorRow(2)] });
+
+      const result = await execute();
+
+      expect(result.created).toBe(0);
+      expect(result.rejected[0].reason).toBe(
+        'El documento ya existe en la base de datos',
+      );
+    });
+
+    it('associates child rows by document even without email', async () => {
+      givenWorkbook({
+        collaborators: [collaboratorRow(2)],
+        skills: [skillRow(3, { correo: null, numero_documento: '990000002' })],
+        experience: [
+          experienceRow(4, { correo: null, numero_documento: 990000002 }),
+        ],
+      });
+
+      const result = await execute();
+
+      expect(result.rejected).toEqual([]);
+      expect(repositories.collaboratorSkills.create).toHaveBeenCalledTimes(1);
+      expect(repositories.experiences.create).toHaveBeenCalledTimes(1);
+    });
   });
 
   it('translates an unreadable workbook into a 400', async () => {

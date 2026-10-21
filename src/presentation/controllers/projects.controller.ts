@@ -33,9 +33,12 @@ export class ProjectsController {
     private readonly updateProjectUseCase: UpdateProjectUseCase,
   ) {}
 
+  /** El LIDER registra los suyos; el ADMIN, a nombre de un líder (v2.1, A5). */
   @Post()
+  @Authorize({ anyOfRoles: ['LIDER', 'ADMIN'] })
   create(@Req() request: AuthenticatedRequest, @Body() dto: CreateProjectDto) {
-    return this.createProjectUseCase.execute(request.user!.userId, dto);
+    const { userId, role } = request.user!;
+    return this.createProjectUseCase.execute({ userId, role }, dto);
   }
 
   @Get()
