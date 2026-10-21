@@ -1,0 +1,71 @@
+# Integración continua del backend: cada PR hacia develop o master debe pasar
+# lint, tipos, pruebas unitarias, build y pruebas de integración (Postgres + pgvector
+# desechable) antes de poder fusionarse (regla del repositorio).
+name: CI
+
+on:
+  pull_request:
+    branches: [develop, master]
+  push:
+    branches: [develop, master]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  quality:
+    name: lint-test-build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      # Sin --fix: en CI solo se reporta.
+      - run: npx eslint "{src,apps,libs,test}/**/*.ts"
+      - run: npx tsc --noEmit
+      - run: npm test
+      - run: npm run build
+
+  e2e:
+    name: e2e
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_USER: test
+          POSTGRES_PASSWORD: test
+          POSTGRES_DB: conecta_u_test
+        ports:
+          - 5433:5432
+        options: >-
+          --health-cmd "pg_isready -U test -d conecta_u_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      TEST_DATABASE_URL: postgres://test:test@localhost:5433/conecta_u_test
+      AI_PROVIDER: fake
+      JWT_SECRET: ci-only-secret
+    steps:
+      - uses: actions/checkout@v4
+      # Las pruebas de integración existen desde la Iteración 2; en ramas que aún
+      # no las tienen el job pasa sin correr nada (sigue siendo un check obligatorio).
+      - uses: actions/setup-node@v4
+        if: hashFiles('test/jest-e2e.json') != ''
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+        if: hashFiles('test/jest-e2e.json') != ''
+      - run: npm run test:e2e
+        if: hashFiles('test/jest-e2e.json') != ''
