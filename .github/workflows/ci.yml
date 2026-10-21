@@ -24,7 +24,7 @@ jobs:
     timeout-minutes: 15
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -72,7 +72,7 @@ jobs:
       JWT_SECRET: ci-only-secret
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       # Las pruebas de integración existen desde la Iteración 2; en ramas que aún
       # no las tienen el job pasa sin correr nada (sigue siendo un check obligatorio).
