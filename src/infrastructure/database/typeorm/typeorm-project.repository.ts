@@ -81,6 +81,7 @@ export class TypeOrmProjectRepository implements ProjectRepository {
       knownSkills,
       deliverables: this.toDeliverableOrm(data.deliverables),
       leaderId: data.leaderId,
+      createdById: data.createdById,
       status: 'BORRADOR',
     });
 
@@ -156,6 +157,7 @@ export class TypeOrmProjectRepository implements ProjectRepository {
           ),
       ),
       leaderId: project.leaderId,
+      createdById: project.createdById,
       status: project.status as ProjectEntity['status'],
       createdAt: project.createdAt,
       updatedAt: project.updatedAt,

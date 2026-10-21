@@ -1,8 +1,14 @@
-import { NotFoundException } from '@nestjs/common';
+import {
+  ConflictException,
+  ForbiddenException,
+  NotFoundException,
+  UnprocessableEntityException,
+} from '@nestjs/common';
 import { UpdateMyCollaboratorProfileUseCase } from './update-my-collaborator-profile.use-case';
 import type { CollaboratorRepository } from '../../domain/repositories/collaborator.repository.interface';
 import type { ProgramRepository } from '../../domain/repositories/program.repository.interface';
 import {
+  IDENTITY,
   buildCollaborator,
   buildProgram,
   createMock,
@@ -75,5 +81,59 @@ describe('UpdateMyCollaboratorProfileUseCase', () => {
     await expect(
       useCase.execute('user-1', { summary: 'x' }),
     ).rejects.toBeInstanceOf(NotFoundException);
+  });
+
+  describe('documento y contacto (v2.1)', () => {
+    it('lets a person without document complete it once, with contact data', async () => {
+      collaboratorRepository.findByDocument.mockResolvedValue(null);
+
+      await useCase.execute('user-1', { ...IDENTITY });
+
+      expect(collaboratorRepository.update).toHaveBeenCalledWith(
+        'collab-1',
+        IDENTITY,
+      );
+    });
+
+    it('403 when the person tries to change a document already saved', async () => {
+      collaboratorRepository.findByUserId.mockResolvedValue(
+        buildCollaborator({ ...IDENTITY }),
+      );
+      collaboratorRepository.findByDocument.mockResolvedValue(null);
+
+      await expect(
+        useCase.execute('user-1', { documentNumber: '1090123456' }),
+      ).rejects.toBeInstanceOf(ForbiddenException);
+      expect(collaboratorRepository.update).not.toHaveBeenCalled();
+    });
+
+    it('accepts the same saved document (nothing changes)', async () => {
+      collaboratorRepository.findByUserId.mockResolvedValue(
+        buildCollaborator({ ...IDENTITY }),
+      );
+      collaboratorRepository.findByDocument.mockResolvedValue(
+        buildCollaborator({ ...IDENTITY }),
+      );
+
+      await useCase.execute('user-1', { ...IDENTITY, phone: '3011112233' });
+
+      expect(collaboratorRepository.update).toHaveBeenCalled();
+    });
+
+    it('409 when the document belongs to someone else', async () => {
+      collaboratorRepository.findByDocument.mockResolvedValue(
+        buildCollaborator({ id: 'other' }),
+      );
+
+      await expect(
+        useCase.execute('user-1', { ...IDENTITY }),
+      ).rejects.toBeInstanceOf(ConflictException);
+    });
+
+    it('422 when the alternate email is the main one', async () => {
+      await expect(
+        useCase.execute('user-1', { alternateEmail: 'ANA@example.com' }),
+      ).rejects.toBeInstanceOf(UnprocessableEntityException);
+    });
   });
 });

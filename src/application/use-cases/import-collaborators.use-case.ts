@@ -40,7 +40,9 @@ import {
 import {
   ImportReport,
   type RejectedRow,
-  groupByEmail,
+  documentKey,
+  emailKey,
+  groupByPerson,
 } from '../import/import-report';
 import {
   type SkillProposal,
@@ -67,6 +69,7 @@ interface CollaboratorImport {
 interface ImportContext {
   report: ImportReport;
   seenEmails: Set<string>;
+  seenDocuments: Set<string>;
   skillRows: Map<string, WorkbookRow[]>;
   experienceRows: Map<string, WorkbookRow[]>;
 }
@@ -121,8 +124,9 @@ export class ImportCollaboratorsUseCase {
     const context: ImportContext = {
       report: new ImportReport(),
       seenEmails: new Set(),
-      skillRows: groupByEmail(workbook.skills),
-      experienceRows: groupByEmail(workbook.experience),
+      seenDocuments: new Set(),
+      skillRows: groupByPerson(workbook.skills),
+      experienceRows: groupByPerson(workbook.experience),
     };
 
     for (const row of workbook.collaborators) {
@@ -177,7 +181,10 @@ export class ImportCollaboratorsUseCase {
       return;
     }
     context.report.reject(...prepared.value.childRejections, ...saved.rejected);
-    context.report.accept(email, saved.proposedSkills);
+    context.report.accept(
+      personKeys(prepared.value.collaborator),
+      saved.proposedSkills,
+    );
   }
 
   /** Valida la fila y sus filas hijas sin escribir nada. */
@@ -195,6 +202,13 @@ export class ImportCollaboratorsUseCase {
     const parsed = parseCollaboratorRow(values);
     if (!parsed.ok) return parsed;
 
+    // v2.1 (A1): el documento identifica a la persona; no puede repetirse en el archivo.
+    const document = `${parsed.value.documentType}:${parsed.value.documentNumber}`;
+    if (context.seenDocuments.has(document)) {
+      return { ok: false, reason: 'Documento duplicado en el archivo' };
+    }
+    context.seenDocuments.add(document);
+
     const resolved = await this.resolveNewCollaborator(parsed.value);
     if (!resolved.ok) return resolved;
 
@@ -206,13 +220,13 @@ export class ImportCollaboratorsUseCase {
         collaborator: parsed.value,
         programId: resolved.value.programId,
         skills: validRows(
-          context.skillRows.get(email),
+          rowsOf(context.skillRows, parsed.value),
           parseSkillRow,
           SHEET_SKILLS,
           childRejections,
         ),
         experience: validRows(
-          context.experienceRows.get(email),
+          rowsOf(context.experienceRows, parsed.value),
           parseExperienceRow,
           SHEET_EXPERIENCE,
           childRejections,
@@ -234,6 +248,17 @@ export class ImportCollaboratorsUseCase {
     }
     if (await this.collaboratorRepository.findByEmail(collaborator.email)) {
       return { ok: false, reason: 'El correo ya existe en la base de datos' };
+    }
+    if (
+      await this.collaboratorRepository.findByDocument(
+        collaborator.documentType,
+        collaborator.documentNumber,
+      )
+    ) {
+      return {
+        ok: false,
+        reason: 'El documento ya existe en la base de datos',
+      };
     }
     return { ok: true, value: { programId: program.id } };
   }
@@ -277,6 +302,12 @@ export class ImportCollaboratorsUseCase {
       profileUrl: collaborator.profileUrl,
       availabilityStatus: collaborator.availabilityStatus,
       weeklyHours: collaborator.weeklyHours,
+      documentType: collaborator.documentType,
+      documentNumber: collaborator.documentNumber,
+      phone: collaborator.phone,
+      nationality: collaborator.nationality,
+      alternateEmail: collaborator.alternateEmail,
+      institutionalCode: collaborator.institutionalCode,
       ...consentFields(true),
       source: 'IMPORTACION',
     });
@@ -355,14 +386,32 @@ export class ImportCollaboratorsUseCase {
   }
 }
 
+/** Llaves por las que las filas hijas encuentran a esta persona: documento y correo. */
+function personKeys(collaborator: ParsedCollaborator): string[] {
+  return [
+    documentKey(collaborator.documentNumber),
+    emailKey(collaborator.email),
+  ];
+}
+
+/** Filas hijas de la persona, por documento o por correo, en el orden del archivo. */
+function rowsOf(
+  rowsByPerson: Map<string, WorkbookRow[]>,
+  collaborator: ParsedCollaborator,
+): WorkbookRow[] {
+  return personKeys(collaborator)
+    .flatMap((key) => rowsByPerson.get(key) ?? [])
+    .sort((a, b) => a.row - b.row);
+}
+
 function validRows<T>(
-  rows: WorkbookRow[] | undefined,
+  rows: WorkbookRow[],
   parse: (values: WorkbookRow['values']) => ParseResult<T>,
   sheet: string,
   rejected: RejectedRow[],
 ): ValidRow<T>[] {
   const valid: ValidRow<T>[] = [];
-  for (const { row, values } of rows ?? []) {
+  for (const { row, values } of rows) {
     const parsed = parse(values);
     if (parsed.ok) {
       valid.push({ row, value: parsed.value });

@@ -1,8 +1,9 @@
 import * as bcrypt from 'bcryptjs';
-import { In } from 'typeorm';
+import { In, IsNull } from 'typeorm';
 import type { AvailabilityStatus } from '../../domain/entities/availability-status.type';
 import type { ExperienceType } from '../../domain/entities/experience-type.type';
 import type { Level } from '../../domain/entities/level.type';
+import type { PersonIdentification } from '../../domain/entities/person-identification';
 import type { PersonType } from '../../domain/entities/person-type.type';
 import type { SkillCategory } from '../../domain/entities/skill-category.type';
 import type { SkillType } from '../../domain/entities/skill-type.type';
@@ -554,6 +555,24 @@ const PROJECT_TYPES: SeedProjectType[] = [
   },
 ];
 
+// v2.1 (A6): campos que la cliente pidió como ejemplo; se agregan a cada tipo si no los tiene.
+const V21_TEMPLATE_FIELDS: TemplateField[] = [
+  {
+    key: 'palabrasClave',
+    label: 'Palabras clave',
+    kind: 'tags',
+    required: true,
+    minItems: 3,
+    maxItems: 5,
+  },
+  {
+    key: 'costoEstimado',
+    label: 'Costo estimado del proyecto',
+    kind: 'currency',
+    required: false,
+  },
+];
+
 const PROJECT_CATEGORIES = [
   'Desarrollo de software',
   'Investigación aplicada',
@@ -569,6 +588,60 @@ const PROJECT_CATEGORIES = [
 const LEADERS = [
   { fullName: 'Laura Méndez', email: 'laura.mendez@conectau.test' },
   { fullName: 'Mario Quintero', email: 'mario.quintero@conectau.test' },
+];
+
+// ---------------------------------------------------------------------------
+// Identificación de las personas del seed (v2.1, A1–A4). DATOS FICTICIOS DE PRUEBA:
+// documentos 99000000xx y teléfonos 30000000xx inventados, no pertenecen a nadie.
+// ---------------------------------------------------------------------------
+
+type SeedIdentity = Omit<PersonIdentification, 'alternateEmail'> & {
+  alternateEmail?: string | null;
+};
+
+const fakeIdentity = (
+  index: number,
+  overrides: Partial<SeedIdentity> = {},
+): SeedIdentity => ({
+  documentType: 'CC',
+  documentNumber: `99000000${String(index).padStart(2, '0')}`,
+  phone: `30000000${String(index).padStart(2, '0')}`,
+  nationality: 'Colombiana',
+  institutionalCode: `11500${String(index).padStart(2, '0')}`,
+  ...overrides,
+});
+
+const SEED_IDENTITIES: Record<string, SeedIdentity> = {
+  'admin@conectau.test': fakeIdentity(1, { institutionalCode: null }),
+  'laura.mendez@conectau.test': fakeIdentity(2),
+  'mario.quintero@conectau.test': fakeIdentity(3),
+  'carlos.contreras@conectau.test': fakeIdentity(4, {
+    alternateEmail: 'carlos.contreras.alterno@conectau.test',
+  }),
+  'maria.rangel@conectau.test': fakeIdentity(5),
+  'diego.luna@conectau.test': fakeIdentity(6),
+  'sara.ayala@conectau.test': fakeIdentity(7),
+  'andres.pardo@conectau.test': fakeIdentity(8),
+  'valentina.ortiz@conectau.test': fakeIdentity(9),
+  // Extranjeros: muestran CE y PPT con otra nacionalidad.
+  'julian.caceres@conectau.test': fakeIdentity(10, {
+    documentType: 'PPT',
+    nationality: 'Venezolana',
+  }),
+  'camila.rojas@conectau.test': fakeIdentity(11, {
+    documentType: 'CE',
+    documentNumber: '990011',
+    nationality: 'Ecuatoriana',
+  }),
+};
+
+/** Cuentas del seed que no tenían persona: se crea una sin consentimiento (no se recomiendan). */
+const ACCOUNT_PERSONS = [
+  {
+    email: 'mario.quintero@conectau.test',
+    firstName: 'Mario',
+    lastName: 'Quintero',
+  },
 ];
 
 interface SeedCollaboratorSkill {
@@ -1105,6 +1178,8 @@ async function seed() {
   const projects = AppDataSource.getRepository(ProjectOrmEntity);
 
   const counters = {
+    templateFields: 0,
+    identities: 0,
     programs: 0,
     skills: 0,
     projectTypes: 0,
@@ -1183,10 +1258,21 @@ async function seed() {
         projectTypes.create({
           code: type.code,
           name: type.name,
-          templateFields: type.templateFields,
+          templateFields: [...type.templateFields, ...V21_TEMPLATE_FIELDS],
         }),
       );
       counters.projectTypes++;
+    } else {
+      // Tipos ya creados (o editados por el ADMIN): solo se agregan los campos v2.1 que falten.
+      const keys = new Set(entity.templateFields.map((field) => field.key));
+      const missing = V21_TEMPLATE_FIELDS.filter(
+        (field) => !keys.has(field.key),
+      );
+      if (missing.length > 0) {
+        entity.templateFields = [...entity.templateFields, ...missing];
+        entity = await projectTypes.save(entity);
+        counters.templateFields += missing.length;
+      }
     }
     projectTypeIdByCode.set(type.code, entity.id);
   }
@@ -1344,6 +1430,52 @@ async function seed() {
     }
   }
 
+  // v2.1: toda cuenta del seed queda vinculada a una persona (Mario y el administrador no tenían).
+  const adminUser = await users.findOne({ where: { email: adminEmail } });
+  const accountPersons = [
+    ...ACCOUNT_PERSONS,
+    ...(adminUser
+      ? [
+          {
+            email: adminEmail,
+            firstName: 'Administrador',
+            lastName: 'Conecta U',
+          },
+        ]
+      : []),
+  ];
+  for (const person of accountPersons) {
+    const user = await users.findOne({ where: { email: person.email } });
+    if (!user) continue;
+    const linked = await collaborators.findOne({ where: { userId: user.id } });
+    const byEmail = await collaborators.findOne({
+      where: { email: person.email },
+    });
+    if (linked || byEmail) continue;
+    await collaborators.save(
+      collaborators.create({
+        email: person.email,
+        userId: user.id,
+        firstName: person.firstName,
+        lastName: person.lastName,
+        personType: 'DOCENTE',
+        programId: programIdByCode.get('ISI'),
+        dataConsent: false,
+        source: 'REGISTRO',
+      }),
+    );
+    counters.collaborators++;
+  }
+
+  // v2.1: identificación ficticia de las personas del seed; solo a quien aún no la tiene.
+  for (const [email, identity] of Object.entries(SEED_IDENTITIES)) {
+    const result = await collaborators.update(
+      { email, documentNumber: IsNull() },
+      { alternateEmail: null, ...identity },
+    );
+    counters.identities += result.affected ?? 0;
+  }
+
   // Proyectos
   for (const project of PROJECTS) {
     const leaderId = leaderIdByEmail.get(project.leaderEmail);
@@ -1385,7 +1517,8 @@ async function seed() {
     `Seed completado: ${counters.programs} programas, ${counters.skills} habilidades, ` +
       `${counters.projectTypes} tipos y ${counters.projectCategories} categorías de proyecto, ` +
       `${counters.users} usuarios, ${counters.collaborators} perfiles de colaborador y ` +
-      `${counters.projects} proyectos nuevos. Contraseña de los usuarios de prueba: ${PASSWORD}` +
+      `${counters.projects} proyectos nuevos; ${counters.templateFields} campos de plantilla v2.1 y ` +
+      `${counters.identities} identificaciones completadas. Contraseña de los usuarios de prueba: ${PASSWORD}` +
       (process.env.ADMIN_PASSWORD
         ? ' (el administrador usa ADMIN_PASSWORD).'
         : ' (también la del administrador: define ADMIN_PASSWORD para cambiarla).'),

@@ -7,7 +7,6 @@ import {
   IsString,
   IsUUID,
   MinLength,
-  ValidateIf,
   ValidateNested,
 } from 'class-validator';
 import { PERSON_NAME_MAX_LENGTH } from '../../domain/entities/collaborator-limits';
@@ -15,11 +14,13 @@ import { PERSON_TYPES } from '../../domain/entities/person-type.type';
 import type { PersonType } from '../../domain/entities/person-type.type';
 import { REGISTERABLE_ROLES } from '../../domain/entities/user-role.type';
 import type { RegisterableRole } from '../../domain/entities/user-role.type';
+import { PersonIdentificationDto } from './person-identification.dto';
 import { IsOptionalNonNull } from './validators/is-optional-non-null.decorator';
 import { IsRequiredText } from './validators/text.decorators';
 import { USER_FULL_NAME_LENGTH } from '../../domain/entities/field-limits';
 
-export class RegisterCollaboratorDto {
+/** La persona de la cuenta (v2.1: toda cuenta queda vinculada a una persona con su documento). */
+export class RegisterCollaboratorDto extends PersonIdentificationDto {
   @IsRequiredText({ max: PERSON_NAME_MAX_LENGTH })
   firstName: string;
 
@@ -53,10 +54,9 @@ export class RegisterDto {
   @IsIn(REGISTERABLE_ROLES)
   role: RegisterableRole;
 
-  // Obligatorio para COLABORADOR (RF1: la cuenta se vincula a un perfil técnico).
-  @ValidateIf((dto: RegisterDto) => dto.role === 'COLABORADOR')
-  @IsDefined({ message: 'Los datos del colaborador son obligatorios' })
+  // Obligatorio para todo rol (v2.1, A1–A4): la cuenta se vincula a una persona identificada.
+  @IsDefined({ message: 'Los datos de la persona son obligatorios' })
   @ValidateNested()
   @Type(() => RegisterCollaboratorDto)
-  collaborator?: RegisterCollaboratorDto;
+  collaborator: RegisterCollaboratorDto;
 }

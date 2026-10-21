@@ -18,6 +18,7 @@ export interface CreateProjectRepositoryDto {
   knownSkillIds?: string[];
   deliverables: DeliverableInput[];
   leaderId: string;
+  createdById: string;
 }
 
 export interface UpdateProjectRepositoryDto {

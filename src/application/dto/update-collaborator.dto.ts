@@ -11,11 +11,16 @@ import {
   RESEARCH_GROUP_MAX_LENGTH,
   SEMESTER,
 } from '../../domain/entities/collaborator-limits';
+import { UpdateIdentificationDto } from './person-identification.dto';
 import { IsOptionalNonNull } from './validators/is-optional-non-null.decorator';
 import { IsProfileUrl } from './validators/is-profile-url.decorator';
 import { IsRequiredText, IsOptionalText } from './validators/text.decorators';
 
-export class UpdateCollaboratorDto {
+/**
+ * El propio perfil: datos del perfil técnico, contacto y documento. El documento solo se puede
+ * registrar si aún no lo tiene (personas anteriores a v2.1); cambiarlo es del ADMIN.
+ */
+export class UpdateCollaboratorDto extends UpdateIdentificationDto {
   @IsOptionalNonNull()
   @IsRequiredText({ max: PERSON_NAME_MAX_LENGTH })
   firstName?: string;

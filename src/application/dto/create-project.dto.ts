@@ -56,4 +56,10 @@ export class CreateProjectDto {
   @ValidateNested({ each: true })
   @Type(() => DeliverableDto)
   deliverables: DeliverableDto[];
+
+  // v2.1 (A5): solo lo usa el ADMIN, que registra el proyecto a nombre de un líder.
+  // Si lo envía un LIDER se ignora: el proyecto siempre es suyo.
+  @IsOptional()
+  @IsUUID()
+  leaderId?: string;
 }

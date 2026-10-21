@@ -3,6 +3,7 @@ import type { AdminGetCollaboratorUseCase } from '../../application/use-cases/ad
 import type { AdminGetProjectUseCase } from '../../application/use-cases/admin-get-project.use-case';
 import type { AdminListCollaboratorsUseCase } from '../../application/use-cases/admin-list-collaborators.use-case';
 import type { AdminListProjectsUseCase } from '../../application/use-cases/admin-list-projects.use-case';
+import type { AdminUpdateCollaboratorIdentificationUseCase } from '../../application/use-cases/admin-update-collaborator-identification.use-case';
 import { createMock } from '../../testing/test-doubles.testing';
 
 describe('AdminController', () => {
@@ -10,11 +11,14 @@ describe('AdminController', () => {
   const getProject = createMock<AdminGetProjectUseCase>();
   const listCollaborators = createMock<AdminListCollaboratorsUseCase>();
   const getCollaborator = createMock<AdminGetCollaboratorUseCase>();
+  const updateIdentification =
+    createMock<AdminUpdateCollaboratorIdentificationUseCase>();
   const controller = new AdminController(
     listProjects,
     getProject,
     listCollaborators,
     getCollaborator,
+    updateIdentification,
   );
 
   beforeEach(() => jest.clearAllMocks());
@@ -35,5 +39,12 @@ describe('AdminController', () => {
 
     expect(listCollaborators.execute).toHaveBeenCalledWith(query);
     expect(getCollaborator.execute).toHaveBeenCalledWith('c1');
+  });
+
+  it('delegates the identification update to its use case', () => {
+    const body = { phone: '3001234567' };
+    void controller.updateCollaboratorIdentification('c1', body);
+
+    expect(updateIdentification.execute).toHaveBeenCalledWith('c1', body);
   });
 });

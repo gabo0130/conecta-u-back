@@ -1,15 +1,32 @@
 import type { ImportRejectedRow } from '../../domain/entities/import-run.entity';
 import type { WorkbookRow } from '../../domain/repositories/collaborator-workbook.interface';
 import { emailOf } from './cell-parsers';
+import { documentNumberOf } from './collaborator-row.parsers';
 
 export type RejectedRow = ImportRejectedRow;
 
-const UNMATCHED_EMAIL =
-  'El correo no corresponde a un colaborador importado en este archivo';
+const UNMATCHED_PERSON =
+  'El documento o el correo no corresponde a un colaborador importado en este archivo';
+
+/**
+ * Llave con la que una fila de Habilidades o Experiencia se asocia a su persona (v2.1): el
+ * documento; si viene vacío, el correo (compatibilidad con cargas anteriores).
+ */
+export function personKeyOf(values: WorkbookRow['values']): string {
+  const documentNumber = documentNumberOf(values.numero_documento);
+  return documentNumber
+    ? documentKey(documentNumber)
+    : emailKey(emailOf(values.correo));
+}
+
+export const documentKey = (documentNumber: string) =>
+  `documento:${documentNumber}`;
+export const emailKey = (email: string) => `correo:${email}`;
 
 /** Resultado de una importación (RF24): creados, rechazados con su causa y advertencias. */
 export class ImportReport {
-  private readonly importedEmails = new Set<string>();
+  private created = 0;
+  private readonly importedKeys = new Set<string>();
   private readonly rejected: RejectedRow[] = [];
   private readonly warnings: string[] = [];
 
@@ -17,8 +34,10 @@ export class ImportReport {
     this.rejected.push(...rows);
   }
 
-  accept(email: string, proposedSkills: string[]): void {
-    this.importedEmails.add(email);
+  /** `keys`: las llaves por las que sus filas hijas pueden encontrarla (documento y correo). */
+  accept(keys: string[], proposedSkills: string[]): void {
+    this.created++;
+    keys.forEach((key) => this.importedKeys.add(key));
     this.warnings.push(
       ...proposedSkills.map(
         (name) => `Habilidad nueva creada como pendiente: "${name}"`,
@@ -26,16 +45,16 @@ export class ImportReport {
     );
   }
 
-  /** Filas de una hoja hija cuyo correo no quedó importado: se informan, no se pierden. */
-  rejectUnmatched(sheet: string, rowsByEmail: Map<string, WorkbookRow[]>) {
-    for (const [email, rows] of rowsByEmail) {
-      if (!this.importedEmails.has(email)) {
+  /** Filas de una hoja hija cuya persona no quedó importada: se informan, no se pierden. */
+  rejectUnmatched(sheet: string, rowsByPerson: Map<string, WorkbookRow[]>) {
+    for (const [key, rows] of rowsByPerson) {
+      if (!this.importedKeys.has(key)) {
         this.reject(
-          ...rows.map(({ row }) => ({
+          ...rows.map(({ row, values }) => ({
             sheet,
             row,
-            email,
-            reason: UNMATCHED_EMAIL,
+            email: emailOf(values.correo),
+            reason: UNMATCHED_PERSON,
           })),
         );
       }
@@ -44,18 +63,18 @@ export class ImportReport {
 
   toResponse() {
     return {
-      created: this.importedEmails.size,
+      created: this.created,
       rejected: this.rejected,
       warnings: this.warnings,
     };
   }
 }
 
-export function groupByEmail(rows: WorkbookRow[]): Map<string, WorkbookRow[]> {
+export function groupByPerson(rows: WorkbookRow[]): Map<string, WorkbookRow[]> {
   const groups = new Map<string, WorkbookRow[]>();
   for (const row of rows) {
-    const email = emailOf(row.values.correo);
-    groups.set(email, [...(groups.get(email) ?? []), row]);
+    const key = personKeyOf(row.values);
+    groups.set(key, [...(groups.get(key) ?? []), row]);
   }
   return groups;
 }

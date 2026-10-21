@@ -87,7 +87,10 @@ describe('ExcelJsCollaboratorWorkbook', () => {
       richText: [{ text: 'ana@' }, { text: 'example.com' }],
     };
     row.getCell(2).value = 'Ana';
-    row.getCell(11).value = { formula: '5*2', result: 10 };
+    row.getCell(COLLABORATOR_HEADERS.indexOf('horas_semana') + 1).value = {
+      formula: '5*2',
+      result: 10,
+    };
     sheet.addRow([]);
     sheet.addRow(['   ']);
 

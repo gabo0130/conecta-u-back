@@ -244,3 +244,11 @@ export const buildRequiredProfile = (
     ...overrides,
   });
 };
+
+/** Identificación ficticia válida (v2.1) para los DTO que crean personas. */
+export const IDENTITY = {
+  documentType: 'CC' as const,
+  documentNumber: '9900000001',
+  phone: '3000000001',
+  nationality: 'Colombiana',
+};

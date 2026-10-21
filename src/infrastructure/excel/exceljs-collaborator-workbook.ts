@@ -9,6 +9,11 @@ import {
   type WorkbookRow,
 } from '../../domain/repositories/collaborator-workbook.interface';
 import {
+  COMMON_NATIONALITIES,
+  DOCUMENT_TYPES,
+  DOCUMENT_TYPE_LABEL,
+} from '../../domain/entities/person-identification';
+import {
   AVAILABILITY_DISPLAY,
   COLLABORATOR_HEADERS,
   EXPERIENCE_HEADERS,
@@ -34,6 +39,8 @@ interface EnumField {
   header: string;
   options: string[];
   allowBlank: boolean;
+  /** `false`: la lista es una sugerencia y Excel deja escribir otro valor (nacionalidad). */
+  strict?: boolean;
 }
 
 /** Una fila de la hoja "Guía": una por columna de una hoja de datos. */
@@ -49,14 +56,52 @@ interface SheetDefinition {
   headers: readonly string[];
   enumFields: EnumField[];
   guideFields: GuideField[];
+  /** Columnas con formato de texto: Excel no les quita ceros a la izquierda ni las vuelve notación científica. */
+  textColumns?: string[];
 }
+
+const DOCUMENT_GUIDE: GuideField = {
+  header: 'numero_documento',
+  required: true,
+  description:
+    'Número de documento, sin puntos ni espacios. Identifica a la persona: no puede repetirse. CC, TI y CE solo dígitos; PPT y PA letras y dígitos.',
+  valid: '1090123456',
+};
+
+const CHILD_DOCUMENT_GUIDE: GuideField = {
+  header: 'numero_documento',
+  required: false,
+  description:
+    'Documento de la persona en la hoja Colaboradores. Si lo dejas vacío, la fila se asocia por el correo.',
+  valid: '1090123456',
+};
+
+const CHILD_EMAIL_GUIDE: GuideField = {
+  header: 'correo',
+  required: false,
+  description:
+    'Correo de la persona en la hoja Colaboradores. Obligatorio solo si numero_documento está vacío.',
+  valid: 'ana.perez@correo.edu.co',
+};
 
 const enumValues = (display: Record<string, string>) => Object.values(display);
 
 const COLLABORATORS_SHEET: SheetDefinition = {
   name: SHEET_COLLABORATORS,
   headers: COLLABORATOR_HEADERS,
+  textColumns: ['numero_documento', 'telefono', 'codigo'],
   enumFields: [
+    {
+      header: 'tipo_documento',
+      options: [...DOCUMENT_TYPES],
+      allowBlank: false,
+    },
+    {
+      header: 'nacionalidad',
+      options: [...COMMON_NATIONALITIES],
+      allowBlank: false,
+      strict: false,
+    },
     {
       header: 'tipo_persona',
       options: enumValues(PERSON_TYPE_DISPLAY),
@@ -91,6 +136,39 @@ const COLLABORATORS_SHEET: SheetDefinition = {
       required: true,
       description: 'Apellidos.',
       valid: 'Pérez Rojas',
+    },
+    {
+      header: 'tipo_documento',
+      required: true,
+      description: `Tipo de documento: ${DOCUMENT_TYPES.map((type) => `${type} (${DOCUMENT_TYPE_LABEL[type]})`).join(', ')}.`,
+      valid: DOCUMENT_TYPES.join(', '),
+    },
+    DOCUMENT_GUIDE,
+    {
+      header: 'telefono',
+      required: true,
+      description:
+        'Teléfono de contacto, de 7 a 15 dígitos; puede empezar con +. Un celular colombiano tiene 10.',
+      valid: '3001234567',
+    },
+    {
+      header: 'nacionalidad',
+      required: true,
+      description: 'Nacionalidad. Elige una de la lista o escribe otra.',
+      valid: COMMON_NATIONALITIES.join(', '),
+    },
+    {
+      header: 'correo_alterno',
+      required: false,
+      description:
+        'Otro correo, por si se pierde el institucional. Debe ser distinto del correo principal.',
+      valid: 'ana.perez@gmail.com',
+    },
+    {
+      header: 'codigo',
+      required: false,
+      description: 'Código estudiantil o de docente.',
+      valid: '1152034',
     },
     {
       header: 'tipo_persona',
@@ -154,6 +232,7 @@ const COLLABORATORS_SHEET: SheetDefinition = {
 const SKILLS_SHEET: SheetDefinition = {
   name: SHEET_SKILLS,
   headers: SKILL_HEADERS,
+  textColumns: ['numero_documento'],
   enumFields: [
     {
       header: 'tipo',
@@ -168,12 +247,8 @@ const SKILLS_SHEET: SheetDefinition = {
     { header: 'nivel', options: enumValues(LEVEL_DISPLAY), allowBlank: false },
   ],
   guideFields: [
-    {
-      header: 'correo',
-      required: true,
-      description: 'Debe coincidir con un correo de la hoja Colaboradores.',
-      valid: 'ana.perez@correo.edu.co',
-    },
+    CHILD_DOCUMENT_GUIDE,
+    CHILD_EMAIL_GUIDE,
     {
       header: 'habilidad',
       required: true,
@@ -218,6 +293,7 @@ const SKILLS_SHEET: SheetDefinition = {
 const EXPERIENCE_SHEET: SheetDefinition = {
   name: SHEET_EXPERIENCE,
   headers: EXPERIENCE_HEADERS,
+  textColumns: ['numero_documento'],
   enumFields: [
     {
       header: 'tipo',
@@ -228,12 +304,8 @@ const EXPERIENCE_SHEET: SheetDefinition = {
     { header: 'actual', options: [YES_DISPLAY, 'No'], allowBlank: false },
   ],
   guideFields: [
-    {
-      header: 'correo',
-      required: true,
-      description: 'Debe coincidir con un correo de la hoja Colaboradores.',
-      valid: 'ana.perez@correo.edu.co',
-    },
+    CHILD_DOCUMENT_GUIDE,
+    CHILD_EMAIL_GUIDE,
     {
       header: 'tipo',
       required: true,
@@ -380,6 +452,10 @@ function writeDataSheet(
   sheet.addRow([...definition.headers]);
   sheet.views = [{ state: 'frozen', ySplit: 1 }];
 
+  for (const header of definition.textColumns ?? []) {
+    sheet.getColumn(definition.headers.indexOf(header) + 1).numFmt = '@';
+  }
+
   for (const field of definition.enumFields) {
     const column = definition.headers.indexOf(field.header) + 1;
     // Lista inline como texto literal (no un rango a una hoja auxiliar): mantiene la plantilla
@@ -391,9 +467,13 @@ function writeDataSheet(
         allowBlank: field.allowBlank,
         formulae: [formula],
         showErrorMessage: true,
-        errorStyle: 'stop',
-        errorTitle: 'Valor inválido',
-        error: `Elige uno de estos valores: ${field.options.join(', ')}.`,
+        errorStyle: field.strict === false ? 'information' : 'stop',
+        errorTitle:
+          field.strict === false ? 'Valor no listado' : 'Valor inválido',
+        error:
+          field.strict === false
+            ? `Sugeridos: ${field.options.join(', ')}. Puedes escribir otro.`
+            : `Elige uno de estos valores: ${field.options.join(', ')}.`,
       };
     }
   }
