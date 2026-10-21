@@ -1,5 +1,10 @@
-# Actualizaciones de dependencias: un PR semanal agrupado hacia develop
-# (nunca directo a master). Las de seguridad llegan aparte, apenas se publican.
+# Actualizaciones de dependencias hacia develop (nunca directo a master):
+# - npm: un solo PR semanal con las versiones menores y parches.
+#   Las versiones MAYORES se ignoran: pueden romper la app y se actualizan a mano,
+#   en una rama propia, cuando el equipo lo decida.
+# - Acciones de GitHub: un solo PR mensual.
+# Las actualizaciones de SEGURIDAD no se ven afectadas por estas reglas y llegan
+# apenas se publican, aunque sean de versión mayor.
 version: 2
 updates:
   - package-ecosystem: npm
@@ -9,7 +14,10 @@ updates:
       interval: weekly
       day: monday
       timezone: America/Bogota
-    open-pull-requests-limit: 5
+    open-pull-requests-limit: 3
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
     groups:
       minor-y-patch:
         update-types: [minor, patch]
@@ -21,5 +29,9 @@ updates:
     target-branch: develop
     schedule:
       interval: monthly
+    open-pull-requests-limit: 1
+    groups:
+      github-actions:
+        patterns: ["*"]
     commit-message:
       prefix: chore(ci)
