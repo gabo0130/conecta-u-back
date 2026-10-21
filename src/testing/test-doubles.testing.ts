@@ -12,6 +12,11 @@ import { ProgramEntity } from '../domain/entities/program.entity';
 import { ProjectCategoryEntity } from '../domain/entities/project-category.entity';
 import { ProjectTypeEntity } from '../domain/entities/project-type.entity';
 import {
+  RequiredProfileEntity,
+  type RequiredProfileProps,
+  RequiredProfileSkillEntity,
+} from '../domain/entities/required-profile.entity';
+import {
   ProjectEntity,
   type ProjectProps,
 } from '../domain/entities/project.entity';
@@ -31,9 +36,13 @@ import type {
 export function createMock<T extends object>(): jest.Mocked<T> {
   const methods = new Map<PropertyKey, jest.Mock>();
   return new Proxy({} as jest.Mocked<T>, {
-    get(_target, property) {
+    get(target, property) {
       // No es una promesa: evita que `await mock` lo trate como thenable.
       if (property === 'then') return undefined;
+      // Propiedades asignadas a mano (`Object.assign(mock, { model: 'x' })`) se respetan.
+      if (Object.prototype.hasOwnProperty.call(target, property)) {
+        return Reflect.get(target, property);
+      }
       if (!methods.has(property)) methods.set(property, jest.fn());
       return methods.get(property);
     },
@@ -200,3 +209,46 @@ export const buildProject = (overrides: Partial<ProjectProps> = {}) =>
     status: 'BORRADOR',
     ...overrides,
   });
+
+export const buildRequiredProfile = (
+  overrides: Partial<RequiredProfileProps> = {},
+) => {
+  const id = overrides.id ?? 'rp1';
+  return new RequiredProfileEntity({
+    id,
+    projectId: 'project-1',
+    analysisId: null,
+    source: 'MANUAL',
+    name: 'Frontend',
+    description: 'Interfaz',
+    justification: '',
+    quantity: 1,
+    priority: 'ALTA',
+    minWeeklyHours: null,
+    position: 0,
+    active: true,
+    skills: [
+      new RequiredProfileSkillEntity(
+        's1',
+        id,
+        'k-react',
+        'React',
+        'CONOCIMIENTO',
+        'BASICO',
+        'ALTA',
+        'React',
+      ),
+    ],
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    ...overrides,
+  });
+};
+
+/** Identificación ficticia válida (v2.1) para los DTO que crean personas. */
+export const IDENTITY = {
+  documentType: 'CC' as const,
+  documentNumber: '9900000001',
+  phone: '3000000001',
+  nationality: 'Colombiana',
+};

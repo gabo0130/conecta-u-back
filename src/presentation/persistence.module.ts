@@ -5,32 +5,44 @@ import { CollaboratorOrmEntity } from '../infrastructure/database/typeorm/collab
 import { DeliverableOrmEntity } from '../infrastructure/database/typeorm/deliverable.orm-entity';
 import { ExperienceOrmEntity } from '../infrastructure/database/typeorm/experience.orm-entity';
 import { ImportRunOrmEntity } from '../infrastructure/database/typeorm/import-run.orm-entity';
+import { ProjectAnalysisOrmEntity } from '../infrastructure/database/typeorm/project-analysis.orm-entity';
 import { ProgramOrmEntity } from '../infrastructure/database/typeorm/program.orm-entity';
 import { ProjectCategoryOrmEntity } from '../infrastructure/database/typeorm/project-category.orm-entity';
 import { ProjectTypeOrmEntity } from '../infrastructure/database/typeorm/project-type.orm-entity';
 import { ProjectOrmEntity } from '../infrastructure/database/typeorm/project.orm-entity';
+import { RecommendationOrmEntity } from '../infrastructure/database/typeorm/recommendation.orm-entity';
+import { RequiredProfileSkillOrmEntity } from '../infrastructure/database/typeorm/required-profile-skill.orm-entity';
+import { RequiredProfileOrmEntity } from '../infrastructure/database/typeorm/required-profile.orm-entity';
 import { SkillOrmEntity } from '../infrastructure/database/typeorm/skill.orm-entity';
+import { TypeOrmCollaboratorEmbeddingRepository } from '../infrastructure/database/typeorm/typeorm-collaborator-embedding.repository';
 import { TypeOrmCollaboratorSkillRepository } from '../infrastructure/database/typeorm/typeorm-collaborator-skill.repository';
 import { TypeOrmCollaboratorRepository } from '../infrastructure/database/typeorm/typeorm-collaborator.repository';
 import { TypeOrmExperienceRepository } from '../infrastructure/database/typeorm/typeorm-experience.repository';
 import { TypeOrmImportRunRepository } from '../infrastructure/database/typeorm/typeorm-import-run.repository';
+import { TypeOrmProjectAnalysisRepository } from '../infrastructure/database/typeorm/typeorm-project-analysis.repository';
 import { TypeOrmProgramRepository } from '../infrastructure/database/typeorm/typeorm-program.repository';
 import { TypeOrmProjectCategoryRepository } from '../infrastructure/database/typeorm/typeorm-project-category.repository';
 import { TypeOrmProjectTypeRepository } from '../infrastructure/database/typeorm/typeorm-project-type.repository';
 import { TypeOrmProjectRepository } from '../infrastructure/database/typeorm/typeorm-project.repository';
+import { TypeOrmRecommendationRepository } from '../infrastructure/database/typeorm/typeorm-recommendation.repository';
+import { TypeOrmRequiredProfileRepository } from '../infrastructure/database/typeorm/typeorm-required-profile.repository';
 import { TypeOrmSkillRepository } from '../infrastructure/database/typeorm/typeorm-skill.repository';
 import { TypeOrmUnitOfWork } from '../infrastructure/database/typeorm/typeorm-unit-of-work';
 import { TypeOrmUserRepository } from '../infrastructure/database/typeorm/typeorm-user.repository';
 import { UserOrmEntity } from '../infrastructure/database/typeorm/user.orm-entity';
 import {
+  COLLABORATOR_EMBEDDING_REPOSITORY,
   COLLABORATOR_REPOSITORY,
   COLLABORATOR_SKILL_REPOSITORY,
   EXPERIENCE_REPOSITORY,
   IMPORT_RUN_REPOSITORY,
   PROGRAM_REPOSITORY,
+  PROJECT_ANALYSIS_REPOSITORY,
   PROJECT_CATEGORY_REPOSITORY,
   PROJECT_REPOSITORY,
   PROJECT_TYPE_REPOSITORY,
+  RECOMMENDATION_REPOSITORY,
+  REQUIRED_PROFILE_REPOSITORY,
   SKILL_REPOSITORY,
   UNIT_OF_WORK,
   USER_REPOSITORY,
@@ -53,6 +65,22 @@ const REPOSITORY_BINDINGS = [
     useClass: TypeOrmProjectCategoryRepository,
   },
   { provide: IMPORT_RUN_REPOSITORY, useClass: TypeOrmImportRunRepository },
+  {
+    provide: PROJECT_ANALYSIS_REPOSITORY,
+    useClass: TypeOrmProjectAnalysisRepository,
+  },
+  {
+    provide: REQUIRED_PROFILE_REPOSITORY,
+    useClass: TypeOrmRequiredProfileRepository,
+  },
+  {
+    provide: COLLABORATOR_EMBEDDING_REPOSITORY,
+    useClass: TypeOrmCollaboratorEmbeddingRepository,
+  },
+  {
+    provide: RECOMMENDATION_REPOSITORY,
+    useClass: TypeOrmRecommendationRepository,
+  },
   { provide: UNIT_OF_WORK, useClass: TypeOrmUnitOfWork },
 ];
 
@@ -71,6 +99,10 @@ const REPOSITORY_BINDINGS = [
       ProjectOrmEntity,
       DeliverableOrmEntity,
       ImportRunOrmEntity,
+      ProjectAnalysisOrmEntity,
+      RequiredProfileOrmEntity,
+      RequiredProfileSkillOrmEntity,
+      RecommendationOrmEntity,
     ]),
   ],
   providers: REPOSITORY_BINDINGS,

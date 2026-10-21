@@ -24,7 +24,8 @@ Corre `npm run migration:run` y `npm run seed` en el backend. Los logins de esta
 4. Corre las carpetas según el rol logueado:
    - **Collaborators** necesita `COLABORADOR` o `LIDER`. `Create My Profile (LIDER)` solo aplica si estás logueado con **Login - Líder sin perfil**.
    - **Projects** necesita `LIDER`, y `programId`/`projectTypeId`/`projectCategoryId` del paso 1.
-   - **Import**, **Users** y **Access > List Roles Catalog** necesitan `ADMIN`.
+   - **AI Analysis (Líder)** necesita `LIDER` dueño de `projectId`. `Request Analysis` tarda entre 15 y 45 s con Gemini real: sube el *Request timeout* de Postman a 60000 ms (con `AI_PROVIDER=fake` es instantáneo). `Generate Recommendations` (después de un análisis) calcula las recomendaciones y `Get Recommendation Detail` usa el `recommendationId` que guarda `List Recommendations`. `Create Required Profile` necesita `skillId` (corre Catalogs antes) y guarda `requiredProfileId` para los `PATCH`.
+   - **Embeddings (Admin)** y **Import**, **Users** y **Access > List Roles Catalog** necesitan `ADMIN`.
    - **Access > Get Menu By Role** acepta cualquier rol autenticado.
 5. Los `POST` de creación (Add Skill, Create Experience, Create Project, Create User) guardan el `id` de la respuesta en `collaboratorSkillId`/`experienceId`/`projectId`/`targetUserId`, para que los `PATCH`/`DELETE` siguientes ya lo tengan listo.
 

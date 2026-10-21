@@ -10,6 +10,7 @@ import {
 import { ExperienceOrmEntity } from './experience.orm-entity';
 import { toExperienceEntity } from './mappers/collaborator.mapper';
 import { pickDefined } from '../../../shared/utils/pick-defined';
+import { markEmbeddingStale } from './mark-embedding-stale';
 import { SkillOrmEntity } from './skill.orm-entity';
 
 @Injectable()
@@ -57,6 +58,7 @@ export class TypeOrmExperienceRepository implements ExperienceRepository {
     });
 
     const saved = await this.repository.save(experience);
+    await markEmbeddingStale(this.repository.manager, data.collaboratorId);
     return this.findById(saved.id) as Promise<ExperienceEntity>;
   }
 
@@ -82,11 +84,23 @@ export class TypeOrmExperienceRepository implements ExperienceRepository {
     }
 
     const saved = await this.repository.save(merged);
+    await markEmbeddingStale(
+      this.repository.manager,
+      experience.collaboratorId,
+    );
     return this.findById(saved.id);
   }
 
   async delete(id: string): Promise<boolean> {
+    const experience = await this.repository.findOne({ where: { id } });
+    if (!experience) {
+      return false;
+    }
     const result = await this.repository.delete(id);
+    await markEmbeddingStale(
+      this.repository.manager,
+      experience.collaboratorId,
+    );
     return (result.affected ?? 0) > 0;
   }
 

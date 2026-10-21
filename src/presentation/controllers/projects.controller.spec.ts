@@ -36,7 +36,10 @@ describe('ProjectsController', () => {
       deliverables: [{ name: 'PMV', scope: 'Iteración 1' }],
     };
     void controller.create(request, dto);
-    expect(createProjectUseCase.execute).toHaveBeenCalledWith('1', dto);
+    expect(createProjectUseCase.execute).toHaveBeenCalledWith(
+      { userId: '1', role: 'LIDER' },
+      dto,
+    );
   });
 
   it('delegates list to use case', () => {

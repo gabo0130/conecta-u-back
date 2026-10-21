@@ -10,6 +10,7 @@ import {
 import { CollaboratorSkillOrmEntity } from './collaborator-skill.orm-entity';
 import { toCollaboratorSkillEntity } from './mappers/collaborator.mapper';
 import { pickDefined } from '../../../shared/utils/pick-defined';
+import { markEmbeddingStale } from './mark-embedding-stale';
 
 @Injectable()
 export class TypeOrmCollaboratorSkillRepository implements CollaboratorSkillRepository {
@@ -42,6 +43,7 @@ export class TypeOrmCollaboratorSkillRepository implements CollaboratorSkillRepo
     });
 
     const saved = await this.repository.save(entry);
+    await markEmbeddingStale(this.repository.manager, data.collaboratorId);
     const withSkill = await this.repository.findOne({
       where: { id: saved.id },
     });
@@ -60,6 +62,7 @@ export class TypeOrmCollaboratorSkillRepository implements CollaboratorSkillRepo
     const merged = this.repository.merge(entry, pickDefined(data));
 
     const saved = await this.repository.save(merged);
+    await markEmbeddingStale(this.repository.manager, entry.collaboratorId);
     const withSkill = await this.repository.findOne({
       where: { id: saved.id },
     });
@@ -67,7 +70,12 @@ export class TypeOrmCollaboratorSkillRepository implements CollaboratorSkillRepo
   }
 
   async delete(id: string): Promise<boolean> {
+    const entry = await this.repository.findOne({ where: { id } });
+    if (!entry) {
+      return false;
+    }
     const result = await this.repository.delete(id);
+    await markEmbeddingStale(this.repository.manager, entry.collaboratorId);
     return (result.affected ?? 0) > 0;
   }
 }

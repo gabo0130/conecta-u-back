@@ -7,7 +7,7 @@ import type { LoginUseCase } from '../../application/use-cases/login.use-case';
 import type { RefreshTokenUseCase } from '../../application/use-cases/refresh-token.use-case';
 import type { RegisterUseCase } from '../../application/use-cases/register.use-case';
 import type { AuthenticatedRequest } from '../guards/jwt-auth.guard';
-import { createMock } from '../../testing/test-doubles.testing';
+import { IDENTITY, createMock } from '../../testing/test-doubles.testing';
 
 describe('AuthController', () => {
   const loginUseCase = createMock<LoginUseCase>();
@@ -32,6 +32,13 @@ describe('AuthController', () => {
       email: 'laura@example.com',
       password: 'Secret123*',
       role: 'LIDER',
+      collaborator: {
+        firstName: 'Ana',
+        lastName: 'Pérez',
+        personType: 'DOCENTE',
+        programId: 'program-1',
+        ...IDENTITY,
+      },
     };
 
     void controller.register(dto);

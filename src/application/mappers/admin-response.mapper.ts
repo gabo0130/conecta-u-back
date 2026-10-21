@@ -2,7 +2,10 @@ import type { CollaboratorEntity } from '../../domain/entities/collaborator.enti
 import type { ImportRunEntity } from '../../domain/entities/import-run.entity';
 import type { ProjectEntity } from '../../domain/entities/project.entity';
 import type { UserEntity } from '../../domain/entities/user.entity';
-import { toCollaboratorProfileResponse } from './collaborator-response.mapper';
+import {
+  toCollaboratorProfileResponse,
+  toIdentificationResponse,
+} from './collaborator-response.mapper';
 import { toProjectResponse } from './project-response.mapper';
 import { toUserResponse } from './user-response.mapper';
 
@@ -56,7 +59,14 @@ export function toAdminCollaboratorSummary(
     source: collaborator.source,
     active: collaborator.active,
     dataConsent: collaborator.dataConsent,
+    ...toIdentificationResponse(collaborator),
     skillsCount: collaborator.skills.length,
+    // A7 (v2.1): cuáles habilidades, no solo cuántas.
+    skills: collaborator.skills.map((entry) => ({
+      name: entry.skill.name,
+      type: entry.skill.type,
+      level: entry.level,
+    })),
     experiencesCount: collaborator.experiences.length,
     user: toLinkedUser(
       collaborator.userId ? usersById.get(collaborator.userId) : undefined,
