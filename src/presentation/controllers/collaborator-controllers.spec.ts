@@ -46,12 +46,18 @@ describe('CollaboratorProfileController', () => {
 
     void controller.create(request, createDto);
     void controller.get(request);
-    void controller.update(request, { summary: 'x' });
+    void controller.update(request, {
+      summary: 'x',
+      truthfulnessDeclared: true,
+    });
     void controller.updateAvailability(request, availabilityDto);
 
     expect(create.execute).toHaveBeenCalledWith('user-1', createDto);
     expect(get.execute).toHaveBeenCalledWith('user-1');
-    expect(update.execute).toHaveBeenCalledWith('user-1', { summary: 'x' });
+    expect(update.execute).toHaveBeenCalledWith('user-1', {
+      summary: 'x',
+      truthfulnessDeclared: true,
+    });
     expect(availability.execute).toHaveBeenCalledWith(
       'user-1',
       availabilityDto,

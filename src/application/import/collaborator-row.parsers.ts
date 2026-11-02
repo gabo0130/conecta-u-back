@@ -63,7 +63,7 @@ import {
 } from './cell-parsers';
 
 // Una función por hoja de la plantilla: convierte la fila en datos del dominio o
-// devuelve el motivo del rechazo (RF24). No acceden a la base de datos.
+// devuelve el motivo del rechazo (RF20). No acceden a la base de datos.
 
 export type ParseResult<T> =
   { ok: true; value: T } | { ok: false; reason: string };

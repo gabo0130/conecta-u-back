@@ -7,17 +7,35 @@ import {
 import { LEVELS } from '../../domain/entities/level.type';
 import { PRIORITIES } from '../../domain/entities/priority.type';
 import { SKILL_TYPES } from '../../domain/entities/skill-type.type';
+import type { SkillType } from '../../domain/entities/skill-type.type';
 import type { AnalysisInput } from '../../domain/repositories/project-analyzer.interface';
 
-/** Cambiar el texto de abajo exige subir esta versión: queda registrada en cada análisis (RNF8). */
-export const ANALYSIS_PROMPT_VERSION = 'v1';
+/**
+ * Cambiar el texto de abajo exige subir esta versión: queda registrada en cada análisis (RNF8).
+ * v2 (ajustes v2.2, E6): describe los tres tipos con la clasificación nueva.
+ */
+export const ANALYSIS_PROMPT_VERSION = 'v2';
+
+/** Qué significa cada tipo (v2.2, E6). Los valores del enum no cambian, solo su descripción. */
+export const SKILL_TYPE_DESCRIPTIONS: Record<SkillType, string> = {
+  CONOCIMIENTO:
+    'conocimiento técnico: herramientas y tecnologías (p. ej. Python, AutoCAD, SPSS)',
+  COMPETENCIA:
+    'competencia técnica: el rol o la disciplina que se ejerce (p. ej. investigador, desarrollador, analista)',
+  HABILIDAD_BLANDA:
+    'competencia blanda: cómo trabaja la persona con otros (p. ej. comunicación, liderazgo)',
+};
 
 export const ANALYSIS_SYSTEM_INSTRUCTION = [
   'Eres un asistente que ayuda a líderes de proyectos universitarios a definir qué perfiles de colaboradores necesitan.',
   'Analiza el proyecto y propone los perfiles requeridos para ejecutarlo.',
   'Reglas:',
   `- Propone entre ${PROFILES_PER_ANALYSIS.min} y ${PROFILES_PER_ANALYSIS.max} perfiles.`,
-  `- Cada perfil lleva entre ${SKILLS_PER_PROFILE.min} y ${SKILLS_PER_PROFILE.max} habilidades e incluye al menos una habilidad blanda.`,
+  `- Cada perfil lleva entre ${SKILLS_PER_PROFILE.min} y ${SKILLS_PER_PROFILE.max} habilidades e incluye al menos una competencia blanda (HABILIDAD_BLANDA).`,
+  '- Clasifica cada habilidad en uno de estos tipos:',
+  ...SKILL_TYPES.map(
+    (type) => `  - ${type}: ${SKILL_TYPE_DESCRIPTIONS[type]}.`,
+  ),
   '- Si en el catálogo existe una habilidad equivalente, usa exactamente su nombre del catálogo.',
   '- La justificación va en español, de 1 a 3 frases, y cita los objetivos o entregables del proyecto que la motivan.',
   '- No inventes datos de personas ni nombres propios: describe únicamente perfiles.',
@@ -91,7 +109,10 @@ export function buildAnalysisPrompt({
   }
 
   if (project.knownSkills.length > 0) {
-    lines.push('', '## Habilidades que el líder ya identificó');
+    lines.push(
+      '',
+      '## Competencias técnicas y blandas requeridas por el proyecto (según el líder)',
+    );
     for (const skill of project.knownSkills) {
       lines.push(`- ${skill.name} (${skill.type})`);
     }

@@ -13,7 +13,7 @@ import { RecommendationsController } from './controllers/recommendations.control
 import { PersistenceModule } from './persistence.module';
 import { SecurityModule } from './security.module';
 
-/** Matchmaking híbrido (RF15–RF17): embeddings de personas y recomendaciones por perfil. */
+/** Matchmaking híbrido (RF11–RF13): embeddings de personas y recomendaciones por perfil. */
 @Module({
   imports: [PersistenceModule, SecurityModule, AnalysisModule],
   controllers: [AdminEmbeddingsController, RecommendationsController],

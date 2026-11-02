@@ -6,7 +6,10 @@ import {
   UnprocessableEntityException,
 } from '@nestjs/common';
 import type { CollaboratorEntity } from '../../domain/entities/collaborator.entity';
-import { consentFields } from '../../domain/entities/data-consent';
+import {
+  consentFields,
+  truthfulnessFields,
+} from '../../domain/entities/data-consent';
 import {
   ALTERNATE_EMAIL_SAME_ERROR,
   type PersonIdentification,
@@ -35,6 +38,8 @@ export interface PersonForAccount extends Omit<
   programId: string;
   /** Solo se toca el consentimiento si llega (clientes antiguos no lo mandan). */
   dataConsent?: boolean;
+  /** Declaración de veracidad (v2.2, E2): la exige el registro; el alta por el admin no la manda. */
+  truthfulnessDeclared?: boolean;
   /** Campos extra del perfil técnico al crearlo desde "Mi perfil". */
   profile?: {
     semester?: number | null;
@@ -120,8 +125,14 @@ export class PersonAccountService {
     pending: PendingPerson,
   ): Promise<CollaboratorEntity> {
     const { person } = pending;
-    const consent =
-      person.dataConsent !== undefined ? consentFields(person.dataConsent) : {};
+    const consent = {
+      ...(person.dataConsent !== undefined
+        ? consentFields(person.dataConsent)
+        : {}),
+      ...(person.truthfulnessDeclared !== undefined
+        ? truthfulnessFields(person.truthfulnessDeclared)
+        : {}),
+    };
 
     if (pending.kind === 'link') {
       // La persona ya existía (importada o sin cuenta): se completa su identificación.

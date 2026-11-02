@@ -34,7 +34,7 @@ import { AuthorizationGuard } from '../guards/authorization.guard';
 import { JwtAuthGuard } from '../guards/jwt-auth.guard';
 import { UuidParamPipe } from '../pipes/uuid-param.pipe';
 
-/** Gestión de catálogos por el ADMIN (RF22): programas, tipos/categorías de proyecto y habilidades. */
+/** Gestión de catálogos por el ADMIN (RF18): programas, tipos/categorías de proyecto y habilidades. */
 @UseGuards(JwtAuthGuard, AuthorizationGuard)
 @Authorize({ anyOfRoles: ['ADMIN'] })
 @Controller('admin/catalogs')

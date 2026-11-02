@@ -20,6 +20,8 @@ export interface CreateCollaboratorRepositoryDto {
   weeklyHours?: number;
   dataConsent?: boolean;
   dataConsentAt?: Date | null;
+  truthfulnessDeclared?: boolean;
+  truthfulnessDeclaredAt?: Date | null;
   source?: CollaboratorSource;
   documentType?: DocumentType | null;
   documentNumber?: string | null;
@@ -42,6 +44,8 @@ export interface UpdateCollaboratorRepositoryDto {
   weeklyHours?: number;
   dataConsent?: boolean;
   dataConsentAt?: Date | null;
+  truthfulnessDeclared?: boolean;
+  truthfulnessDeclaredAt?: Date | null;
   active?: boolean;
   documentType?: DocumentType | null;
   documentNumber?: string | null;

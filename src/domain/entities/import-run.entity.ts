@@ -1,4 +1,4 @@
-/** Una fila rechazada al importar (RF24): en qué hoja, qué fila, de quién y por qué. */
+/** Una fila rechazada al importar (RF20): en qué hoja, qué fila, de quién y por qué. */
 export interface ImportRejectedRow {
   sheet: string;
   row: number;

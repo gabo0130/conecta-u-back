@@ -12,7 +12,9 @@ async function bootstrap() {
 
   const swaggerConfig = new DocumentBuilder()
     .setTitle('Conecta U API')
-    .setDescription('API de Conecta U — Iteración 1 (RF1-RF11, RF23-RF24)')
+    .setDescription(
+      'API de Conecta U — Iteraciones 1 y 2 (requisitos con la numeración v2.2)',
+    )
     .setVersion('1.0')
     .addBearerAuth()
     .build();

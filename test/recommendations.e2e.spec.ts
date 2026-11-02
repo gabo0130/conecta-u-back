@@ -9,7 +9,7 @@ import {
 } from './support/fixtures';
 import { createTestApp, login } from './support/test-app';
 
-// RF15–RF17 y reconstrucción de embeddings por HTTP, con AI_PROVIDER=fake y la base de pruebas.
+// RF11–RF13 y reconstrucción de embeddings por HTTP, con AI_PROVIDER=fake y la base de pruebas.
 
 const UNKNOWN_ID = '00000000-0000-4000-8000-000000000000';
 
@@ -153,7 +153,7 @@ describe('Recomendaciones (integración)', () => {
       expect(response.body.message).toBe('Perfil no encontrado');
     });
 
-    it('RF17: el detalle explica el puntaje con pesos que suman 1 (dueño y ADMIN)', async () => {
+    it('RF13: el detalle explica el puntaje con pesos que suman 1 (dueño y ADMIN)', async () => {
       const body = await list();
       const [first] = body.profiles.flatMap(
         (profile) => profile.recommendations,
@@ -202,7 +202,7 @@ describe('Recomendaciones (integración)', () => {
       await http()
         .patch('/api/collaborators/me')
         .auth(collaborator, { type: 'bearer' })
-        .send({ dataConsent: false })
+        .send({ dataConsent: false, truthfulnessDeclared: true })
         .expect(200);
 
       expect(await stored()).toEqual({

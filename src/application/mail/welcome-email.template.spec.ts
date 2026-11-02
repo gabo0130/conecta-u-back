@@ -29,6 +29,16 @@ describe('renderWelcomeEmail', () => {
     expect(text).toContain(cta);
   });
 
+  it('uses the v2.2 classification when inviting to complete the profile (E6)', () => {
+    const { html, text } = renderWelcomeEmail({ ...base, role: 'COLABORADOR' });
+
+    for (const body of [html, text]) {
+      expect(body).toContain(
+        'Agrega tus conocimientos técnicos, competencias técnicas y competencias blandas.',
+      );
+    }
+  });
+
   it('builds the link from the app url without a double slash', () => {
     const { html } = renderWelcomeEmail({ ...base, role: 'COLABORADOR' });
 

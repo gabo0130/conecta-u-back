@@ -12,7 +12,7 @@ import { toUserResponse } from '../mappers/user-response.mapper';
 import { PersonAccountService } from '../support/person-account.service';
 import { SendWelcomeEmailUseCase } from './send-welcome-email.use-case';
 
-/** RF18: el ADMIN crea una cuenta con cualquier rol, vinculada a una persona identificada (v2.1). */
+/** RF14: el ADMIN crea una cuenta con cualquier rol, vinculada a una persona identificada (v2.1). */
 @Injectable()
 export class CreateUserUseCase {
   constructor(
@@ -33,21 +33,26 @@ export class CreateUserUseCase {
     const pending = await this.personAccount.prepare(email, data.collaborator);
     const passwordHash = await this.passwordHasher.hash(data.password);
 
-    const user = await this.unitOfWork.run(async (repositories) => {
+    const { user, person } = await this.unitOfWork.run(async (repositories) => {
       const created = await repositories.users.create({
         fullName: data.fullName,
         email,
         passwordHash,
         role: data.role,
       });
-      await this.personAccount.link(repositories, created.id, pending);
-      return created;
+      const linked = await this.personAccount.link(
+        repositories,
+        created.id,
+        pending,
+      );
+      return { user: created, person: linked };
     });
 
     // Sin await: el correo no debe retrasar la respuesta ni hacerla fallar (el caso de uso no lanza).
     void this.sendWelcomeEmail.execute({
       fullName: user.fullName,
       email: user.email,
+      alternateEmail: person.alternateEmail,
       role: user.role,
     });
 

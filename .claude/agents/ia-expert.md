@@ -18,15 +18,18 @@ Un prompt más corto no es automáticamente mejor: cada simplificación debe dem
 
 ## 2. Contexto del repo (verifícalo, no lo asumas)
 
-Puntos de partida conocidos al 16/10/2026 — confirma que existen y busca otros con `Grep` (`genai`, `GoogleGenAI`, `generateContent`, `embedContent`, `responseSchema`, `AI_PROVIDER`, `EMBEDDING`):
+Puntos de partida conocidos al 21/10/2026 — confirma que existen y busca otros con `Grep` (`genai`, `GoogleGenAI`, `generateContent`, `embedContent`, `responseSchema`, `AI_PROVIDER`, `EMBEDDING`):
 
-- `src/infrastructure/ai/`: `gemini-project-analyzer.ts`, `gemini-prompt.ts`, `gemini-embedding-provider.ts`, `retry-transient.ts`, `fake-project-analyzer.ts`, `fake-embedding-provider.ts` y sus specs.
-- `src/application/analysis/`: `analysis-input.builder.ts` (qué se envía), `analysis-output.validator.ts` (validación de la salida), `catalog-profile-mapper.ts` y `skill-catalog-index.ts` (mapeo al catálogo), `collaborator-embedding-text.ts`, `collaborator-embedding.service.ts`, `profile-embedder.ts`, `analysis-timeouts.ts`, `analysis-recovery.service.ts`.
+- `src/infrastructure/ai/`: `gemini-project-analyzer.ts`, `gemini-prompt.ts`, `gemini-embedding-provider.ts`, `retry-transient.ts` (un 429 no se reintenta sobre el mismo modelo), `quota-circuit-breaker.ts` (cuota diaria agotada → el modelo no se llama por 30 min), `fake-project-analyzer.ts`, `fake-embedding-provider.ts` y sus specs.
+- `src/application/analysis/`: `analysis-input.builder.ts` (qué se envía), `analysis-output.validator.ts` (validación de la salida), `catalog-profile-mapper.ts` y `skill-catalog-index.ts` (mapeo al catálogo), `collaborator-embedding-text.ts`, `collaborator-embedding.service.ts`, `profile-embedder.ts`, `analysis-timeouts.ts`, `analysis-recovery.service.ts`, `contact-data.ts` (redacción de correos, enlaces, teléfonos y números de documento antes del prompt y de los embeddings).
 - Casos de uso en `src/application/use-cases/` (análisis, perfiles requeridos, recomendaciones, rebuild de embeddings) y `src/application/matchmaking/`.
-- Contrato y reglas: `notes/backend-iteracion-2.md` (§4 integración con Gemini, §5 matchmaking, §6 embeddings, §12 contrato implementado). Léelo antes de opinar sobre lo que el modelo "debería" devolver.
+- Contrato y reglas: `notes/backend-iteracion-2.md` (§4 integración con Gemini, §5 matchmaking, §6 embeddings, §12 contrato implementado). Léelo antes de opinar sobre lo que el modelo "debería" devolver. Control de cambios v2.1 de la cliente: `notes/ajustes-cliente-v2.1.md`.
 - Variables: `AI_PROVIDER` (`fake`|`gemini`), `GEMINI_MODEL`, `GEMINI_FALLBACK_MODEL`, `GEMINI_EMBEDDING_MODEL`, `EMBEDDING_DIM`, `AI_TIMEOUT_MS` (presupuesto total), `EMBEDDING_TIMEOUT_MS`, `MATCH_WEIGHTS`, `MATCH_TOP_N`.
 - Trazabilidad (RNF8): `project_analyses` guarda `provider`, `model`, `promptVersion`, `input`, `rawOutput`, `inputTokens`, `outputTokens`, `durationMs`; los embeddings guardan `embeddingModel`. Límites RT7: 1 análisis en curso y máx. 5 por proyecto al día.
 - Privacidad (Ley 1581): la entrada al modelo y el texto de embeddings **no** llevan correo, teléfono ni datos de contacto. Cualquier propuesta debe mantenerlo.
+- v2.1 (20/10/2026): las personas tienen `documentType`/`documentNumber`, `phone`, `nationality`, `alternateEmail` e `institutionalCode`. **Ninguno** puede llegar a Gemini, a los embeddings, a las recomendaciones ni al breakdown; tampoco usarlos como señal del matchmaking (la nacionalidad en el puntaje sería discriminatoria). Si un flujo nuevo los lee, es un hallazgo 🔴.
+- v2.1: los campos de plantilla ganan `tags` (lista de palabras clave) y `currency` (pesos, entero). `AnalysisInputBuilder` los envía como "a, b, c" y "$ 2.500.000 COP"; la huella (`projectFingerprint`) se calcula sobre ese mismo texto, así que cambiar el formato marca como desactualizados los análisis que tengan esos campos.
+- v2.1: el ADMIN puede registrar proyectos a nombre de un líder, pero analizar, editar perfiles y generar recomendaciones sigue siendo del líder dueño (`loadOwnedProject`) hasta que se decida otra cosa.
 
 No inventes archivos, componentes ni funcionalidades. Si algo de esta lista ya no existe, dilo.
 

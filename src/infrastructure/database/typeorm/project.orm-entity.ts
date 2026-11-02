@@ -32,6 +32,16 @@ export class ProjectOrmEntity {
   @Column({ type: 'text', nullable: false })
   objectives: string;
 
+  // v2.2, E5: NULL en los proyectos anteriores; el DTO exige ejecutora y duración al crear.
+  @Column({ type: 'varchar', length: 150, nullable: true })
+  executingEntity: string | null;
+
+  @Column({ type: 'varchar', length: 150, nullable: true })
+  sponsorEntity: string | null;
+
+  @Column({ type: 'smallint', nullable: true })
+  durationMonths: number | null;
+
   @ManyToOne(() => ProjectTypeOrmEntity, { eager: true })
   @JoinColumn({ name: 'typeId' })
   type: ProjectTypeOrmEntity;

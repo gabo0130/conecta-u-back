@@ -197,6 +197,18 @@ describe('parseSkillRow', () => {
   });
 
   it.each([
+    ['Conocimiento técnico', 'CONOCIMIENTO'],
+    ['competencia tecnica', 'COMPETENCIA'],
+    ['Competencia blanda', 'HABILIDAD_BLANDA'],
+    // Etiquetas anteriores a v2.2: los archivos ya llenados siguen sirviendo.
+    ['Conocimiento', 'CONOCIMIENTO'],
+    ['Competencia', 'COMPETENCIA'],
+  ])('reads the type "%s" as %s (v2.2, E6)', (tipo, type) => {
+    const result = parseSkillRow(skill({ tipo }));
+    expect(result.ok && result.value.type).toBe(type);
+  });
+
+  it.each([
     [{ habilidad: null }, 'habilidad es obligatorio'],
     [{ habilidad: 'h'.repeat(81) }, 'habilidad admite máximo 80 caracteres'],
     [{ tipo: 'Otra' }, 'tipo de habilidad inválido'],

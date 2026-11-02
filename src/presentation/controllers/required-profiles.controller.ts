@@ -19,7 +19,7 @@ import type { AuthenticatedRequest } from '../guards/jwt-auth.guard';
 import { JwtAuthGuard } from '../guards/jwt-auth.guard';
 import { UuidParamPipe } from '../pipes/uuid-param.pipe';
 
-/** RF13: el líder dueño agrega perfiles a mano, los edita o los descarta. */
+/** RF9: el líder dueño agrega perfiles a mano, los edita o los descarta. */
 @UseGuards(JwtAuthGuard, AuthorizationGuard)
 @Authorize({ anyOfRoles: ['LIDER'] })
 @Controller('projects/:id/required-profiles')

@@ -87,7 +87,7 @@ const SAVE_FAILED =
   'No se pudo guardar el colaborador ni sus habilidades o experiencia';
 
 /**
- * RF23–RF24: importa colaboradores desde la plantilla Excel. Cada colaborador se guarda
+ * RF19–RF20: importa colaboradores desde la plantilla Excel. Cada colaborador se guarda
  * con sus habilidades y experiencia en una sola transacción (RNF9): o entra completo o se
  * reporta como rechazado, sin cortar el resto de la carga.
  */

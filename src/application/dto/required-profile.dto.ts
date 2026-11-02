@@ -37,7 +37,7 @@ export class RequiredProfileSkillDto {
   importance: Priority;
 }
 
-/** RF13: perfil que el líder agrega a mano, con habilidades del catálogo. */
+/** RF9: perfil que el líder agrega a mano, con habilidades del catálogo. */
 export class CreateRequiredProfileDto {
   @IsRequiredText({ max: PROFILE_NAME_MAX_LENGTH })
   name: string;

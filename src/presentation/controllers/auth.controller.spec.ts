@@ -37,6 +37,7 @@ describe('AuthController', () => {
         lastName: 'Pérez',
         personType: 'DOCENTE',
         programId: 'program-1',
+        truthfulnessDeclared: true,
         ...IDENTITY,
       },
     };

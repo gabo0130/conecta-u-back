@@ -42,7 +42,7 @@ const EMBEDDING_REFRESH_BUDGET_MS = 20_000;
 const PROFILE_REFRESH_BUDGET_MS = 10_000;
 
 /**
- * RF15–RF16: compara cada perfil requerido activo con las personas elegibles y guarda las
+ * RF11–RF12: compara cada perfil requerido activo con las personas elegibles y guarda las
  * mejores `topN` por perfil. Reemplaza las recomendaciones anteriores del proyecto.
  */
 @Injectable()

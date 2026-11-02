@@ -11,7 +11,7 @@ export class ProjectTypeEntity {
   ) {}
 
   /**
-   * Valida `typeData` contra la plantilla del tipo (RF7–RF8): sin claves desconocidas,
+   * Valida `typeData` contra la plantilla del tipo (RF6): sin claves desconocidas,
    * con todos los campos obligatorios y cada valor acorde a su `kind`.
    * Devuelve los errores encontrados; vacío si es válido.
    */

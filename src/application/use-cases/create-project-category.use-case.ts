@@ -3,7 +3,7 @@ import type { ProjectCategoryRepository } from '../../domain/repositories/projec
 import { PROJECT_CATEGORY_REPOSITORY } from '../../shared/interfaces/tokens';
 import { CreateProjectCategoryDto } from '../dto/create-project-category.dto';
 
-/** ADMIN: crea una categoría de proyecto (RF22). */
+/** ADMIN: crea una categoría de proyecto (RF18). */
 @Injectable()
 export class CreateProjectCategoryUseCase {
   constructor(

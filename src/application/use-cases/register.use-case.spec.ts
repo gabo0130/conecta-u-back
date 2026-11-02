@@ -43,6 +43,7 @@ describe('RegisterUseCase', () => {
       lastName: 'Pérez',
       personType: 'ESTUDIANTE',
       programId: 'program-1',
+      truthfulnessDeclared: true,
       ...IDENTITY,
     },
   };
@@ -86,7 +87,7 @@ describe('RegisterUseCase', () => {
     expect(repositories.collaborators.create).toHaveBeenCalledTimes(1);
   });
 
-  it('sends the welcome email once the account is created', async () => {
+  it('sends the welcome email once the account is created, also to the alternate email (v2.2, E3)', async () => {
     repositories.users.create.mockResolvedValue(
       buildUser({
         fullName: 'Ana Pérez',
@@ -94,12 +95,16 @@ describe('RegisterUseCase', () => {
         role: 'COLABORADOR',
       }),
     );
+    repositories.collaborators.create.mockResolvedValue(
+      buildCollaborator({ alternateEmail: 'ana.personal@gmail.com' }),
+    );
 
     await useCase.execute(colaborador);
 
     expect(sendWelcomeEmail.execute).toHaveBeenCalledWith({
       fullName: 'Ana Pérez',
       email: 'ana@example.com',
+      alternateEmail: 'ana.personal@gmail.com',
       role: 'COLABORADOR',
     });
   });

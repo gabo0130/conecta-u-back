@@ -5,7 +5,7 @@ import { toPageMeta } from '../../shared/pagination/pagination.util';
 import { normalizeSkillName } from '../../shared/utils/normalize-skill-name';
 import { AdminListSkillsQueryDto } from '../dto/admin-list-skills-query.dto';
 
-/** ADMIN: catálogo de habilidades paginado, con filtros (RF22) — incluye las PENDIENTE por revisar. */
+/** ADMIN: catálogo de habilidades paginado, con filtros (RF18) — incluye las PENDIENTE por revisar. */
 @Injectable()
 export class AdminListSkillsUseCase {
   constructor(

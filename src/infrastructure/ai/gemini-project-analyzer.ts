@@ -41,7 +41,7 @@ const MIN_FALLBACK_MS = 8000;
 const logger = new Logger('GeminiProjectAnalyzer');
 
 /**
- * Análisis con Gemini (RF12): salida JSON estructurada. Toda falla del servicio (red, cuota,
+ * Análisis con Gemini (RF8): salida JSON estructurada. Toda falla del servicio (red, cuota,
  * tiempo agotado, bloqueo) se traduce a `AnalyzerUnavailableError`; un JSON ilegible, a
  * `InvalidAnalysisOutputError`, que el caso de uso reintenta una vez.
  *

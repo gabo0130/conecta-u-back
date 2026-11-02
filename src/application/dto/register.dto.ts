@@ -1,5 +1,6 @@
 import { Type } from 'class-transformer';
 import {
+  Equals,
   IsBoolean,
   IsDefined,
   IsIn,
@@ -15,12 +16,16 @@ import type { PersonType } from '../../domain/entities/person-type.type';
 import { REGISTERABLE_ROLES } from '../../domain/entities/user-role.type';
 import type { RegisterableRole } from '../../domain/entities/user-role.type';
 import { PersonIdentificationDto } from './person-identification.dto';
+import { TRUTHFULNESS_REQUIRED } from './validators/truthfulness';
 import { IsOptionalNonNull } from './validators/is-optional-non-null.decorator';
 import { IsRequiredText } from './validators/text.decorators';
 import { USER_FULL_NAME_LENGTH } from '../../domain/entities/field-limits';
 
-/** La persona de la cuenta (v2.1: toda cuenta queda vinculada a una persona con su documento). */
-export class RegisterCollaboratorDto extends PersonIdentificationDto {
+/**
+ * La persona de una cuenta nueva (v2.1: toda cuenta queda vinculada a una persona con su
+ * documento). El alta por el ADMIN usa esta forma, sin la declaración de veracidad.
+ */
+export class AccountPersonDto extends PersonIdentificationDto {
   @IsRequiredText({ max: PERSON_NAME_MAX_LENGTH })
   firstName: string;
 
@@ -37,6 +42,13 @@ export class RegisterCollaboratorDto extends PersonIdentificationDto {
   @IsOptionalNonNull()
   @IsBoolean({ message: 'La autorización de datos debe ser verdadero o falso' })
   dataConsent?: boolean;
+}
+
+/** En el registro público la persona declara además que su información es verídica (v2.2, E2). */
+export class RegisterCollaboratorDto extends AccountPersonDto {
+  // Declaración de veracidad (v2.2, E2): obligatoria y verdadera; se guarda con su fecha.
+  @Equals(true, { message: TRUTHFULNESS_REQUIRED })
+  truthfulnessDeclared: boolean;
 }
 
 export class RegisterDto {
