@@ -35,21 +35,26 @@ export class RegisterUseCase {
     const passwordHash = await this.passwordHasher.hash(data.password);
 
     // Usuario y persona se escriben juntos: si falla la persona no queda una cuenta huérfana.
-    const user = await this.unitOfWork.run(async (repositories) => {
+    const { user, person } = await this.unitOfWork.run(async (repositories) => {
       const created = await repositories.users.create({
         fullName: data.fullName,
         email,
         passwordHash,
         role: data.role,
       });
-      await this.personAccount.link(repositories, created.id, pending);
-      return created;
+      const linked = await this.personAccount.link(
+        repositories,
+        created.id,
+        pending,
+      );
+      return { user: created, person: linked };
     });
 
     // Sin await: el correo no debe retrasar la respuesta ni hacerla fallar (el caso de uso no lanza).
     void this.sendWelcomeEmail.execute({
       fullName: user.fullName,
       email: user.email,
+      alternateEmail: person.alternateEmail,
       role: user.role,
     });
 

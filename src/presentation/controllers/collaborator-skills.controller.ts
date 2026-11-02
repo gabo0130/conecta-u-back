@@ -21,7 +21,7 @@ import type { AuthenticatedRequest } from '../guards/jwt-auth.guard';
 import { JwtAuthGuard } from '../guards/jwt-auth.guard';
 import { UuidParamPipe } from '../pipes/uuid-param.pipe';
 
-/** Conocimientos, competencias y habilidades blandas del perfil (RF4). */
+/** Conocimientos, competencias y habilidades blandas del perfil (RF3). */
 @UseGuards(JwtAuthGuard, AuthorizationGuard)
 @Authorize({ anyOfRoles: ['COLABORADOR', 'LIDER'] })
 @Controller('collaborators/me/skills')

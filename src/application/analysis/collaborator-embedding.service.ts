@@ -22,7 +22,7 @@ export interface RebuildSummary {
   remaining: number;
 }
 
-/** Mantiene al día los embeddings del perfil de las personas (RF15, parte semántica). */
+/** Mantiene al día los embeddings del perfil de las personas (RF11, parte semántica). */
 @Injectable()
 export class CollaboratorEmbeddingService {
   private readonly logger: ReturnType<AppLoggerService['forContext']>;

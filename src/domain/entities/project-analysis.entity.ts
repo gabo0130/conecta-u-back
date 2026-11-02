@@ -21,7 +21,7 @@ export interface ProjectAnalysisProps {
   completedAt: Date | null;
 }
 
-/** Una corrida de análisis de un proyecto con IA (RF12). Se conserva todo el historial. */
+/** Una corrida de análisis de un proyecto con IA (RF8). Se conserva todo el historial. */
 export class ProjectAnalysisEntity implements ProjectAnalysisProps {
   readonly id: string;
   readonly projectId: string;

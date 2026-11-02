@@ -1,4 +1,5 @@
 import {
+  Equals,
   IsBoolean,
   IsIn,
   IsInt,
@@ -15,6 +16,7 @@ import {
 import { PERSON_TYPES } from '../../domain/entities/person-type.type';
 import type { PersonType } from '../../domain/entities/person-type.type';
 import { PersonIdentificationDto } from './person-identification.dto';
+import { TRUTHFULNESS_REQUIRED } from './validators/truthfulness';
 import { IsOptionalNonNull } from './validators/is-optional-non-null.decorator';
 import { IsProfileUrl } from './validators/is-profile-url.decorator';
 import { IsRequiredText, IsOptionalText } from './validators/text.decorators';
@@ -51,4 +53,8 @@ export class CreateMyCollaboratorDto extends PersonIdentificationDto {
   @IsOptionalNonNull()
   @IsBoolean()
   dataConsent?: boolean;
+
+  // Declaración de veracidad (v2.2, E2): obligatoria y verdadera; se guarda con su fecha.
+  @Equals(true, { message: TRUTHFULNESS_REQUIRED })
+  truthfulnessDeclared: boolean;
 }

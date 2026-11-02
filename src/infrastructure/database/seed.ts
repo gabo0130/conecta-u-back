@@ -5,10 +5,12 @@ import type { ExperienceType } from '../../domain/entities/experience-type.type'
 import type { Level } from '../../domain/entities/level.type';
 import type { PersonIdentification } from '../../domain/entities/person-identification';
 import type { PersonType } from '../../domain/entities/person-type.type';
-import type { SkillCategory } from '../../domain/entities/skill-category.type';
-import type { SkillType } from '../../domain/entities/skill-type.type';
 import type { TemplateField } from '../../domain/entities/template-field.type';
 import { normalizeSkillName } from '../../shared/utils/normalize-skill-name';
+import {
+  UFPS_CAREER_SKILLS,
+  type SeedSkill,
+} from './seed-data/ufps-career-skills';
 import { AppDataSource } from './data-source';
 import { CollaboratorOrmEntity } from './typeorm/collaborator.orm-entity';
 import { CollaboratorSkillOrmEntity } from './typeorm/collaborator-skill.orm-entity';
@@ -109,14 +111,7 @@ const PROGRAMS: SeedProgram[] = [
   { code: 'DER', name: 'Derecho', faculty: 'Educación, Artes y Humanidades' },
 ];
 
-interface SeedSkill {
-  name: string;
-  type: SkillType;
-  category: SkillCategory;
-  synonyms?: string[];
-}
-
-const SKILLS: SeedSkill[] = [
+const BASE_SKILLS: SeedSkill[] = [
   {
     name: 'React',
     type: 'CONOCIMIENTO',
@@ -490,6 +485,9 @@ const SKILLS: SeedSkill[] = [
     category: 'COMUNICACION',
   },
 ];
+
+// v2.2 (E6): el catálogo base más las habilidades de otras carreras de la UFPS.
+const SKILLS: SeedSkill[] = [...BASE_SKILLS, ...UFPS_CAREER_SKILLS];
 
 interface SeedProjectType {
   code: string;
@@ -1357,6 +1355,9 @@ async function seed() {
           weeklyHours: 5,
           dataConsent: true,
           dataConsentAt: new Date(),
+          // v2.2 (E2): las cuentas del seed se registraron declarando la veracidad.
+          truthfulnessDeclared: true,
+          truthfulnessDeclaredAt: new Date(),
           source: 'REGISTRO',
         }),
       );
@@ -1397,6 +1398,8 @@ async function seed() {
         weeklyHours: data.weeklyHours,
         dataConsent: true,
         dataConsentAt: new Date(),
+        truthfulnessDeclared: true,
+        truthfulnessDeclaredAt: new Date(),
         source: 'REGISTRO',
       }),
     );

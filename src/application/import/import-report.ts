@@ -23,7 +23,7 @@ export const documentKey = (documentNumber: string) =>
   `documento:${documentNumber}`;
 export const emailKey = (email: string) => `correo:${email}`;
 
-/** Resultado de una importación (RF24): creados, rechazados con su causa y advertencias. */
+/** Resultado de una importación (RF20): creados, rechazados con su causa y advertencias. */
 export class ImportReport {
   private created = 0;
   private readonly importedKeys = new Set<string>();

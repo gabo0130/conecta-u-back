@@ -30,6 +30,7 @@ describe('CreateMyCollaboratorProfileUseCase', () => {
     programId: 'program-1',
     researchGroup: 'GIDIS',
     dataConsent: true,
+    truthfulnessDeclared: true,
     ...IDENTITY,
   };
 
@@ -59,6 +60,8 @@ describe('CreateMyCollaboratorProfileUseCase', () => {
         documentNumber: '9900000001',
         dataConsent: true,
         dataConsentAt: expect.any(Date) as Date,
+        truthfulnessDeclared: true,
+        truthfulnessDeclaredAt: expect.any(Date) as Date,
         source: 'REGISTRO',
       }),
     );

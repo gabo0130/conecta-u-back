@@ -22,7 +22,7 @@ import type { AuthenticatedRequest } from '../guards/jwt-auth.guard';
 import { JwtAuthGuard } from '../guards/jwt-auth.guard';
 import { UuidParamPipe } from '../pipes/uuid-param.pipe';
 
-/** RF15–RF17: recomendaciones de personas para los perfiles requeridos de un proyecto. */
+/** RF11–RF13: recomendaciones de personas para los perfiles requeridos de un proyecto. */
 @UseGuards(JwtAuthGuard, AuthorizationGuard)
 @Controller('projects/:id/recommendations')
 export class RecommendationsController {

@@ -14,7 +14,7 @@ import {
   toImportRunSummary,
 } from '../mappers/admin-response.mapper';
 
-/** ADMIN: historial de importaciones de colaboradores (RF24), más reciente primero. */
+/** ADMIN: historial de importaciones de colaboradores (RF20), más reciente primero. */
 @Injectable()
 export class AdminListImportRunsUseCase {
   constructor(

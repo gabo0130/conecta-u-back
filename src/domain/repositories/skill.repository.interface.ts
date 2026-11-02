@@ -46,7 +46,7 @@ export interface SkillRepository {
   findAllActive(): Promise<SkillEntity[]>;
   /** Autocompletar (capado, sin paginar): lo usa el `SkillPicker`. */
   search(filter: SkillSearchFilter): Promise<SkillEntity[]>;
-  /** Listado paginado con filtros, para la pantalla de administración (RF22). */
+  /** Listado paginado con filtros, para la pantalla de administración (RF18). */
   findAllPaged(
     params: PageParams,
     filter?: SkillAdminFilter,

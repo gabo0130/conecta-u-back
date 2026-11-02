@@ -103,7 +103,12 @@ export const LEVEL_LABELS: Record<string, Level> = {
   experto: 'EXPERTO',
 };
 
+// v2.2 (E6, P11): la plantilla muestra las etiquetas nuevas; las anteriores se siguen aceptando
+// para que los archivos ya llenados no fallen.
 export const SKILL_TYPE_LABELS: Record<string, SkillType> = {
+  'conocimiento tecnico': 'CONOCIMIENTO',
+  'competencia tecnica': 'COMPETENCIA',
+  'competencia blanda': 'HABILIDAD_BLANDA',
   conocimiento: 'CONOCIMIENTO',
   competencia: 'COMPETENCIA',
   'habilidad blanda': 'HABILIDAD_BLANDA',
@@ -161,9 +166,9 @@ export const LEVEL_DISPLAY: Record<Level, string> = {
 };
 
 export const SKILL_TYPE_DISPLAY: Record<SkillType, string> = {
-  CONOCIMIENTO: 'Conocimiento',
-  COMPETENCIA: 'Competencia',
-  HABILIDAD_BLANDA: 'Habilidad blanda',
+  CONOCIMIENTO: 'Conocimiento técnico',
+  COMPETENCIA: 'Competencia técnica',
+  HABILIDAD_BLANDA: 'Competencia blanda',
 };
 
 export const SKILL_CATEGORY_DISPLAY: Record<SkillCategory, string> = {

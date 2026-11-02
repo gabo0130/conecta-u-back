@@ -24,7 +24,7 @@ import {
   TEMPLATE_FIELD_OPTION_MAX_LENGTH,
 } from '../../domain/entities/field-limits';
 
-/** Un campo de la plantilla de un tipo de proyecto, definido por el ADMIN (RF7/RF22). */
+/** Un campo de la plantilla de un tipo de proyecto, definido por el ADMIN (RF6/RF18). */
 export class TemplateFieldDto {
   @Matches(/^[a-zA-Z][a-zA-Z0-9]*$/, {
     message:

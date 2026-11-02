@@ -1,7 +1,7 @@
 import type { CollaboratorEntity } from '../entities/collaborator.entity';
 
 /**
- * Embeddings del perfil de cada persona (RF15, parte semántica). Un embedding está
+ * Embeddings del perfil de cada persona (RF11, parte semántica). Un embedding está
  * desactualizado cuando `embeddingUpdatedAt` es null (los repositorios de personas,
  * habilidades y experiencias lo dejan así cada vez que cambia el contenido del perfil) o
  * cuando lo generó otro modelo que el actual (`model`): no se puede comparar.

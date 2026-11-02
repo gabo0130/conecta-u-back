@@ -1,6 +1,7 @@
 import { createHash } from 'node:crypto';
 import { Inject, Injectable } from '@nestjs/common';
 import type { ProjectEntity } from '../../domain/entities/project.entity';
+import type { TemplateFieldKind } from '../../domain/entities/template-field.type';
 import type { SkillEntity } from '../../domain/entities/skill.entity';
 import type { AnalysisInput } from '../../domain/repositories/project-analyzer.interface';
 import type { ProgramRepository } from '../../domain/repositories/program.repository.interface';
@@ -13,7 +14,7 @@ import {
   PROJECT_TYPE_REPOSITORY,
   SKILL_REPOSITORY,
 } from '../../shared/interfaces/tokens';
-import { OMITTED_CONTACT, stripContactData } from './contact-data';
+import { OMITTED_PERSONAL_DATA, stripContactData } from './contact-data';
 
 export type ProjectInput = AnalysisInput['project'];
 
@@ -53,7 +54,7 @@ export class AnalysisInputBuilder {
     const fields = (type?.templateFields ?? [])
       .map((field) => ({
         label: field.label,
-        value: scalarText(project.typeData[field.key]),
+        value: fieldText(field.kind, project.typeData[field.key]),
       }))
       .filter((field) => field.value !== '');
 
@@ -102,9 +103,12 @@ export class AnalysisInputBuilder {
   }
 }
 
-/** Ley 1581: el texto libre del líder puede traer correos, enlaces o teléfonos; no van a la IA. */
+/**
+ * Ley 1581: el texto libre del líder puede traer correos, enlaces, teléfonos o números de
+ * documento; no van a la IA.
+ */
 function withoutContactData(project: ProjectInput): ProjectInput {
-  const strip = (text: string) => stripContactData(text, OMITTED_CONTACT);
+  const strip = (text: string) => stripContactData(text, OMITTED_PERSONAL_DATA);
   return {
     ...project,
     title: strip(project.title),
@@ -122,6 +126,26 @@ function withoutContactData(project: ProjectInput): ProjectInput {
       scope: strip(deliverable.scope),
     })),
   };
+}
+
+/** Desde aquí los montos se escriben con separador de miles. */
+const GROUPED_FROM = 1_000_000;
+
+/**
+ * Texto de un campo de plantilla para la IA. Los montos van con separador de miles: sin él,
+ * un costo de 7 o 10 dígitos ("2500000") se confunde con un teléfono y se omite del prompt.
+ */
+function fieldText(kind: TemplateFieldKind, value: unknown): string {
+  if (typeof value === 'number' && Number.isInteger(value)) {
+    if (kind === 'currency') return `$ ${groupThousands(value)} COP`;
+    if (Math.abs(value) >= GROUPED_FROM) return groupThousands(value);
+  }
+  return scalarText(value);
+}
+
+/** "2500000" → "2.500.000" (convención colombiana), sin depender del ICU del servidor. */
+function groupThousands(value: number): string {
+  return String(value).replace(/\B(?=(\d{3})+(?!\d))/g, '.');
 }
 
 /**

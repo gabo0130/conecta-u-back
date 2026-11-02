@@ -10,7 +10,7 @@ import {
 import { toRecommendationDetail } from '../mappers/recommendation-response.mapper';
 import { type Actor, loadProjectForViewer } from '../support/project-access';
 
-/** RF17: por qué se recomienda a una persona (desglose del puntaje). */
+/** RF13: por qué se recomienda a una persona (desglose del puntaje). */
 @Injectable()
 export class GetRecommendationDetailUseCase {
   constructor(

@@ -15,7 +15,7 @@ import { toProjectAnalysisResponse } from '../mappers/analysis-response.mapper';
 import { AnalysisRecoveryService } from '../analysis/analysis-recovery.service';
 import { type Actor, loadProjectForViewer } from '../support/project-access';
 
-/** RF13–RF14: el último análisis completado de un proyecto, con sus perfiles y justificaciones. */
+/** RF9–RF10: el último análisis completado de un proyecto, con sus perfiles y justificaciones. */
 @Injectable()
 export class GetProjectAnalysisUseCase {
   constructor(

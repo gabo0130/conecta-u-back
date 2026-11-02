@@ -76,6 +76,21 @@ describe('CreateUserUseCase', () => {
     expect(sendWelcomeEmail.execute).toHaveBeenCalled();
   });
 
+  it('sends the welcome email to the main and the alternate email (v2.2, E3)', async () => {
+    repositories.collaborators.create.mockResolvedValue(
+      buildCollaborator({ alternateEmail: 'ana.personal@gmail.com' }),
+    );
+
+    await useCase.execute(dto);
+
+    expect(sendWelcomeEmail.execute).toHaveBeenCalledWith(
+      expect.objectContaining({
+        email: 'ana@example.com',
+        alternateEmail: 'ana.personal@gmail.com',
+      }),
+    );
+  });
+
   it('throws ConflictException when email is already used', async () => {
     userRepository.findByEmail.mockResolvedValue(buildUser());
 

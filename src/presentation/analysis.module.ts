@@ -70,7 +70,7 @@ function embeddingDimensions(config: ConfigService): number {
 }
 
 /**
- * Análisis de proyectos con IA (RF12–RF14). `AI_PROVIDER=gemini` usa la API real (exige
+ * Análisis de proyectos con IA (RF8–RF10). `AI_PROVIDER=gemini` usa la API real (exige
  * `GEMINI_API_KEY`); cualquier otro valor, o ninguno, usa los adaptadores deterministas
  * sin red, útiles en desarrollo y como respaldo en una demostración.
  */

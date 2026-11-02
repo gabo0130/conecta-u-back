@@ -19,7 +19,7 @@ import type { AuthenticatedRequest } from '../guards/jwt-auth.guard';
 import { JwtAuthGuard } from '../guards/jwt-auth.guard';
 import { UuidParamPipe } from '../pipes/uuid-param.pipe';
 
-/** Experiencia del perfil con dedicación y nivel (RF5). */
+/** Experiencia del perfil con dedicación y nivel (RF4). */
 @UseGuards(JwtAuthGuard, AuthorizationGuard)
 @Authorize({ anyOfRoles: ['COLABORADOR', 'LIDER'] })
 @Controller('collaborators/me/experience')

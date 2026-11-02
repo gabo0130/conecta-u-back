@@ -58,6 +58,9 @@ export function toCollaboratorProfileResponse(
     availabilityStatus: collaborator.availabilityStatus,
     weeklyHours: collaborator.weeklyHours,
     dataConsent: collaborator.dataConsent,
+    // v2.2, E2: solo la propia persona y el ADMIN (nunca en vistas del líder ni recomendaciones).
+    truthfulnessDeclared: collaborator.truthfulnessDeclared,
+    truthfulnessDeclaredAt: collaborator.truthfulnessDeclaredAt,
     source: collaborator.source,
     ...toIdentificationResponse(collaborator),
     skills: collaborator.skills.map(toCollaboratorSkillResponse),

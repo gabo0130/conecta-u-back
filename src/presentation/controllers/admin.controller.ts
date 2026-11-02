@@ -19,7 +19,7 @@ import { AuthorizationGuard } from '../guards/authorization.guard';
 import { JwtAuthGuard } from '../guards/jwt-auth.guard';
 import { UuidParamPipe } from '../pipes/uuid-param.pipe';
 
-/** Consulta global del ADMIN: todos los proyectos y todos los perfiles técnicos (HU-15/HU-16, lectura). */
+/** Consulta global del ADMIN: todos los proyectos y todos los perfiles técnicos (HU-14/HU-15, lectura). */
 @UseGuards(JwtAuthGuard, AuthorizationGuard)
 @Authorize({ anyOfRoles: ['ADMIN'] })
 @Controller('admin')

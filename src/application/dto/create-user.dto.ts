@@ -9,7 +9,7 @@ import {
 } from 'class-validator';
 import { USER_ROLES } from '../../domain/entities/user-role.type';
 import type { UserRole } from '../../domain/entities/user-role.type';
-import { RegisterCollaboratorDto } from './register.dto';
+import { AccountPersonDto } from './register.dto';
 import { IsRequiredText } from './validators/text.decorators';
 import { USER_FULL_NAME_LENGTH } from '../../domain/entities/field-limits';
 
@@ -30,6 +30,6 @@ export class CreateUserDto {
   // v2.1: toda cuenta, también la de un ADMIN, queda vinculada a una persona identificada.
   @IsDefined({ message: 'Los datos de la persona son obligatorios' })
   @ValidateNested()
-  @Type(() => RegisterCollaboratorDto)
-  collaborator: RegisterCollaboratorDto;
+  @Type(() => AccountPersonDto)
+  collaborator: AccountPersonDto;
 }

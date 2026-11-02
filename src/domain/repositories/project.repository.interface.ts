@@ -19,6 +19,9 @@ export interface CreateProjectRepositoryDto {
   deliverables: DeliverableInput[];
   leaderId: string;
   createdById: string;
+  executingEntity?: string | null;
+  sponsorEntity?: string | null;
+  durationMonths?: number | null;
 }
 
 export interface UpdateProjectRepositoryDto {
@@ -31,6 +34,9 @@ export interface UpdateProjectRepositoryDto {
   typeData?: Record<string, unknown>;
   knownSkillIds?: string[];
   deliverables?: DeliverableInput[];
+  executingEntity?: string | null;
+  sponsorEntity?: string | null;
+  durationMonths?: number | null;
   status?: ProjectStatus;
 }
 

@@ -21,6 +21,8 @@ export interface CollaboratorProps {
   weeklyHours?: number;
   dataConsent?: boolean;
   dataConsentAt?: Date | null;
+  truthfulnessDeclared?: boolean;
+  truthfulnessDeclaredAt?: Date | null;
   source?: CollaboratorSource;
   active?: boolean;
   documentType?: DocumentType | null;
@@ -49,6 +51,9 @@ export class CollaboratorEntity {
   readonly weeklyHours: number;
   readonly dataConsent: boolean;
   readonly dataConsentAt: Date | null;
+  // Declaración de veracidad (v2.2, E2; buena fe, art. 83 de la Constitución).
+  readonly truthfulnessDeclared: boolean;
+  readonly truthfulnessDeclaredAt: Date | null;
   readonly source: CollaboratorSource;
   readonly active: boolean;
   // Identificación y contacto (v2.1). Pueden faltar en personas anteriores a v2.1.
@@ -77,6 +82,8 @@ export class CollaboratorEntity {
     this.weeklyHours = props.weeklyHours ?? 0;
     this.dataConsent = props.dataConsent ?? false;
     this.dataConsentAt = props.dataConsentAt ?? null;
+    this.truthfulnessDeclared = props.truthfulnessDeclared ?? false;
+    this.truthfulnessDeclaredAt = props.truthfulnessDeclaredAt ?? null;
     this.source = props.source ?? 'REGISTRO';
     this.active = props.active ?? true;
     this.documentType = props.documentType ?? null;

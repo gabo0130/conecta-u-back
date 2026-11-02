@@ -58,6 +58,8 @@ export function toCollaboratorEntity(
     weeklyHours: collaborator.weeklyHours,
     dataConsent: collaborator.dataConsent,
     dataConsentAt: collaborator.dataConsentAt,
+    truthfulnessDeclared: collaborator.truthfulnessDeclared,
+    truthfulnessDeclaredAt: collaborator.truthfulnessDeclaredAt,
     source: collaborator.source as CollaboratorEntity['source'],
     active: collaborator.active,
     documentType:

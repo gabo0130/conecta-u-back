@@ -1,7 +1,7 @@
 import type { TemplateField } from '../../domain/entities/template-field.type';
 
 /**
- * Validación cruzada entre campos de una plantilla (RF7/RF22), que `class-validator` no cubre
+ * Validación cruzada entre campos de una plantilla (RF6/RF18), que `class-validator` no cubre
  * por campo: claves repetidas y campos `select` sin opciones. Devuelve los errores en español;
  * vacío si es válida.
  */

@@ -4,7 +4,7 @@ import { SKILL_REPOSITORY } from '../../shared/interfaces/tokens';
 import { normalizeSkillName } from '../../shared/utils/normalize-skill-name';
 import { AdminCreateSkillDto } from '../dto/admin-create-skill.dto';
 
-/** ADMIN: agrega una habilidad directamente al catálogo, ya ACTIVA por defecto (RF22). */
+/** ADMIN: agrega una habilidad directamente al catálogo, ya ACTIVA por defecto (RF18). */
 @Injectable()
 export class AdminCreateSkillUseCase {
   constructor(
