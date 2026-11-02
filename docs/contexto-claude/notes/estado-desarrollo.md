@@ -341,3 +341,7 @@ Extensión compatible (plan §2): no cambia las HU del seminario. Decisiones de 
 - 🟠 **Orden del ranking duplicado:** `application/matchmaking/rank-candidates.ts` lo usan `GenerateRecommendationsUseCase` y la evaluación sintética (mide exactamente el mismo sistema). Producción gana el desempate final por id (orden determinista). Los resultados sintéticos no cambian.
 - 🟠 **Reintento de IA duplicado:** `application/analysis/ai-call.ts` (`withOneRetryOnInvalidOutput`, `aiErrorToHttp`) en el análisis y en la caracterización.
 - 🟡 Transformer `numeric` compartido (`typeorm/transformers/numeric.transformer.ts`); decorador `IsNeedScale`; `CreateProjectUseCase` exportado por `ProjectsModule` (sin segunda instancia); el Excel separa intereses solo por `;` (por la API un interés puede llevar coma).
+
+### Build de producción con `scripts/` (corregido)
+- Desde que existe `scripts/synthetic` (importa `src/`), `nest build` emitía `dist/src/main.js` y `npm run start:prod` (`node dist/main`, el comando de Render) fallaba con «Cannot find module dist/main». `tsconfig.build.json` ahora excluye `scripts`; verificado `dist/main.js` y el arranque. **Importante si esta rama se fusiona.**
+- T10 verificado en navegador contra este back (ver la bitácora del front).
