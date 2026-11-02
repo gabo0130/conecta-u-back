@@ -5,7 +5,13 @@ const paths = (role: Parameters<typeof getMenuByRole>[0]) =>
 
 describe('getMenuByRole', () => {
   it('gives the leader access to projects and to their technical profile (RF3)', () => {
-    expect(paths('LIDER')).toEqual(['/dashboard', '/proyectos', '/perfil']);
+    // Tesis (D1): el formulador también registra necesidades.
+    expect(paths('LIDER')).toEqual([
+      '/dashboard',
+      '/proyectos',
+      '/necesidades',
+      '/perfil',
+    ]);
   });
 
   it('gives the collaborator access to their technical profile', () => {
@@ -17,6 +23,7 @@ describe('getMenuByRole', () => {
       '/dashboard',
       '/proyectos',
       '/colaboradores',
+      '/necesidades',
       '/users',
       '/importar',
       '/settings',

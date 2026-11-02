@@ -34,6 +34,13 @@ export const MENU_CATALOG: MenuConfig[] = [
         icon: 'folder',
         path: '/proyectos',
       },
+      // Tesis (D1): el formulador registra necesidades y las convierte en oportunidades.
+      {
+        id: 'necesidades',
+        label: 'Necesidades',
+        icon: 'needs',
+        path: '/necesidades',
+      },
       // RF3: un líder también puede tener (o crear) su perfil técnico de colaborador.
       {
         id: 'perfil',
@@ -86,6 +93,13 @@ export const MENU_CATALOG: MenuConfig[] = [
         label: 'Colaboradores',
         icon: 'profiles',
         path: '/colaboradores',
+      },
+      // Tesis (D1): todas las necesidades institucionales, con prioridad y completitud.
+      {
+        id: 'necesidades',
+        label: 'Necesidades',
+        icon: 'needs',
+        path: '/necesidades',
       },
       {
         id: 'usuarios',

@@ -2504,6 +2504,30 @@
             },
             "description": "Solo ADMIN. Tasa de aceptación global { accepted, discarded, decided, acceptanceRate } (null sin decisiones) y por proyecto. Son decisiones reales de los líderes: la evaluación sintética va aparte (scripts/synthetic)."
           }
+        },
+        {
+          "name": "Opportunity Draft (T10)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/needs/{{needId}}/opportunity-draft",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "needs",
+                "{{needId}}",
+                "opportunity-draft"
+              ]
+            },
+            "description": "Solo el formulador y con la necesidad abierta. Borrador para precargar el formulario de proyecto: title, summary (problema o descripción), objectives, executingEntity (dependencia), durationMonths (meses hasta el plazo, 1–60), typeId (tipo sugerido), knownSkills (competencias del catálogo) y deliverables (resultados esperados). No guarda nada."
+          }
         }
       ]
     }

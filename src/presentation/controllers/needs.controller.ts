@@ -21,6 +21,7 @@ import { ConvertNeedToOpportunityUseCase } from '../../application/use-cases/con
 import { CharacterizeNeedUseCase } from '../../application/use-cases/characterize-need.use-case';
 import { CreateNeedUseCase } from '../../application/use-cases/create-need.use-case';
 import { DiscardNeedUseCase } from '../../application/use-cases/discard-need.use-case';
+import { GetOpportunityDraftUseCase } from '../../application/use-cases/get-opportunity-draft.use-case';
 import { GetNeedUseCase } from '../../application/use-cases/get-need.use-case';
 import { ListNeedsUseCase } from '../../application/use-cases/list-needs.use-case';
 import { UpdateNeedUseCase } from '../../application/use-cases/update-need.use-case';
@@ -43,6 +44,7 @@ export class NeedsController {
     private readonly discardUseCase: DiscardNeedUseCase,
     private readonly characterizeUseCase: CharacterizeNeedUseCase,
     private readonly convertUseCase: ConvertNeedToOpportunityUseCase,
+    private readonly draftUseCase: GetOpportunityDraftUseCase,
   ) {}
 
   @Post()
@@ -87,6 +89,15 @@ export class NeedsController {
     @Param('id', UuidParamPipe) id: string,
   ) {
     return this.characterizeUseCase.execute(request.user!.userId, id);
+  }
+
+  /** Borrador del proyecto desde la caracterización, para precargar el formulario (T10). */
+  @Get(':id/opportunity-draft')
+  draft(
+    @Req() request: AuthenticatedRequest,
+    @Param('id', UuidParamPipe) id: string,
+  ) {
+    return this.draftUseCase.execute(request.user!.userId, id);
   }
 
   /** T5: crea el proyecto (mismo cuerpo que `POST /projects`) y enlaza la necesidad. */

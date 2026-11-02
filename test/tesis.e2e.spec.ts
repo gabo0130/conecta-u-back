@@ -600,4 +600,77 @@ describe('Tesis (integración)', () => {
         .expect(403);
     });
   });
+
+  describe('T10 · borrador de la oportunidad y menú', () => {
+    it('precarga el proyecto desde la caracterización, y lo que devuelve se puede enviar', async () => {
+      const created = await http()
+        .post('/api/needs')
+        .auth(owner, { type: 'bearer' })
+        .send({
+          ...NEED,
+          title: 'Necesidad con borrador',
+          dependency: 'Bienestar Universitario',
+          deadline: '2030-01-01',
+        })
+        .expect(201);
+      const id = created.body.id;
+      await http()
+        .post(`/api/needs/${id}/characterization`)
+        .auth(owner, { type: 'bearer' })
+        .expect(200);
+
+      const draft = await http()
+        .get(`/api/needs/${id}/opportunity-draft`)
+        .auth(owner, { type: 'bearer' })
+        .expect(200);
+      expect(draft.body).toMatchObject({
+        needId: id,
+        title: 'Necesidad con borrador',
+        summary: expect.stringContaining('Bienestar necesita'),
+        executingEntity: 'Bienestar Universitario',
+        durationMonths: expect.any(Number),
+        deliverables: [
+          { name: 'Prototipo funcional', scope: expect.any(String) },
+        ],
+      });
+      expect(
+        draft.body.knownSkills.map((skill: { id: string }) => skill.id),
+      ).toEqual(
+        expect.arrayContaining([
+          scenario.skillIds.python,
+          scenario.skillIds.databases,
+        ]),
+      );
+      await http()
+        .get(`/api/needs/${id}/opportunity-draft`)
+        .auth(otherLeader, { type: 'bearer' })
+        .expect(403);
+
+      // El borrador, completado con lo que el formulador elige, crea la oportunidad.
+      const { knownSkills, needId, typeId, ...rest } = draft.body;
+      void needId;
+      void typeId;
+      await http()
+        .post(`/api/needs/${id}/opportunity`)
+        .auth(owner, { type: 'bearer' })
+        .send({
+          ...rest,
+          objectives: rest.objectives || 'Atender la necesidad.',
+          typeId: scenario.typeId,
+          categoryId: scenario.categoryId,
+          knownSkillIds: knownSkills.map((skill: { id: string }) => skill.id),
+        })
+        .expect(201);
+    });
+
+    it('el menú del líder y del ADMIN incluye Necesidades', async () => {
+      const me = await http()
+        .get('/api/auth/me')
+        .auth(owner, { type: 'bearer' })
+        .expect(200);
+      expect(me.body.menu.map((item: { path: string }) => item.path)).toContain(
+        '/necesidades',
+      );
+    });
+  });
 });
