@@ -238,4 +238,36 @@ describe('Tesis (integración)', () => {
         .expect(403);
     });
   });
+
+  describe('T3 · índice de completitud', () => {
+    it('sube al registrar, caracterizar y completar lo que falta', async () => {
+      const created = await http()
+        .post('/api/needs')
+        .auth(owner, { type: 'bearer' })
+        .send({ ...NEED, title: 'Necesidad para medir completitud' })
+        .expect(201);
+      expect(created.body.completeness).toBe(0);
+      expect(created.body.missingElements).toHaveLength(7);
+
+      const characterized = await http()
+        .post(`/api/needs/${created.body.id}/characterization`)
+        .auth(owner, { type: 'bearer' })
+        .expect(200);
+      // Problema, objetivo, beneficiarios, resultados y competencias: 20+20+15+15+15.
+      expect(characterized.body.completeness).toBe(85);
+      expect(
+        characterized.body.missingElements.map(
+          (item: { element: string }) => item.element,
+        ),
+      ).toEqual(['deadline', 'dependency']);
+
+      const completed = await http()
+        .patch(`/api/needs/${created.body.id}`)
+        .auth(owner, { type: 'bearer' })
+        .send({ deadline: '2027-06-30', dependency: 'Bienestar Universitario' })
+        .expect(200);
+      expect(completed.body.completeness).toBe(100);
+      expect(completed.body.missingElements).toEqual([]);
+    });
+  });
 });

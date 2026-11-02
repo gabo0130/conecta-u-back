@@ -44,6 +44,22 @@ describe('needs (tesis D1)', () => {
         characterization: null,
       });
     });
+
+    it('calcula la completitud con lo declarado (plazo 10 + dependencia 5)', async () => {
+      needRepository.create.mockResolvedValue(buildNeed());
+      await new CreateNeedUseCase(needRepository).execute('leader-1', {
+        title: 'Plataforma de citas',
+        description: 'Texto largo de la necesidad institucional de prueba.',
+        kind: 'ADMINISTRATIVA',
+        urgency: 4,
+        impact: 5,
+        deadline: '2027-03-01',
+        dependency: 'Bienestar',
+      });
+      expect(needRepository.create).toHaveBeenCalledWith(
+        expect.objectContaining({ completeness: 15 }),
+      );
+    });
   });
 
   describe('ListNeedsUseCase', () => {
@@ -125,8 +141,21 @@ describe('needs (tesis D1)', () => {
       expect(needRepository.update).toHaveBeenCalledWith('need-1', {
         urgency: 2,
         dependency: null,
+        completeness: 0,
       });
       expect(result.urgency).toBe(2);
+    });
+
+    it('recalcula la completitud con los datos ya guardados', async () => {
+      needRepository.findById.mockResolvedValue(
+        buildNeed({ dependency: 'Bienestar' }),
+      );
+      needRepository.update.mockResolvedValue(buildNeed());
+      await update.execute('leader-1', 'need-1', { deadline: '2027-01-01' });
+      expect(needRepository.update).toHaveBeenCalledWith('need-1', {
+        deadline: '2027-01-01',
+        completeness: 15,
+      });
     });
 
     it('una necesidad convertida o descartada no se edita (409)', async () => {

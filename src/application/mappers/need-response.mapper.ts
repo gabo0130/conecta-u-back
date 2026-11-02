@@ -1,4 +1,5 @@
 import type { NeedEntity } from '../../domain/entities/need';
+import { computeNeedCompleteness } from '../../domain/services/need-completeness';
 
 /** Resumen para la lista de necesidades (sin el texto completo ni la caracterización). */
 export function toNeedSummaryResponse(need: NeedEntity) {
@@ -20,10 +21,11 @@ export function toNeedSummaryResponse(need: NeedEntity) {
   };
 }
 
-/** Detalle de una necesidad, con su caracterización. */
+/** Detalle de una necesidad, con su caracterización y los elementos que le faltan (T3). */
 export function toNeedResponse(need: NeedEntity) {
   return {
     ...toNeedSummaryResponse(need),
+    missingElements: computeNeedCompleteness(need).missing,
     description: need.description,
     characterization: need.characterization,
     characterizedAt: need.characterizedAt,

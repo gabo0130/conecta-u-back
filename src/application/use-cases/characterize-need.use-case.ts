@@ -35,6 +35,7 @@ import {
   parseCharacterization,
   type ParsedCharacterization,
 } from '../needs/characterization-output.validator';
+import { scoreNeed } from '../needs/need-scores';
 import { loadOpenOwnedNeed, NOT_FOUND } from '../support/need-access';
 
 export const CHARACTERIZATION_UNAVAILABLE =
@@ -108,14 +109,16 @@ export class CharacterizeNeedUseCase {
       throw toHttpError(error);
     }
 
+    const characterization = {
+      ...parsed,
+      provider: this.characterizer.provider,
+      promptVersion: this.characterizer.promptVersion,
+    };
     const updated = await this.needRepository.update(need.id, {
-      characterization: {
-        ...parsed,
-        provider: this.characterizer.provider,
-        promptVersion: this.characterizer.promptVersion,
-      },
+      characterization,
       characterizedAt: new Date(),
       status: 'CARACTERIZADA',
+      ...scoreNeed({ ...need, characterization }),
     });
     if (!updated) throw new NotFoundException({ message: NOT_FOUND });
     return toNeedResponse(updated);

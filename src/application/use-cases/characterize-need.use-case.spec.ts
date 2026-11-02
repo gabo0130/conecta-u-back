@@ -84,6 +84,8 @@ describe('CharacterizeNeedUseCase (T2)', () => {
       expect.objectContaining({
         status: 'CARACTERIZADA',
         characterizedAt: expect.any(Date),
+        // Problema (20) y competencias (15); sin objetivo, beneficiarios, resultados, plazo ni dependencia.
+        completeness: 35,
       }),
     );
     expect(result.characterization).toMatchObject({
