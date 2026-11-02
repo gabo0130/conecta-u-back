@@ -1,5 +1,7 @@
 import type { DataSource, EntityManager } from 'typeorm';
 import { TypeOrmCollaboratorRepository } from './typeorm-collaborator.repository';
+import { TypeOrmNeedRepository } from './typeorm-need.repository';
+import { TypeOrmProjectRepository } from './typeorm-project.repository';
 import { TypeOrmUnitOfWork } from './typeorm-unit-of-work';
 
 describe('TypeOrmUnitOfWork', () => {
@@ -18,11 +20,14 @@ describe('TypeOrmUnitOfWork', () => {
       expect(repositories.collaborators).toBeInstanceOf(
         TypeOrmCollaboratorRepository,
       );
+      // Tesis (T5): la conversión necesidad → oportunidad escribe ambos en la transacción.
+      expect(repositories.projects).toBeInstanceOf(TypeOrmProjectRepository);
+      expect(repositories.needs).toBeInstanceOf(TypeOrmNeedRepository);
       return Promise.resolve('done');
     });
 
     expect(result).toBe('done');
     expect(dataSource.transaction).toHaveBeenCalledTimes(1);
-    expect(manager.getRepository).toHaveBeenCalledTimes(5);
+    expect(manager.getRepository).toHaveBeenCalledTimes(7);
   });
 });
