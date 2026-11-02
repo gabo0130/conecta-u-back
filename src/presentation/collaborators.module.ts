@@ -2,6 +2,9 @@ import { Module } from '@nestjs/common';
 import { PersonAccountService } from '../application/support/person-account.service';
 import { AddMyCollaboratorSkillUseCase } from '../application/use-cases/add-my-collaborator-skill.use-case';
 import { CreateMyCollaboratorProfileUseCase } from '../application/use-cases/create-my-collaborator-profile.use-case';
+import { DeleteMyExperienceCertificateUseCase } from '../application/use-cases/delete-my-experience-certificate.use-case';
+import { GetExperienceCertificateUseCase } from '../application/use-cases/get-experience-certificate.use-case';
+import { UploadMyExperienceCertificateUseCase } from '../application/use-cases/upload-my-experience-certificate.use-case';
 import { CreateMyExperienceUseCase } from '../application/use-cases/create-my-experience.use-case';
 import { DeleteMyCollaboratorSkillUseCase } from '../application/use-cases/delete-my-collaborator-skill.use-case';
 import { DeleteMyExperienceUseCase } from '../application/use-cases/delete-my-experience.use-case';
@@ -31,6 +34,9 @@ import { SecurityModule } from './security.module';
     CreateMyExperienceUseCase,
     DeleteMyCollaboratorSkillUseCase,
     DeleteMyExperienceUseCase,
+    UploadMyExperienceCertificateUseCase,
+    DeleteMyExperienceCertificateUseCase,
+    GetExperienceCertificateUseCase,
     GetMyCollaboratorProfileUseCase,
     ListMyCollaboratorSkillsUseCase,
     UpdateMyAvailabilityUseCase,

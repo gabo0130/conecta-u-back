@@ -3,6 +3,10 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { CollaboratorSkillOrmEntity } from '../infrastructure/database/typeorm/collaborator-skill.orm-entity';
 import { CollaboratorOrmEntity } from '../infrastructure/database/typeorm/collaborator.orm-entity';
 import { DeliverableOrmEntity } from '../infrastructure/database/typeorm/deliverable.orm-entity';
+import { ExperienceCertificateOrmEntity } from '../infrastructure/database/typeorm/experience-certificate.orm-entity';
+import { TypeOrmExperienceCertificateRepository } from '../infrastructure/database/typeorm/typeorm-experience-certificate.repository';
+import { InvitationOrmEntity } from '../infrastructure/database/typeorm/invitation.orm-entity';
+import { TypeOrmInvitationRepository } from '../infrastructure/database/typeorm/typeorm-invitation.repository';
 import { ExperienceOrmEntity } from '../infrastructure/database/typeorm/experience.orm-entity';
 import { ImportRunOrmEntity } from '../infrastructure/database/typeorm/import-run.orm-entity';
 import { ProjectAnalysisOrmEntity } from '../infrastructure/database/typeorm/project-analysis.orm-entity';
@@ -34,8 +38,10 @@ import {
   COLLABORATOR_EMBEDDING_REPOSITORY,
   COLLABORATOR_REPOSITORY,
   COLLABORATOR_SKILL_REPOSITORY,
+  EXPERIENCE_CERTIFICATE_REPOSITORY,
   EXPERIENCE_REPOSITORY,
   IMPORT_RUN_REPOSITORY,
+  INVITATION_REPOSITORY,
   PROGRAM_REPOSITORY,
   PROJECT_ANALYSIS_REPOSITORY,
   PROJECT_CATEGORY_REPOSITORY,
@@ -58,6 +64,10 @@ const REPOSITORY_BINDINGS = [
     useClass: TypeOrmCollaboratorSkillRepository,
   },
   { provide: EXPERIENCE_REPOSITORY, useClass: TypeOrmExperienceRepository },
+  {
+    provide: EXPERIENCE_CERTIFICATE_REPOSITORY,
+    useClass: TypeOrmExperienceCertificateRepository,
+  },
   { provide: PROJECT_REPOSITORY, useClass: TypeOrmProjectRepository },
   { provide: PROJECT_TYPE_REPOSITORY, useClass: TypeOrmProjectTypeRepository },
   {
@@ -81,6 +91,7 @@ const REPOSITORY_BINDINGS = [
     provide: RECOMMENDATION_REPOSITORY,
     useClass: TypeOrmRecommendationRepository,
   },
+  { provide: INVITATION_REPOSITORY, useClass: TypeOrmInvitationRepository },
   { provide: UNIT_OF_WORK, useClass: TypeOrmUnitOfWork },
 ];
 
@@ -94,6 +105,7 @@ const REPOSITORY_BINDINGS = [
       CollaboratorOrmEntity,
       CollaboratorSkillOrmEntity,
       ExperienceOrmEntity,
+      ExperienceCertificateOrmEntity,
       ProjectTypeOrmEntity,
       ProjectCategoryOrmEntity,
       ProjectOrmEntity,
@@ -103,6 +115,7 @@ const REPOSITORY_BINDINGS = [
       RequiredProfileOrmEntity,
       RequiredProfileSkillOrmEntity,
       RecommendationOrmEntity,
+      InvitationOrmEntity,
     ]),
   ],
   providers: REPOSITORY_BINDINGS,

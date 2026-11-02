@@ -8,8 +8,10 @@ import { AuthModule } from './presentation/auth.module';
 import { CatalogsModule } from './presentation/catalogs.module';
 import { CollaboratorsModule } from './presentation/collaborators.module';
 import { HealthController } from './presentation/controllers/health.controller';
+import { InvitationsModule } from './presentation/invitations.module';
 import { ImportModule } from './presentation/import.module';
 import { MatchmakingModule } from './presentation/matchmaking.module';
+import { ReportsModule } from './presentation/reports.module';
 import { ProjectsModule } from './presentation/projects.module';
 import { UsersModule } from './presentation/users.module';
 import { LoggingModule } from './shared/logging/logging.module';
@@ -49,6 +51,8 @@ import { TraceIdMiddleware } from './shared/logging/trace-id.middleware';
     AdminModule,
     AnalysisModule,
     MatchmakingModule,
+    InvitationsModule,
+    ReportsModule,
   ],
 })
 export class AppModule implements NestModule {

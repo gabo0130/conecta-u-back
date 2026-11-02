@@ -1,3 +1,4 @@
+import { requiresCertificate } from '../../domain/entities/experience-certificate';
 import type { CollaboratorSkillEntity } from '../../domain/entities/collaborator-skill.entity';
 import type { CollaboratorEntity } from '../../domain/entities/collaborator.entity';
 import type { ExperienceEntity } from '../../domain/entities/experience.entity';
@@ -38,6 +39,16 @@ export function toExperienceResponse(experience: ExperienceEntity) {
       experience.startDate,
       experience.endDate,
     ),
+    // v2.2, E8: solo metadatos; el archivo se descarga por su propia ruta (dueño o ADMIN).
+    certificate: experience.certificate
+      ? {
+          fileName: experience.certificate.fileName,
+          mimeType: experience.certificate.mimeType,
+          sizeBytes: experience.certificate.sizeBytes,
+          uploadedAt: experience.certificate.uploadedAt,
+        }
+      : null,
+    certificateRequired: requiresCertificate(experience.type),
   };
 }
 

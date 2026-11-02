@@ -17,6 +17,9 @@ import type { UpdateMyCollaboratorProfileUseCase } from '../../application/use-c
 import type { UpdateMyCollaboratorSkillUseCase } from '../../application/use-cases/update-my-collaborator-skill.use-case';
 import type { UpdateMyExperienceUseCase } from '../../application/use-cases/update-my-experience.use-case';
 import type { AuthenticatedRequest } from '../guards/jwt-auth.guard';
+import type { DeleteMyExperienceCertificateUseCase } from '../../application/use-cases/delete-my-experience-certificate.use-case';
+import type { GetExperienceCertificateUseCase } from '../../application/use-cases/get-experience-certificate.use-case';
+import type { UploadMyExperienceCertificateUseCase } from '../../application/use-cases/upload-my-experience-certificate.use-case';
 import { createMock } from '../../testing/test-doubles.testing';
 
 const request = {
@@ -102,10 +105,16 @@ describe('CollaboratorExperienceController', () => {
   const create = createMock<CreateMyExperienceUseCase>();
   const update = createMock<UpdateMyExperienceUseCase>();
   const remove = createMock<DeleteMyExperienceUseCase>();
+  const upload = createMock<UploadMyExperienceCertificateUseCase>();
+  const removeCertificate = createMock<DeleteMyExperienceCertificateUseCase>();
+  const getCertificate = createMock<GetExperienceCertificateUseCase>();
   const controller = new CollaboratorExperienceController(
     create,
     update,
     remove,
+    upload,
+    removeCertificate,
+    getCertificate,
   );
 
   beforeEach(() => jest.clearAllMocks());
@@ -120,5 +129,48 @@ describe('CollaboratorExperienceController', () => {
     expect(create.execute).toHaveBeenCalledWith('user-1', dto);
     expect(update.execute).toHaveBeenCalledWith('user-1', 'exp-1', dto);
     expect(remove.execute).toHaveBeenCalledWith('user-1', 'exp-1');
+  });
+
+  it('delegates the certificate routes with the uploaded file', async () => {
+    const res = { set: jest.fn(), send: jest.fn() };
+    getCertificate.forOwner.mockResolvedValue({
+      fileName: 'cert.pdf',
+      mimeType: 'application/pdf',
+      sizeBytes: 5,
+      uploadedAt: new Date(),
+      content: Buffer.from('%PDF-'),
+    });
+
+    void controller.uploadCertificate(request, 'exp-1', {
+      buffer: Buffer.from('%PDF-'),
+      originalname: 'cert.pdf',
+    } as Express.Multer.File);
+    void controller.uploadCertificate(request, 'exp-1', undefined);
+    void controller.deleteCertificate(request, 'exp-1');
+    await controller.downloadCertificate(
+      request,
+      'exp-1',
+      res as unknown as import('express').Response,
+    );
+
+    expect(upload.execute).toHaveBeenNthCalledWith(1, 'user-1', 'exp-1', {
+      buffer: Buffer.from('%PDF-'),
+      originalName: 'cert.pdf',
+    });
+    expect(upload.execute).toHaveBeenNthCalledWith(
+      2,
+      'user-1',
+      'exp-1',
+      undefined,
+    );
+    expect(removeCertificate.execute).toHaveBeenCalledWith('user-1', 'exp-1');
+    expect(getCertificate.forOwner).toHaveBeenCalledWith('user-1', 'exp-1');
+    expect(res.set).toHaveBeenCalledWith(
+      expect.objectContaining({
+        'Content-Type': 'application/pdf',
+        'X-Content-Type-Options': 'nosniff',
+      }),
+    );
+    expect(res.send).toHaveBeenCalled();
   });
 });

@@ -48,6 +48,6 @@ const DEFAULT_SMTP_PORT = 587;
     },
     SendWelcomeEmailUseCase,
   ],
-  exports: [SendWelcomeEmailUseCase],
+  exports: [SendWelcomeEmailUseCase, MAIL_SENDER, APP_URL],
 })
 export class MailModule {}

@@ -1,3 +1,4 @@
+import type { CertificateMimeType } from '../../../../domain/entities/experience-certificate';
 import { CollaboratorSkillEntity } from '../../../../domain/entities/collaborator-skill.entity';
 import { CollaboratorEntity } from '../../../../domain/entities/collaborator.entity';
 import { ExperienceEntity } from '../../../../domain/entities/experience.entity';
@@ -35,6 +36,14 @@ export function toExperienceEntity(
     level: experience.level as ExperienceEntity['level'],
     description: experience.description,
     technologies: (experience.technologies ?? []).map(toSkillEntity),
+    certificate: experience.certificate
+      ? {
+          fileName: experience.certificate.fileName,
+          mimeType: experience.certificate.mimeType as CertificateMimeType,
+          sizeBytes: experience.certificate.sizeBytes,
+          uploadedAt: experience.certificate.uploadedAt,
+        }
+      : null,
   });
 }
 

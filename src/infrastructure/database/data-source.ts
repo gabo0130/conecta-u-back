@@ -3,6 +3,8 @@ import { DataSource } from 'typeorm';
 import { CollaboratorOrmEntity } from './typeorm/collaborator.orm-entity';
 import { CollaboratorSkillOrmEntity } from './typeorm/collaborator-skill.orm-entity';
 import { DeliverableOrmEntity } from './typeorm/deliverable.orm-entity';
+import { ExperienceCertificateOrmEntity } from './typeorm/experience-certificate.orm-entity';
+import { InvitationOrmEntity } from './typeorm/invitation.orm-entity';
 import { ExperienceOrmEntity } from './typeorm/experience.orm-entity';
 import { ImportRunOrmEntity } from './typeorm/import-run.orm-entity';
 import { ProgramOrmEntity } from './typeorm/program.orm-entity';
@@ -28,6 +30,7 @@ export const AppDataSource = new DataSource({
     SkillOrmEntity,
     CollaboratorSkillOrmEntity,
     ExperienceOrmEntity,
+    ExperienceCertificateOrmEntity,
     ProjectTypeOrmEntity,
     ProjectCategoryOrmEntity,
     ProjectOrmEntity,
@@ -37,6 +40,7 @@ export const AppDataSource = new DataSource({
     RequiredProfileOrmEntity,
     RequiredProfileSkillOrmEntity,
     RecommendationOrmEntity,
+    InvitationOrmEntity,
   ],
   migrations: ['src/migrations/*.ts'],
   synchronize: false,

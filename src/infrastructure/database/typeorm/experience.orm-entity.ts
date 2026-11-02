@@ -5,11 +5,13 @@ import {
   JoinTable,
   ManyToMany,
   ManyToOne,
+  OneToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { EXPERIENCE_TYPES } from '../../../domain/entities/experience-type.type';
 import { LEVELS } from '../../../domain/entities/level.type';
 import { CollaboratorOrmEntity } from './collaborator.orm-entity';
+import { ExperienceCertificateOrmEntity } from './experience-certificate.orm-entity';
 import { SkillOrmEntity } from './skill.orm-entity';
 
 @Entity({ name: 'experiences' })
@@ -62,4 +64,10 @@ export class ExperienceOrmEntity {
     inverseJoinColumn: { name: 'skillId' },
   })
   technologies: SkillOrmEntity[];
+
+  @OneToOne(
+    () => ExperienceCertificateOrmEntity,
+    (certificate) => certificate.experience,
+  )
+  certificate?: ExperienceCertificateOrmEntity | null;
 }

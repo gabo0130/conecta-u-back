@@ -1924,6 +1924,311 @@
           }
         }
       ]
+    },
+    {
+      "name": "Iteración 3 (Examen)",
+      "item": [
+        {
+          "name": "Upload Experience Certificate (RF4, E8)",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/collaborators/me/experience/{{experienceId}}/certificate",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "collaborators",
+                "me",
+                "experience",
+                "{{experienceId}}",
+                "certificate"
+              ]
+            },
+            "description": "Multipart `file`: PDF, PNG o JPG, máx. 2 MB; reemplaza el anterior. 422 si no es PDF/imagen, 413 si pesa más. Token de Colaborador/Líder.",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Download My Certificate",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/collaborators/me/experience/{{experienceId}}/certificate",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "collaborators",
+                "me",
+                "experience",
+                "{{experienceId}}",
+                "certificate"
+              ]
+            },
+            "description": "Solo el dueño. Se sirve en línea con nosniff."
+          }
+        },
+        {
+          "name": "Delete My Certificate",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/collaborators/me/experience/{{experienceId}}/certificate",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "collaborators",
+                "me",
+                "experience",
+                "{{experienceId}}",
+                "certificate"
+              ]
+            },
+            "description": "204; 404 si no hay certificado."
+          }
+        },
+        {
+          "name": "Admin Download Certificate (RT16)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/collaborators/{{collaboratorId}}/experience/{{experienceId}}/certificate",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "collaborators",
+                "{{collaboratorId}}",
+                "experience",
+                "{{experienceId}}",
+                "certificate"
+              ]
+            },
+            "description": "Solo ADMIN."
+          }
+        },
+        {
+          "name": "Create Person without account (RF17)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/collaborators",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "collaborators"
+              ]
+            },
+            "description": "409 si el correo o el documento ya existen.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"docente@ufps.edu.co\",\n  \"firstName\": \"Marta\",\n  \"lastName\": \"Rojas\",\n  \"personType\": \"DOCENTE\",\n  \"programId\": \"{{programId}}\",\n  \"documentType\": \"CC\",\n  \"documentNumber\": \"1094000111\",\n  \"phone\": \"3001112233\",\n  \"nationality\": \"Colombiana\",\n  \"dataConsent\": true,\n  \"summary\": \"Docente de redes.\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Update Person Profile (RF17)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/collaborators/{{collaboratorId}}/profile",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "collaborators",
+                "{{collaboratorId}}",
+                "profile"
+              ]
+            },
+            "description": "Campos parciales del perfil.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"availabilityStatus\": \"PARCIAL\",\n  \"weeklyHours\": 6\n}"
+            }
+          }
+        },
+        {
+          "name": "Deactivate / Reactivate Person (RF17)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/collaborators/{{collaboratorId}}/status",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "collaborators",
+                "{{collaboratorId}}",
+                "status"
+              ]
+            },
+            "description": "Dar de baja borra su vector y sus recomendaciones.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"active\": false\n}"
+            }
+          }
+        },
+        {
+          "name": "Platform Stats (RF15)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/stats",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "stats"
+              ]
+            },
+            "description": "Indicadores del dashboard."
+          }
+        },
+        {
+          "name": "Report (RF16)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/reports/proyectos?format=xlsx",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "reports",
+                "proyectos"
+              ],
+              "query": [
+                {
+                  "key": "format",
+                  "value": "xlsx"
+                }
+              ]
+            },
+            "description": "kind: proyectos, personas, habilidades, recomendaciones, convocatorias. format: xlsx (por defecto) o csv."
+          }
+        },
+        {
+          "name": "Send Invitations (RF21)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/projects/{{projectId}}/invitations",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "projects",
+                "{{projectId}}",
+                "invitations"
+              ]
+            },
+            "description": "Solo el líder dueño y a personas recomendadas. Un correo por persona (Reply-To del líder); no repite en 24 h.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"collaboratorIds\": [\n    \"{{collaboratorId}}\"\n  ],\n  \"message\": \"Hola, tu perfil encaja con nuestro proyecto. ¿Te gustaría participar?\"\n}"
+            }
+          }
+        },
+        {
+          "name": "List Invitations (RF22)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/projects/{{projectId}}/invitations",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "projects",
+                "{{projectId}}",
+                "invitations"
+              ]
+            },
+            "description": "Líder dueño (correo enmascarado) o ADMIN (completo)."
+          }
+        }
+      ]
     }
   ]
 }

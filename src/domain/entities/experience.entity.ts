@@ -1,3 +1,4 @@
+import type { ExperienceCertificateInfo } from './experience-certificate';
 import type { ExperienceType } from './experience-type.type';
 import type { Level } from './level.type';
 import { SkillEntity } from './skill.entity';
@@ -15,6 +16,7 @@ export interface ExperienceProps {
   level: Level;
   description?: string | null;
   technologies?: SkillEntity[];
+  certificate?: ExperienceCertificateInfo | null;
 }
 
 export class ExperienceEntity {
@@ -30,6 +32,8 @@ export class ExperienceEntity {
   readonly level: Level;
   readonly description: string | null;
   readonly technologies: SkillEntity[];
+  /** v2.2, E8: certificado que soporta la experiencia (solo metadatos). */
+  readonly certificate: ExperienceCertificateInfo | null;
 
   constructor(props: ExperienceProps) {
     this.id = props.id;
@@ -44,5 +48,6 @@ export class ExperienceEntity {
     this.level = props.level;
     this.description = props.description ?? null;
     this.technologies = props.technologies ?? [];
+    this.certificate = props.certificate ?? null;
   }
 }

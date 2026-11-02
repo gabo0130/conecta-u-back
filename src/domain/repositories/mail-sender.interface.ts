@@ -5,6 +5,8 @@ export interface MailMessage {
   html: string;
   /** Versión en texto plano, para clientes que no muestran HTML. */
   text: string;
+  /** A quién llegan las respuestas (p. ej. el líder en una convocatoria). */
+  replyTo?: string;
 }
 
 export interface MailSender {

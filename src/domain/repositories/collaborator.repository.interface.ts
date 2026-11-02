@@ -35,6 +35,7 @@ export interface UpdateCollaboratorRepositoryDto {
   userId?: string | null;
   firstName?: string;
   lastName?: string;
+  personType?: PersonType;
   programId?: string;
   semester?: number | null;
   researchGroup?: string | null;

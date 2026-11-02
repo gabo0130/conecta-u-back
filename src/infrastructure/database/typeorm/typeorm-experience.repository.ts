@@ -25,7 +25,7 @@ export class TypeOrmExperienceRepository implements ExperienceRepository {
   async findById(id: string): Promise<ExperienceEntity | null> {
     const experience = await this.repository.findOne({
       where: { id },
-      relations: ['technologies'],
+      relations: ['technologies', 'certificate'],
     });
     return experience ? toExperienceEntity(experience) : null;
   }
@@ -35,7 +35,7 @@ export class TypeOrmExperienceRepository implements ExperienceRepository {
   ): Promise<ExperienceEntity[]> {
     const experiences = await this.repository.find({
       where: { collaboratorId },
-      relations: ['technologies'],
+      relations: ['technologies', 'certificate'],
     });
     return experiences.map(toExperienceEntity);
   }
@@ -68,7 +68,7 @@ export class TypeOrmExperienceRepository implements ExperienceRepository {
   ): Promise<ExperienceEntity | null> {
     const experience = await this.repository.findOne({
       where: { id },
-      relations: ['technologies'],
+      relations: ['technologies', 'certificate'],
     });
     if (!experience) {
       return null;

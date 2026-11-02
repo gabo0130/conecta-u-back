@@ -23,6 +23,7 @@ const RELATIONS = [
   'skills.skill',
   'experiences',
   'experiences.technologies',
+  'experiences.certificate',
 ];
 
 @Injectable()
