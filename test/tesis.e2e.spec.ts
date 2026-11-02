@@ -473,4 +473,131 @@ describe('Tesis (integración)', () => {
       expect(response.body.message).toBe('Puedes registrar hasta 10 intereses');
     });
   });
+
+  describe('T7 · aceptar o descartar recomendaciones', () => {
+    type Card = {
+      id: string;
+      rank: number;
+      score: number;
+      collaborator: { id: string };
+      feedback: null | { decision: string; rankAtDecision: number };
+    };
+    const projectUrl = () => `/api/projects/${scenario.projectId}`;
+    const cards = async (): Promise<Card[]> => {
+      const response = await http()
+        .get(`${projectUrl()}/recommendations?includeUnavailable=true`)
+        .auth(owner, { type: 'bearer' })
+        .expect(200);
+      return (response.body.profiles as { recommendations: Card[] }[]).flatMap(
+        (profile) => profile.recommendations,
+      );
+    };
+    const decide = (card: Card, body: object, token = owner) =>
+      http()
+        .put(`${projectUrl()}/recommendations/${card.id}/feedback`)
+        .auth(token, { type: 'bearer' })
+        .send(body);
+
+    beforeAll(async () => {
+      await http()
+        .post(`${projectUrl()}/analysis`)
+        .auth(owner, { type: 'bearer' })
+        .expect(201);
+      await http()
+        .post(`${projectUrl()}/recommendations`)
+        .auth(owner, { type: 'bearer' })
+        // También quien hoy no está disponible: así hay al menos dos tarjetas.
+        .send({ includeUnavailable: true })
+        .expect(200);
+    });
+
+    it('el líder acepta una y descarta otra; se ve en cada tarjeta', async () => {
+      const [first, second] = await cards();
+      expect(second).toBeDefined();
+      expect(first.feedback).toBeNull();
+
+      const accepted = await decide(first, { decision: 'ACEPTADA' }).expect(
+        200,
+      );
+      expect(accepted.body).toMatchObject({
+        recommendationId: first.id,
+        decision: 'ACEPTADA',
+        rankAtDecision: first.rank,
+        scoreAtDecision: first.score,
+      });
+      await decide(second, {
+        decision: 'DESCARTADA',
+        reason: 'Ya está en otro proyecto',
+      }).expect(200);
+
+      const after = await cards();
+      expect(after.find((c) => c.id === first.id)?.feedback?.decision).toBe(
+        'ACEPTADA',
+      );
+      expect(after.find((c) => c.id === second.id)?.feedback?.decision).toBe(
+        'DESCARTADA',
+      );
+    });
+
+    it('la decisión se conserva al regenerar y la última reemplaza a la anterior', async () => {
+      const [first] = await cards();
+      await http()
+        .post(`${projectUrl()}/recommendations`)
+        .auth(owner, { type: 'bearer' })
+        .send({ includeUnavailable: true })
+        .expect(200);
+      const regenerated = await cards();
+      const same = regenerated.find(
+        (c) => c.collaborator.id === first.collaborator.id,
+      )!;
+      expect(same.id).not.toBe(first.id);
+      expect(same.feedback?.decision).toBe('ACEPTADA');
+
+      await decide(same, { decision: 'DESCARTADA' }).expect(200);
+      expect(
+        (await cards()).find((c) => c.collaborator.id === first.collaborator.id)
+          ?.feedback?.decision,
+      ).toBe('DESCARTADA');
+      // Vuelve a dejarla aceptada para el resumen.
+      await decide(same, { decision: 'ACEPTADA' }).expect(200);
+    });
+
+    it('valida la decisión y solo decide el líder dueño', async () => {
+      const [first] = await cards();
+      await decide(first, { decision: 'TAL_VEZ' }).expect(422);
+      await decide(first, { decision: 'ACEPTADA' }, otherLeader).expect(403);
+      await decide(first, { decision: 'ACEPTADA' }, admin).expect(403);
+      await http()
+        .put(
+          `${projectUrl()}/recommendations/00000000-0000-4000-8000-000000000000/feedback`,
+        )
+        .auth(owner, { type: 'bearer' })
+        .send({ decision: 'ACEPTADA' })
+        .expect(404);
+    });
+
+    it('el ADMIN ve la tasa de aceptación global y por proyecto', async () => {
+      const response = await http()
+        .get('/api/admin/evaluation')
+        .auth(admin, { type: 'bearer' })
+        .expect(200);
+      expect(response.body.acceptance).toEqual({
+        accepted: 1,
+        discarded: 1,
+        decided: 2,
+        acceptanceRate: 0.5,
+      });
+      expect(response.body.byProject).toEqual([
+        expect.objectContaining({
+          projectId: scenario.projectId,
+          projectTitle: 'Proyecto de integración',
+          acceptanceRate: 0.5,
+        }),
+      ]);
+      await http()
+        .get('/api/admin/evaluation')
+        .auth(owner, { type: 'bearer' })
+        .expect(403);
+    });
+  });
 });

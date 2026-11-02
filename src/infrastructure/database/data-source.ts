@@ -6,6 +6,7 @@ import { DeliverableOrmEntity } from './typeorm/deliverable.orm-entity';
 import { ExperienceCertificateOrmEntity } from './typeorm/experience-certificate.orm-entity';
 import { InvitationOrmEntity } from './typeorm/invitation.orm-entity';
 import { NeedOrmEntity } from './typeorm/need.orm-entity';
+import { RecommendationFeedbackOrmEntity } from './typeorm/recommendation-feedback.orm-entity';
 import { ExperienceOrmEntity } from './typeorm/experience.orm-entity';
 import { ImportRunOrmEntity } from './typeorm/import-run.orm-entity';
 import { ProgramOrmEntity } from './typeorm/program.orm-entity';
@@ -43,6 +44,7 @@ export const AppDataSource = new DataSource({
     RecommendationOrmEntity,
     InvitationOrmEntity,
     NeedOrmEntity,
+    RecommendationFeedbackOrmEntity,
   ],
   migrations: ['src/migrations/*.ts'],
   synchronize: false,

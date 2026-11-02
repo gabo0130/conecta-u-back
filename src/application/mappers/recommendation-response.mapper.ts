@@ -1,4 +1,5 @@
 import type { RequiredProfileEntity } from '../../domain/entities/required-profile.entity';
+import type { RecommendationFeedbackEntity } from '../../domain/entities/recommendation-feedback';
 import type { RecommendationView } from '../../domain/repositories/recommendation.repository.interface';
 
 // Respuestas de las recomendaciones (RF11–RF13). Nunca incluyen correo, teléfono ni enlaces.
@@ -12,8 +13,44 @@ const toComponents = (view: RecommendationView) => ({
 
 const toPerson = (view: RecommendationView) => ({ ...view.collaborator });
 
-export function toRecommendationItem(view: RecommendationView) {
+/** Decisión del líder (tesis, D6), sin datos de quién decidió. */
+export function toFeedbackResponse(feedback: RecommendationFeedbackEntity) {
+  return {
+    decision: feedback.decision,
+    reason: feedback.reason,
+    rankAtDecision: feedback.rankAtDecision,
+    scoreAtDecision: feedback.scoreAtDecision,
+    decidedAt: feedback.decidedAt,
+  };
+}
+
+/** Clave de una decisión: vale para la persona en ese perfil, aunque se regenere la lista. */
+export const feedbackKey = (
+  requiredProfileId: string,
+  collaboratorId: string,
+) => `${requiredProfileId}:${collaboratorId}`;
+
+export type FeedbackIndex = ReadonlyMap<string, RecommendationFeedbackEntity>;
+
+export function indexFeedback(
+  feedback: RecommendationFeedbackEntity[],
+): FeedbackIndex {
+  return new Map(
+    feedback.map((item) => [
+      feedbackKey(item.requiredProfileId, item.collaboratorId),
+      item,
+    ]),
+  );
+}
+
+export function toRecommendationItem(
+  view: RecommendationView,
+  feedback: FeedbackIndex = new Map(),
+) {
   const { matchedSkills, missingSkills } = view.breakdown;
+  const decision = feedback.get(
+    feedbackKey(view.requiredProfileId, view.collaborator.id),
+  );
   return {
     id: view.id,
     rank: view.rank,
@@ -22,6 +59,7 @@ export function toRecommendationItem(view: RecommendationView) {
     matchedSkillCount: matchedSkills.length,
     requiredSkillCount: matchedSkills.length + missingSkills.length,
     collaborator: toPerson(view),
+    feedback: decision ? toFeedbackResponse(decision) : null,
   };
 }
 
@@ -30,6 +68,7 @@ export function toRecommendationsResponse(
   profiles: RequiredProfileEntity[],
   views: RecommendationView[],
   includeUnavailable: boolean,
+  feedback: FeedbackIndex = new Map(),
 ) {
   const generatedAt = views.reduce<Date | null>(
     (latest, view) =>
@@ -48,7 +87,7 @@ export function toRecommendationsResponse(
       priority: profile.priority,
       recommendations: views
         .filter((view) => view.requiredProfileId === profile.id)
-        .map(toRecommendationItem),
+        .map((view) => toRecommendationItem(view, feedback)),
     })),
   };
 }

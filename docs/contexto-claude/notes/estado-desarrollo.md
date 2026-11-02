@@ -310,3 +310,10 @@ Extensión compatible (plan §2): no cambia las HU del seminario. Decisiones de 
 - Respuesta de «Mi perfil» y vistas del ADMIN con `interests`. El texto del embedding agrega «Intereses: …» (redactado como el resto). Cambiar los intereses pone `embeddingUpdatedAt = null`.
 - **Fallo encontrado por las pruebas y corregido:** `repository.merge()` de TypeORM mezcla los arreglos posición a posición, así que quitar un interés no se guardaba; el repositorio asigna la lista nueva tal cual.
 - Pruebas: 13 unitarias (regla, decorador, parser, plantilla y lector, texto del embedding, invalidación en el repositorio) y 2 e2e (normaliza, marca el embedding desactualizado, quitar uno se guarda; 422 con 11).
+
+### T7 · Aceptar o descartar recomendaciones (D6, tasa de aceptación)
+- Migración `1791600000000-CreateRecommendationFeedback`: tabla `recommendation_feedback` (único por `requiredProfileId` + `collaboratorId`; `decision` enum ACEPTADA/DESCARTADA, `reason` ≤ 500, `rankAtDecision`, `scoreAtDecision`, `decidedById`, `decidedAt`; FK CASCADE a proyecto, perfil y persona; índice por proyecto). No depende de `recommendations`, que se reemplaza al regenerar: la decisión se conserva.
+- `PUT /projects/:id/recommendations/:recommendationId/feedback` (`RecordRecommendationFeedbackUseCase`, solo el líder dueño; 404 si la recomendación es de otro proyecto): upsert, vale la última decisión. `GET /projects/:id/recommendations` trae `feedback` en cada tarjeta.
+- `GET /admin/evaluation` (`GetEvaluationSummaryUseCase`, `AdminEvaluationController`): tasa de aceptación global y por proyecto (`acceptanceRate` = aceptadas / decididas, 4 decimales; `null` sin decisiones).
+- Ley 1581: retirar el consentimiento o desactivar a la persona borra también sus filas de `recommendation_feedback` (junto con el vector y las recomendaciones).
+- Pruebas: 7 unitarias (caso de uso, resumen, tasa, controlador, mapeo en la lista, borrado por consentimiento) y 4 e2e (aceptar/descartar visible en la tarjeta; se conserva al regenerar; 422/403/404; resumen del ADMIN 0,5 y 403 al líder).

@@ -1,3 +1,4 @@
+import type { RecommendationFeedbackRepository } from '../../domain/repositories/recommendation-feedback.repository.interface';
 import {
   ConflictException,
   ForbiddenException,
@@ -371,11 +372,13 @@ describe('ListRecommendationsUseCase', () => {
   const analysisRepository = createMock<ProjectAnalysisRepository>();
   const profileRepository = createMock<RequiredProfileRepository>();
   const recommendationRepository = createMock<RecommendationRepository>();
+  const feedbackRepository = createMock<RecommendationFeedbackRepository>();
   const useCase = new ListRecommendationsUseCase(
     projectRepository,
     analysisRepository,
     profileRepository,
     recommendationRepository,
+    feedbackRepository,
   );
   const leader = { userId: 'leader-1', role: 'LIDER' as const };
 
@@ -387,6 +390,34 @@ describe('ListRecommendationsUseCase', () => {
     analysisRepository.findLatestCompleted.mockResolvedValue(analysis);
     profileRepository.findActiveForProject.mockResolvedValue([profile()]);
     recommendationRepository.findByProject.mockResolvedValue([view()]);
+    feedbackRepository.findByProject.mockResolvedValue([]);
+  });
+
+  it('muestra la decisión del líder en cada tarjeta (tesis, T7)', async () => {
+    feedbackRepository.findByProject.mockResolvedValue([
+      {
+        id: 'f1',
+        projectId: 'project-1',
+        requiredProfileId: 'rp1',
+        collaboratorId: 'c1',
+        decision: 'ACEPTADA',
+        reason: null,
+        rankAtDecision: 1,
+        scoreAtDecision: 80,
+        decidedById: 'leader-1',
+        decidedAt: new Date('2026-11-01'),
+      },
+    ]);
+
+    const result = await useCase.execute(leader, 'project-1');
+
+    expect(result.profiles[0].recommendations[0].feedback).toEqual({
+      decision: 'ACEPTADA',
+      reason: null,
+      rankAtDecision: 1,
+      scoreAtDecision: 80,
+      decidedAt: new Date('2026-11-01'),
+    });
   });
 
   it('groups the recommendations by profile without exposing contact data', async () => {

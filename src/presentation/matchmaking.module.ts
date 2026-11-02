@@ -4,11 +4,14 @@ import { CollaboratorEmbeddingService } from '../application/analysis/collaborat
 import { parseMatchSettings } from '../application/matchmaking/match-settings';
 import { GenerateRecommendationsUseCase } from '../application/use-cases/generate-recommendations.use-case';
 import { GetRecommendationDetailUseCase } from '../application/use-cases/get-recommendation-detail.use-case';
+import { GetEvaluationSummaryUseCase } from '../application/use-cases/get-evaluation-summary.use-case';
 import { ListRecommendationsUseCase } from '../application/use-cases/list-recommendations.use-case';
+import { RecordRecommendationFeedbackUseCase } from '../application/use-cases/record-recommendation-feedback.use-case';
 import { RebuildEmbeddingsUseCase } from '../application/use-cases/rebuild-embeddings.use-case';
 import { MATCH_SETTINGS } from '../shared/interfaces/tokens';
 import { AnalysisModule } from './analysis.module';
 import { AdminEmbeddingsController } from './controllers/admin-embeddings.controller';
+import { AdminEvaluationController } from './controllers/admin-evaluation.controller';
 import { RecommendationsController } from './controllers/recommendations.controller';
 import { PersistenceModule } from './persistence.module';
 import { SecurityModule } from './security.module';
@@ -16,7 +19,11 @@ import { SecurityModule } from './security.module';
 /** Matchmaking híbrido (RF11–RF13): embeddings de personas y recomendaciones por perfil. */
 @Module({
   imports: [PersistenceModule, SecurityModule, AnalysisModule],
-  controllers: [AdminEmbeddingsController, RecommendationsController],
+  controllers: [
+    AdminEmbeddingsController,
+    AdminEvaluationController,
+    RecommendationsController,
+  ],
   providers: [
     {
       provide: MATCH_SETTINGS,
@@ -32,6 +39,8 @@ import { SecurityModule } from './security.module';
     GenerateRecommendationsUseCase,
     ListRecommendationsUseCase,
     GetRecommendationDetailUseCase,
+    RecordRecommendationFeedbackUseCase,
+    GetEvaluationSummaryUseCase,
   ],
   exports: [CollaboratorEmbeddingService],
 })

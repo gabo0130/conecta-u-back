@@ -5,6 +5,7 @@ import {
   HttpCode,
   Param,
   Post,
+  Put,
   Query,
   Req,
   UseGuards,
@@ -12,10 +13,12 @@ import {
 import {
   GenerateRecommendationsDto,
   ListRecommendationsQueryDto,
+  RecommendationFeedbackDto,
 } from '../../application/dto/recommendations.dto';
 import { GenerateRecommendationsUseCase } from '../../application/use-cases/generate-recommendations.use-case';
 import { GetRecommendationDetailUseCase } from '../../application/use-cases/get-recommendation-detail.use-case';
 import { ListRecommendationsUseCase } from '../../application/use-cases/list-recommendations.use-case';
+import { RecordRecommendationFeedbackUseCase } from '../../application/use-cases/record-recommendation-feedback.use-case';
 import { Authorize } from '../guards/authorization.decorator';
 import { AuthorizationGuard } from '../guards/authorization.guard';
 import type { AuthenticatedRequest } from '../guards/jwt-auth.guard';
@@ -30,6 +33,7 @@ export class RecommendationsController {
     private readonly generateUseCase: GenerateRecommendationsUseCase,
     private readonly listUseCase: ListRecommendationsUseCase,
     private readonly detailUseCase: GetRecommendationDetailUseCase,
+    private readonly feedbackUseCase: RecordRecommendationFeedbackUseCase,
   ) {}
 
   @Post()
@@ -52,6 +56,23 @@ export class RecommendationsController {
   ) {
     const { userId, role } = request.user!;
     return this.listUseCase.execute({ userId, role }, id, query);
+  }
+
+  /** Tesis (T7): aceptar o descartar a la persona; vale la última decisión. */
+  @Put(':recommendationId/feedback')
+  @Authorize({ anyOfRoles: ['LIDER'] })
+  feedback(
+    @Req() request: AuthenticatedRequest,
+    @Param('id', UuidParamPipe) id: string,
+    @Param('recommendationId', UuidParamPipe) recommendationId: string,
+    @Body() dto: RecommendationFeedbackDto,
+  ) {
+    return this.feedbackUseCase.execute(
+      request.user!.userId,
+      id,
+      recommendationId,
+      dto,
+    );
   }
 
   @Get(':recommendationId')

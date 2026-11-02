@@ -7,10 +7,12 @@ describe('RecommendationsController', () => {
   const generate = mockUseCase();
   const list = mockUseCase();
   const detail = mockUseCase();
+  const feedback = mockUseCase();
   const controller = new RecommendationsController(
     generate as never,
     list as never,
     detail as never,
+    feedback as never,
   );
   const leader = {
     user: { userId: 'leader-1', role: 'LIDER' },
@@ -38,6 +40,19 @@ describe('RecommendationsController', () => {
       { userId: 'admin-1', role: 'ADMIN' },
       'p1',
       query,
+    );
+  });
+
+  it('registra la decisión del líder (tesis, T7)', () => {
+    const dto = { decision: 'ACEPTADA' as const };
+
+    void controller.feedback(leader, 'p1', 'rec1', dto);
+
+    expect(feedback.execute).toHaveBeenCalledWith(
+      'leader-1',
+      'p1',
+      'rec1',
+      dto,
     );
   });
 

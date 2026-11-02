@@ -2451,6 +2451,59 @@
               "raw": "{\n  \"interests\": [\n    \"IA aplicada a la salud\",\n    \"Energías renovables\"\n  ],\n  \"truthfulnessDeclared\": true\n}"
             }
           }
+        },
+        {
+          "name": "Recommendation Feedback (T7)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/projects/{{projectId}}/recommendations/{{recommendationId}}/feedback",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "projects",
+                "{{projectId}}",
+                "recommendations",
+                "{{recommendationId}}",
+                "feedback"
+              ]
+            },
+            "description": "Tesis (D6). Solo el líder dueño. decision: ACEPTADA | DESCARTADA; reason opcional (≤ 500). Se guarda por (perfil, persona) con el puesto y el puntaje del momento: se conserva al regenerar y la última decisión reemplaza a la anterior. GET /projects/:id/recommendations trae feedback en cada tarjeta (null si no hay).",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"decision\": \"ACEPTADA\",\n  \"reason\": null\n}"
+            }
+          }
+        },
+        {
+          "name": "Admin Evaluation Summary (T7)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/evaluation",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "evaluation"
+              ]
+            },
+            "description": "Solo ADMIN. Tasa de aceptación global { accepted, discarded, decided, acceptanceRate } (null sin decisiones) y por proyecto. Son decisiones reales de los líderes: la evaluación sintética va aparte (scripts/synthetic)."
+          }
         }
       ]
     }

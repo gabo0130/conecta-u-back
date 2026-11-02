@@ -10,6 +10,7 @@ import {
 } from '../../../domain/repositories/collaborator.repository.interface';
 import { CollaboratorOrmEntity } from './collaborator.orm-entity';
 import { toCollaboratorEntity } from './mappers/collaborator.mapper';
+import { RecommendationFeedbackOrmEntity } from './recommendation-feedback.orm-entity';
 import { RecommendationOrmEntity } from './recommendation.orm-entity';
 import { pickDefined } from '../../../shared/utils/pick-defined';
 import type {
@@ -158,6 +159,10 @@ export class TypeOrmCollaboratorRepository implements CollaboratorRepository {
       // el vector derivado y las recomendaciones guardadas, no solo se ocultan.
       if (withdrawn) {
         await manager.delete(RecommendationOrmEntity, { collaboratorId: id });
+        // Tesis (D6): las decisiones del líder sobre la persona también son datos suyos.
+        await manager.delete(RecommendationFeedbackOrmEntity, {
+          collaboratorId: id,
+        });
       }
       return result;
     });

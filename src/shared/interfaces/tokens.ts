@@ -49,3 +49,6 @@ export const NEED_REPOSITORY = Symbol('NEED_REPOSITORY');
 export const NEED_CHARACTERIZER = Symbol('NEED_CHARACTERIZER');
 /** Cortacircuitos de cuota de Gemini, compartido por el análisis y la caracterización. */
 export const GEMINI_QUOTA_BREAKER = Symbol('GEMINI_QUOTA_BREAKER');
+export const RECOMMENDATION_FEEDBACK_REPOSITORY = Symbol(
+  'RECOMMENDATION_FEEDBACK_REPOSITORY',
+);

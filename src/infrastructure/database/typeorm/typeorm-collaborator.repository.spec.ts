@@ -1,6 +1,7 @@
 import type { EntityManager, Repository } from 'typeorm';
 import { OrmUtils } from 'typeorm/util/OrmUtils';
 import type { CollaboratorOrmEntity } from './collaborator.orm-entity';
+import { RecommendationFeedbackOrmEntity } from './recommendation-feedback.orm-entity';
 import { RecommendationOrmEntity } from './recommendation.orm-entity';
 import { TypeOrmCollaboratorRepository } from './typeorm-collaborator.repository';
 
@@ -99,6 +100,10 @@ describe('TypeOrmCollaboratorRepository.update consent withdrawal (Ley 1581)', (
         embeddingUpdatedAt: null,
       });
       expect(remove).toHaveBeenCalledWith(RecommendationOrmEntity, {
+        collaboratorId: 'c1',
+      });
+      // Tesis (T7): también las decisiones del líder sobre la persona.
+      expect(remove).toHaveBeenCalledWith(RecommendationFeedbackOrmEntity, {
         collaboratorId: 'c1',
       });
     },
