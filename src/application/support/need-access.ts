@@ -47,5 +47,11 @@ export async function loadOpenOwnedNeed(
 
 export const NOT_FOUND = 'Recurso no encontrado';
 
+/** Resultado de `updateIfOpen`: null significa que se cerró mientras tanto (409). */
+export function requireStillOpen(need: NeedEntity | null): NeedEntity {
+  if (!need) throw new ConflictException({ message: NEED_CLOSED_MESSAGE });
+  return need;
+}
+
 export const NEED_CLOSED_MESSAGE =
   'La necesidad ya se convirtió en oportunidad o se descartó: no se puede modificar.';

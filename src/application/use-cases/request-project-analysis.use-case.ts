@@ -1,6 +1,5 @@
 import {
   ConflictException,
-  HttpException,
   Inject,
   Injectable,
   ServiceUnavailableException,
@@ -29,6 +28,10 @@ import {
   PROJECT_REPOSITORY,
 } from '../../shared/interfaces/tokens';
 import { AppLoggerService } from '../../shared/logging/logger.service';
+import {
+  aiErrorToHttp,
+  withOneRetryOnInvalidOutput,
+} from '../analysis/ai-call';
 import { AnalysisInputBuilder } from '../analysis/analysis-input.builder';
 import { parseAnalysisOutput } from '../analysis/analysis-output.validator';
 import { AnalysisRecoveryService } from '../analysis/analysis-recovery.service';
@@ -47,8 +50,6 @@ const INVALID_OUTPUT_MESSAGE =
   'La IA devolvió una respuesta que no se pudo procesar. Intenta de nuevo.';
 const ABANDONED_MESSAGE =
   'El análisis tardó demasiado y se canceló. Intenta de nuevo.';
-/** Con menos tiempo que esto no vale la pena reintentar una salida inválida. */
-const MIN_RETRY_MS = 10_000;
 /** Con menos tiempo que esto se guardan los perfiles sin embedding (son opcionales). */
 const MIN_EMBEDDING_MS = 1_000;
 
@@ -177,13 +178,12 @@ export class RequestProjectAnalysisUseCase {
     const add = (current: number | null, extra: number | null) =>
       current === null && extra === null ? null : (current ?? 0) + (extra ?? 0);
 
-    for (let attempt = 1; ; attempt++) {
-      const response = await this.analyzer.analyze(input, {
-        timeoutMs: Math.max(deadline - Date.now(), 1),
-      });
-      inputTokens = add(inputTokens, response.usage.inputTokens);
-      outputTokens = add(outputTokens, response.usage.outputTokens);
-      try {
+    return withOneRetryOnInvalidOutput(
+      async (timeoutMs) => {
+        const response = await this.analyzer.analyze(input, { timeoutMs });
+        // Los tokens de un intento fallido también se gastaron: se suman.
+        inputTokens = add(inputTokens, response.usage.inputTokens);
+        outputTokens = add(outputTokens, response.usage.outputTokens);
         return {
           model: response.model,
           output: parseAnalysisOutput(response.output),
@@ -191,18 +191,14 @@ export class RequestProjectAnalysisUseCase {
           inputTokens,
           outputTokens,
         };
-      } catch (error) {
-        const retryable =
-          error instanceof InvalidAnalysisOutputError &&
-          attempt < 2 &&
-          deadline - Date.now() >= MIN_RETRY_MS;
-        if (!retryable) throw error;
+      },
+      deadline,
+      (reason) =>
         this.logger.warn('Salida de la IA inválida: se reintenta una vez', {
           method: 'analyzeWithRetry',
-          reason: error.message,
-        });
-      }
-    }
+          reason,
+        }),
+    );
   }
 
   /**
@@ -279,12 +275,8 @@ function failureMessage(error: unknown): string {
 }
 
 function toHttpError(error: unknown): unknown {
-  if (error instanceof HttpException) return error;
-  if (error instanceof AnalyzerUnavailableError) {
-    return new ServiceUnavailableException({ message: UNAVAILABLE_MESSAGE });
-  }
-  if (error instanceof InvalidAnalysisOutputError) {
-    return new ServiceUnavailableException({ message: INVALID_OUTPUT_MESSAGE });
-  }
-  return error;
+  return aiErrorToHttp(error, {
+    unavailable: UNAVAILABLE_MESSAGE,
+    invalidOutput: INVALID_OUTPUT_MESSAGE,
+  });
 }

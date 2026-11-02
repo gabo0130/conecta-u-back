@@ -2,9 +2,9 @@ import { collaboratorEmbeddingText } from '../../src/application/analysis/collab
 import { profileEmbeddingText } from '../../src/application/analysis/catalog-profile-mapper';
 import {
   projectExperienceType,
-  toPersonSpec,
   toProfileSpec,
 } from '../../src/application/matchmaking/match-input';
+import { rankCandidates } from '../../src/application/matchmaking/rank-candidates';
 import { CollaboratorSkillEntity } from '../../src/domain/entities/collaborator-skill.entity';
 import { CollaboratorEntity } from '../../src/domain/entities/collaborator.entity';
 import { ExperienceEntity } from '../../src/domain/entities/experience.entity';
@@ -15,7 +15,6 @@ import {
 import { SkillEntity } from '../../src/domain/entities/skill.entity';
 import type { EmbeddingProvider } from '../../src/domain/repositories/embedding-provider.interface';
 import {
-  computeMatch,
   cosineSimilarity,
   DEFAULT_MATCH_WEIGHTS,
   SEMANTIC_FLOOR,
@@ -186,7 +185,7 @@ function toRequiredProfile(need: TestNeed, profile: NeedProfile, index: number):
   });
 }
 
-/** Mismo orden que `GenerateRecommendationsUseCase`: pertinentes, puntaje, habilidades, apellido. */
+/** El mismo orden que la generación de recomendaciones (`rankCandidates`), sin copias. */
 function rankHybrid(
   profile: RequiredProfileEntity,
   profileEmbedding: number[] | null,
@@ -194,26 +193,12 @@ function rankHybrid(
   weights: MatchWeights,
   experienceType: ReturnType<typeof projectExperienceType>,
 ): string[] {
-  const spec = toProfileSpec(profile, profileEmbedding);
-  return candidates
-    .map(({ collaborator, embedding }) => ({
-      collaborator,
-      result: computeMatch(spec, toPersonSpec(collaborator, embedding, EVALUATION_DATE), {
-        weights,
-        projectExperienceType: experienceType,
-      }),
-    }))
-    .filter(({ result }) => result.relevant)
-    .sort(
-      (a, b) =>
-        b.result.score - a.result.score ||
-        b.result.components.skills - a.result.components.skills ||
-        a.collaborator.lastName.localeCompare(b.collaborator.lastName) ||
-        a.collaborator.firstName.localeCompare(b.collaborator.firstName) ||
-        a.collaborator.id.localeCompare(b.collaborator.id),
-    )
-    .slice(0, TOP_N)
-    .map(({ collaborator }) => collaborator.id);
+  return rankCandidates(toProfileSpec(profile, profileEmbedding), candidates, {
+    weights,
+    projectExperienceType: experienceType,
+    topN: TOP_N,
+    now: EVALUATION_DATE,
+  }).map(({ collaborator }) => collaborator.id);
 }
 
 function evaluateRanking(

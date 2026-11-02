@@ -1,3 +1,4 @@
+import { applyDecorators } from '@nestjs/common';
 import { IsIn, IsInt, IsOptional, Max, Min } from 'class-validator';
 import {
   NEED_KINDS,
@@ -18,6 +19,16 @@ import { IsOptionalText, IsRequiredText } from './validators/text.decorators';
 const { scale } = NEED_LIMITS;
 const scaleMessage = (field: string) =>
   `${field} debe ser un número entero entre ${scale.min} y ${scale.max}`;
+/** Urgencia e impacto: entero de la escala 1–5 que declara el formulador. */
+function IsNeedScale(field: string) {
+  const message = scaleMessage(field);
+  return applyDecorators(
+    IsInt({ message }),
+    Min(scale.min, { message }),
+    Max(scale.max, { message }),
+  );
+}
+
 const KIND_MESSAGE = `kind debe ser uno de: ${NEED_KINDS.join(', ')}`;
 
 /** Tesis (D1): el formulador describe la necesidad con sus palabras. */
@@ -31,14 +42,10 @@ export class CreateNeedDto {
   @IsIn(NEED_KINDS, { message: KIND_MESSAGE })
   kind: NeedKind;
 
-  @IsInt({ message: scaleMessage('urgency') })
-  @Min(scale.min, { message: scaleMessage('urgency') })
-  @Max(scale.max, { message: scaleMessage('urgency') })
+  @IsNeedScale('urgency')
   urgency: number;
 
-  @IsInt({ message: scaleMessage('impact') })
-  @Min(scale.min, { message: scaleMessage('impact') })
-  @Max(scale.max, { message: scaleMessage('impact') })
+  @IsNeedScale('impact')
   impact: number;
 
   @IsOptional()
@@ -64,15 +71,11 @@ export class UpdateNeedDto {
   kind?: NeedKind;
 
   @IsOptionalNonNull()
-  @IsInt({ message: scaleMessage('urgency') })
-  @Min(scale.min, { message: scaleMessage('urgency') })
-  @Max(scale.max, { message: scaleMessage('urgency') })
+  @IsNeedScale('urgency')
   urgency?: number;
 
   @IsOptionalNonNull()
-  @IsInt({ message: scaleMessage('impact') })
-  @Min(scale.min, { message: scaleMessage('impact') })
-  @Max(scale.max, { message: scaleMessage('impact') })
+  @IsNeedScale('impact')
   impact?: number;
 
   @IsOptional()

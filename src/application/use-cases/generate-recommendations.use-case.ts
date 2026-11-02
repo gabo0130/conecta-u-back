@@ -9,7 +9,6 @@ import type {
 } from '../../domain/repositories/recommendation.repository.interface';
 import type { RequiredProfileEntity } from '../../domain/entities/required-profile.entity';
 import type { RequiredProfileRepository } from '../../domain/repositories/required-profile.repository.interface';
-import { computeMatch } from '../../domain/services/match-score';
 import {
   MATCH_SETTINGS,
   PROJECT_ANALYSIS_REPOSITORY,
@@ -24,9 +23,9 @@ import { ProfileEmbedder } from '../analysis/profile-embedder';
 import { REBUILD_MAX_LIMIT } from '../dto/rebuild-embeddings.dto';
 import type { GenerateRecommendationsDto } from '../dto/recommendations.dto';
 import { toRecommendationsResponse } from '../mappers/recommendation-response.mapper';
+import { rankCandidates } from '../matchmaking/rank-candidates';
 import {
   projectExperienceType,
-  toPersonSpec,
   toProfileSpec,
 } from '../matchmaking/match-input';
 import type { MatchSettings } from '../matchmaking/match-settings';
@@ -116,7 +115,7 @@ export class GenerateRecommendationsUseCase {
     const now = new Date();
 
     const rows = profiles.flatMap((profile) =>
-      this.rankCandidates(
+      this.toRecommendations(
         profile.id,
         toProfileSpec(profile, profileEmbeddings.get(profile.id) ?? null),
         eligible,
@@ -137,45 +136,29 @@ export class GenerateRecommendationsUseCase {
     );
   }
 
-  private rankCandidates(
+  private toRecommendations(
     requiredProfileId: string,
     profile: ReturnType<typeof toProfileSpec>,
     candidates: MatchCandidate[],
     experienceType: ReturnType<typeof projectExperienceType>,
     now: Date,
   ): NewRecommendation[] {
-    return candidates
-      .map(({ collaborator, embedding }) => ({
-        collaborator,
-        result: computeMatch(
-          profile,
-          toPersonSpec(collaborator, embedding, now),
-          {
-            weights: this.settings.weights,
-            projectExperienceType: experienceType,
-          },
-        ),
-      }))
-      .filter(({ result }) => result.relevant)
-      .sort(
-        (a, b) =>
-          b.result.score - a.result.score ||
-          b.result.components.skills - a.result.components.skills ||
-          a.collaborator.lastName.localeCompare(b.collaborator.lastName) ||
-          a.collaborator.firstName.localeCompare(b.collaborator.firstName),
-      )
-      .slice(0, this.settings.topN)
-      .map(({ collaborator, result }, index) => ({
-        requiredProfileId,
-        collaboratorId: collaborator.id,
-        rank: index + 1,
-        score: result.score,
-        skillScore: result.components.skills,
-        semanticScore: result.components.semantic,
-        experienceScore: result.components.experience,
-        availabilityScore: result.components.availability,
-        breakdown: result.breakdown,
-      }));
+    return rankCandidates(profile, candidates, {
+      weights: this.settings.weights,
+      projectExperienceType: experienceType,
+      topN: this.settings.topN,
+      now,
+    }).map(({ collaborator, result }, index) => ({
+      requiredProfileId,
+      collaboratorId: collaborator.id,
+      rank: index + 1,
+      score: result.score,
+      skillScore: result.components.skills,
+      semanticScore: result.components.semantic,
+      experienceScore: result.components.experience,
+      availabilityScore: result.components.availability,
+      breakdown: result.breakdown,
+    }));
   }
 
   /**

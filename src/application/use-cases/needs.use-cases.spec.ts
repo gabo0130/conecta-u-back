@@ -133,13 +133,13 @@ describe('needs (tesis D1)', () => {
 
     it('aplica solo los campos enviados', async () => {
       needRepository.findById.mockResolvedValue(buildNeed());
-      needRepository.update.mockResolvedValue(buildNeed({ urgency: 2 }));
+      needRepository.updateIfOpen.mockResolvedValue(buildNeed({ urgency: 2 }));
       const result = await update.execute('leader-1', 'need-1', {
         urgency: 2,
         title: undefined,
         dependency: null,
       });
-      expect(needRepository.update).toHaveBeenCalledWith('need-1', {
+      expect(needRepository.updateIfOpen).toHaveBeenCalledWith('need-1', {
         urgency: 2,
         dependency: null,
         completeness: 0,
@@ -153,14 +153,61 @@ describe('needs (tesis D1)', () => {
       needRepository.findById.mockResolvedValue(
         buildNeed({ dependency: 'Bienestar' }),
       );
-      needRepository.update.mockResolvedValue(buildNeed());
+      needRepository.updateIfOpen.mockResolvedValue(buildNeed());
       await update.execute('leader-1', 'need-1', { deadline: '2027-01-01' });
-      expect(needRepository.update).toHaveBeenCalledWith('need-1', {
+      expect(needRepository.updateIfOpen).toHaveBeenCalledWith('need-1', {
         deadline: '2027-01-01',
         completeness: 15,
         // 100 · (0,4·5/5 + 0,4·4/5 + 0,2·15/100) = 75
         priorityScore: 75,
       });
+    });
+
+    it('cambiar la descripción de una caracterizada borra la caracterización (vuelve a REGISTRADA)', async () => {
+      needRepository.findById.mockResolvedValue(
+        buildNeed({
+          status: 'CARACTERIZADA',
+          characterizedAt: new Date(),
+          characterization: {
+            problem: 'P',
+            objective: 'O',
+            beneficiaries: 'B',
+            expectedResults: ['R'],
+            competencies: [],
+            unmatchedCompetencies: [],
+            suggestedProjectTypeCode: null,
+            missingInformation: [],
+            provider: 'fake',
+            model: 'fake-1',
+            promptVersion: 'v1',
+          },
+        }),
+      );
+      needRepository.updateIfOpen.mockResolvedValue(buildNeed());
+      await update.execute('leader-1', 'need-1', {
+        description: 'Otra descripción completamente distinta de la necesidad.',
+      });
+      expect(needRepository.updateIfOpen).toHaveBeenCalledWith(
+        'need-1',
+        expect.objectContaining({
+          characterization: null,
+          characterizedAt: null,
+          status: 'REGISTRADA',
+          completeness: 0,
+        }),
+      );
+    });
+
+    it('cambiar solo la urgencia conserva la caracterización', async () => {
+      needRepository.findById.mockResolvedValue(
+        buildNeed({ status: 'CARACTERIZADA' }),
+      );
+      needRepository.updateIfOpen.mockResolvedValue(buildNeed());
+      await update.execute('leader-1', 'need-1', { urgency: 1 });
+      expect(needRepository.updateIfOpen).toHaveBeenCalledWith(
+        'need-1',
+        expect.not.objectContaining({ status: 'REGISTRADA' }),
+      );
     });
 
     it('una necesidad convertida o descartada no se edita (409)', async () => {
@@ -183,7 +230,7 @@ describe('needs (tesis D1)', () => {
   describe('DiscardNeedUseCase', () => {
     it('la marca DESCARTADA con su motivo', async () => {
       needRepository.findById.mockResolvedValue(buildNeed());
-      needRepository.update.mockResolvedValue(
+      needRepository.updateIfOpen.mockResolvedValue(
         buildNeed({ status: 'DESCARTADA', discardReason: 'Duplicada' }),
       );
       const result = await new DiscardNeedUseCase(needRepository).execute(
@@ -191,23 +238,23 @@ describe('needs (tesis D1)', () => {
         'need-1',
         { reason: 'Duplicada' },
       );
-      expect(needRepository.update).toHaveBeenCalledWith('need-1', {
+      expect(needRepository.updateIfOpen).toHaveBeenCalledWith('need-1', {
         status: 'DESCARTADA',
         discardReason: 'Duplicada',
       });
       expect(result.status).toBe('DESCARTADA');
     });
 
-    it('404 si desaparece entre la lectura y la escritura', async () => {
+    it('409 si otra petición la convirtió entre la lectura y la escritura', async () => {
       needRepository.findById.mockResolvedValue(buildNeed());
-      needRepository.update.mockResolvedValue(null);
+      needRepository.updateIfOpen.mockResolvedValue(null);
       await expect(
         new DiscardNeedUseCase(needRepository).execute(
           'leader-1',
           'need-1',
           {},
         ),
-      ).rejects.toThrow(NotFoundException);
+      ).rejects.toThrow(ConflictException);
     });
   });
 });

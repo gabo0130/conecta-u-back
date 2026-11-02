@@ -16,5 +16,7 @@ import { SecurityModule } from './security.module';
     ListMyProjectsUseCase,
     UpdateProjectUseCase,
   ],
+  // La conversión necesidad → oportunidad (tesis) reutiliza sus validaciones.
+  exports: [CreateProjectUseCase],
 })
 export class ProjectsModule {}

@@ -54,7 +54,7 @@ describe('CharacterizeNeedUseCase (T2)', () => {
           'Escríbanme a ana@ufps.edu.co: necesitamos una plataforma en React para los estudiantes.',
       }),
     );
-    needRepository.update.mockImplementation((id, changes) =>
+    needRepository.updateIfOpen.mockImplementation((id, changes) =>
       Promise.resolve(buildNeed({ ...changes })),
     );
     skillRepository.findAllActive.mockResolvedValue([
@@ -79,7 +79,7 @@ describe('CharacterizeNeedUseCase (T2)', () => {
     expect(input.need.description).not.toContain('ana@ufps.edu.co');
     expect(input.need.description).toContain('[dato personal omitido]');
     expect(input.catalog).toEqual([{ name: 'React', type: 'CONOCIMIENTO' }]);
-    expect(needRepository.update).toHaveBeenCalledWith(
+    expect(needRepository.updateIfOpen).toHaveBeenCalledWith(
       'need-1',
       expect.objectContaining({
         status: 'CARACTERIZADA',
@@ -110,7 +110,7 @@ describe('CharacterizeNeedUseCase (T2)', () => {
     await expect(useCase.execute('leader-1', 'need-1')).rejects.toThrow(
       new ServiceUnavailableException({ message: CHARACTERIZATION_INVALID }),
     );
-    expect(needRepository.update).not.toHaveBeenCalled();
+    expect(needRepository.updateIfOpen).not.toHaveBeenCalled();
   });
 
   it('503 si la IA no responde', async () => {
@@ -132,6 +132,25 @@ describe('CharacterizeNeedUseCase (T2)', () => {
       }),
     );
     expect(characterizer.characterize).not.toHaveBeenCalled();
+  });
+
+  it('409 si se convirtió mientras la IA respondía (no la regresa a CARACTERIZADA)', async () => {
+    characterizer.characterize.mockResolvedValue(response({ problema: 'P' }));
+    needRepository.findById
+      .mockResolvedValueOnce(buildNeed())
+      .mockResolvedValueOnce(buildNeed({ status: 'CONVERTIDA' }));
+    await expect(useCase.execute('leader-1', 'need-1')).rejects.toThrow(
+      ConflictException,
+    );
+    expect(needRepository.updateIfOpen).not.toHaveBeenCalled();
+  });
+
+  it('409 si la escritura condicional no encuentra la necesidad abierta', async () => {
+    characterizer.characterize.mockResolvedValue(response({ problema: 'P' }));
+    needRepository.updateIfOpen.mockResolvedValue(null);
+    await expect(useCase.execute('leader-1', 'need-1')).rejects.toThrow(
+      ConflictException,
+    );
   });
 
   it('409 si la necesidad ya se convirtió', async () => {

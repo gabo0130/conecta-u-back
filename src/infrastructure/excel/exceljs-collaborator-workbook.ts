@@ -209,7 +209,7 @@ const COLLABORATORS_SHEET: SheetDefinition = {
     {
       header: 'intereses',
       required: false,
-      description: `Temas que le interesan a la persona, separados por punto y coma (máximo ${INTERESTS_MAX}). Columna opcional: una plantilla anterior sin ella también se acepta.`,
+      description: `Temas que le interesan a la persona, separados por punto y coma; la coma no separa (máximo ${INTERESTS_MAX}). Columna opcional: una plantilla anterior sin ella también se acepta.`,
       valid: 'IA aplicada a la salud; Energías renovables',
     },
     {

@@ -35,7 +35,11 @@ export interface NeedRepository {
   create(data: NewNeed): Promise<NeedEntity>;
   findById(id: string): Promise<NeedEntity | null>;
   findPage(filters: NeedFilters, params: PageParams): Promise<Page<NeedEntity>>;
-  update(id: string, changes: NeedChanges): Promise<NeedEntity | null>;
+  /**
+   * Escribe solo si la necesidad sigue abierta (REGISTRADA o CARACTERIZADA), en la misma
+   * sentencia: devuelve null si otra petición la convirtió o descartó entre la lectura y aquí.
+   */
+  updateIfOpen(id: string, changes: NeedChanges): Promise<NeedEntity | null>;
   /**
    * Enlaza la oportunidad y pasa la necesidad a CONVERTIDA solo si sigue abierta y sin
    * proyecto (escritura condicional). Devuelve la necesidad actualizada, o null si otra

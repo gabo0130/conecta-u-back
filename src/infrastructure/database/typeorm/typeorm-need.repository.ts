@@ -87,23 +87,27 @@ export class TypeOrmNeedRepository implements NeedRepository {
     return { items: rows.map(toNeedEntity), total };
   }
 
-  async update(id: string, changes: NeedChanges): Promise<NeedEntity | null> {
-    // La caracterización es un objeto plano: se guarda tal cual en la columna jsonb.
-    await this.repository.update(
-      id,
-      changes as QueryDeepPartialEntity<NeedOrmEntity>,
-    );
-    return this.findById(id);
+  updateIfOpen(id: string, changes: NeedChanges): Promise<NeedEntity | null> {
+    return this.writeIfOpen({ id }, changes);
   }
 
-  async markConverted(
-    id: string,
-    projectId: string,
-  ): Promise<NeedEntity | null> {
-    const result = await this.repository.update(
-      { id, status: In([...OPEN_NEED_STATUSES]), projectId: IsNull() },
+  markConverted(id: string, projectId: string): Promise<NeedEntity | null> {
+    return this.writeIfOpen(
+      { id, projectId: IsNull() },
       { status: 'CONVERTIDA', projectId },
     );
-    return result.affected === 1 ? this.findById(id) : null;
+  }
+
+  /** UPDATE … WHERE status IN (abiertos): la condición y la escritura van juntas. */
+  private async writeIfOpen(
+    where: FindOptionsWhere<NeedOrmEntity>,
+    changes: NeedChanges,
+  ): Promise<NeedEntity | null> {
+    const result = await this.repository.update(
+      { ...where, status: In([...OPEN_NEED_STATUSES]) },
+      // La caracterización es un objeto plano: se guarda tal cual en la columna jsonb.
+      changes as QueryDeepPartialEntity<NeedOrmEntity>,
+    );
+    return result.affected === 1 ? this.findById(where.id as string) : null;
   }
 }

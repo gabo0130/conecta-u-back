@@ -12,12 +12,7 @@ import { FEEDBACK_DECISIONS } from '../../../domain/entities/recommendation-feed
 import { CollaboratorOrmEntity } from './collaborator.orm-entity';
 import { ProjectOrmEntity } from './project.orm-entity';
 import { RequiredProfileOrmEntity } from './required-profile.orm-entity';
-
-// `numeric` llega como texto desde Postgres: se convierte a número al leer.
-const numeric = {
-  to: (value: number) => value,
-  from: (value: string | null) => (value === null ? null : Number(value)),
-};
+import { numericTransformer } from './transformers/numeric.transformer';
 
 /** Aceptar o descartar a una persona recomendada (tesis, D6). No depende de `recommendations`. */
 @Entity({ name: 'recommendation_feedback' })
@@ -61,7 +56,12 @@ export class RecommendationFeedbackOrmEntity {
   @Column({ type: 'int' })
   rankAtDecision: number;
 
-  @Column({ type: 'numeric', precision: 5, scale: 2, transformer: numeric })
+  @Column({
+    type: 'numeric',
+    precision: 5,
+    scale: 2,
+    transformer: numericTransformer,
+  })
   scoreAtDecision: number;
 
   @Column('uuid')

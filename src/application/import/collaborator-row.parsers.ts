@@ -160,9 +160,10 @@ export function parseCollaboratorRow(
   );
   if (!researchGroup.ok) return researchGroup;
 
-  // Tesis (T6): columna opcional, separada por punto y coma (también se acepta coma).
+  // Tesis (T6): columna opcional, separada por punto y coma. La coma no separa: por la API
+  // un interés puede llevarla ("Ciencia de datos, salud"), y la regla debe ser la misma.
   const interests = normalizeInterests(
-    (optionalTextOf(values.intereses ?? null) ?? '').split(/[;,]/),
+    (optionalTextOf(values.intereses ?? null) ?? '').split(';'),
   );
   const interestsProblem = interestsError(interests);
   if (interestsProblem) return reject(`intereses: ${interestsProblem}`);

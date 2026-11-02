@@ -1,8 +1,6 @@
 import {
-  HttpException,
   Inject,
   Injectable,
-  NotFoundException,
   ServiceUnavailableException,
 } from '@nestjs/common';
 import type {
@@ -10,10 +8,6 @@ import type {
   NeedCharacterizer,
 } from '../../domain/repositories/need-characterizer.interface';
 import type { NeedRepository } from '../../domain/repositories/need.repository.interface';
-import {
-  AnalyzerUnavailableError,
-  InvalidAnalysisOutputError,
-} from '../../domain/repositories/project-analyzer.interface';
 import type { ProjectTypeRepository } from '../../domain/repositories/project-type.repository.interface';
 import type { SkillRepository } from '../../domain/repositories/skill.repository.interface';
 import {
@@ -24,6 +18,10 @@ import {
   SKILL_REPOSITORY,
 } from '../../shared/interfaces/tokens';
 import { AppLoggerService } from '../../shared/logging/logger.service';
+import {
+  aiErrorToHttp,
+  withOneRetryOnInvalidOutput,
+} from '../analysis/ai-call';
 import type { AnalysisTimeouts } from '../analysis/analysis-timeouts';
 import {
   OMITTED_PERSONAL_DATA,
@@ -36,7 +34,7 @@ import {
   type ParsedCharacterization,
 } from '../needs/characterization-output.validator';
 import { scoreNeed } from '../needs/need-scores';
-import { loadOpenOwnedNeed, NOT_FOUND } from '../support/need-access';
+import { loadOpenOwnedNeed, requireStillOpen } from '../support/need-access';
 
 export const CHARACTERIZATION_UNAVAILABLE =
   'El servicio de caracterización no está disponible. Intenta de nuevo en unos minutos.';
@@ -44,8 +42,6 @@ export const CHARACTERIZATION_QUOTA_EXHAUSTED =
   'El servicio de caracterización alcanzó su límite de uso por hoy. Intenta de nuevo más tarde.';
 export const CHARACTERIZATION_INVALID =
   'La IA devolvió una respuesta que no se pudo procesar. Intenta de nuevo.';
-/** Con menos tiempo que esto no vale la pena reintentar una salida inválida. */
-const MIN_RETRY_MS = 10_000;
 
 const redact = (text: string) => stripContactData(text, OMITTED_PERSONAL_DATA);
 
@@ -114,57 +110,50 @@ export class CharacterizeNeedUseCase {
       provider: this.characterizer.provider,
       promptVersion: this.characterizer.promptVersion,
     };
-    const updated = await this.needRepository.update(need.id, {
+    // La IA tarda segundos: los puntajes se calculan con la necesidad como está ahora (409 si
+    // mientras tanto se convirtió o descartó), y la escritura vuelve a exigir que siga abierta.
+    const current = await loadOpenOwnedNeed(
+      this.needRepository,
+      userId,
+      needId,
+    );
+    const updated = await this.needRepository.updateIfOpen(needId, {
       characterization,
       characterizedAt: new Date(),
       status: 'CARACTERIZADA',
-      ...scoreNeed({ ...need, characterization }),
+      ...scoreNeed({ ...current, characterization }),
     });
-    if (!updated) throw new NotFoundException({ message: NOT_FOUND });
-    return toNeedResponse(updated);
+    return toNeedResponse(requireStillOpen(updated));
   }
 
   /** Un reintento si la salida no cumple el esquema y queda tiempo, igual que el análisis. */
-  private async characterizeWithRetry(
+  private characterizeWithRetry(
     input: CharacterizationInput,
     context: Parameters<typeof parseCharacterization>[1],
   ): Promise<ParsedCharacterization & { model: string }> {
-    const deadline = Date.now() + this.timeouts.totalMs;
-    for (let attempt = 1; ; attempt++) {
-      const response = await this.characterizer.characterize(input, {
-        timeoutMs: Math.max(deadline - Date.now(), 1),
-      });
-      try {
+    return withOneRetryOnInvalidOutput(
+      async (timeoutMs) => {
+        const response = await this.characterizer.characterize(input, {
+          timeoutMs,
+        });
         return {
           ...parseCharacterization(response.output, context),
           model: response.model ?? this.characterizer.model,
         };
-      } catch (error) {
-        const retryable =
-          error instanceof InvalidAnalysisOutputError &&
-          attempt === 1 &&
-          deadline - Date.now() >= MIN_RETRY_MS;
-        if (!retryable) throw error;
+      },
+      Date.now() + this.timeouts.totalMs,
+      (reason) =>
         this.logger.warn('Salida de la IA inválida: se reintenta una vez', {
           method: 'characterizeWithRetry',
-          reason: error.message,
-        });
-      }
-    }
+          reason,
+        }),
+    );
   }
 }
 
 function toHttpError(error: unknown): unknown {
-  if (error instanceof HttpException) return error;
-  if (error instanceof AnalyzerUnavailableError) {
-    return new ServiceUnavailableException({
-      message: CHARACTERIZATION_UNAVAILABLE,
-    });
-  }
-  if (error instanceof InvalidAnalysisOutputError) {
-    return new ServiceUnavailableException({
-      message: CHARACTERIZATION_INVALID,
-    });
-  }
-  return error;
+  return aiErrorToHttp(error, {
+    unavailable: CHARACTERIZATION_UNAVAILABLE,
+    invalidOutput: CHARACTERIZATION_INVALID,
+  });
 }

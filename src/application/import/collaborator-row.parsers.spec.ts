@@ -126,15 +126,15 @@ describe('parseCollaboratorRow', () => {
     });
   });
 
-  it('lee los intereses opcionales separados por punto y coma o coma (tesis, T6)', () => {
+  it('lee los intereses opcionales separados por punto y coma (tesis, T6)', () => {
     const result = parseCollaboratorRow(
       collaborator({
-        intereses: ' IA en salud ; Energía solar, ia en salud ;',
+        intereses: ' IA en salud ; Ciencia de datos, salud; ia en salud ;',
       }),
     );
     expect(result).toMatchObject({
       ok: true,
-      value: { interests: ['IA en salud', 'Energía solar'] },
+      value: { interests: ['IA en salud', 'Ciencia de datos, salud'] },
     });
   });
 

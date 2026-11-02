@@ -12,12 +12,7 @@ import {
 import { NEED_KINDS, NEED_STATUSES } from '../../../domain/entities/need';
 import { ProjectOrmEntity } from './project.orm-entity';
 import { UserOrmEntity } from './user.orm-entity';
-
-// `numeric` llega como texto desde Postgres: se convierte a número al leer.
-const numeric = {
-  to: (value: number) => value,
-  from: (value: string | null) => (value === null ? null : Number(value)),
-};
+import { numericTransformer } from './transformers/numeric.transformer';
 
 /** Necesidades institucionales (tesis, D1). */
 @Entity({ name: 'needs' })
@@ -69,7 +64,7 @@ export class NeedOrmEntity {
     precision: 5,
     scale: 2,
     default: 0,
-    transformer: numeric,
+    transformer: numericTransformer,
   })
   priorityScore: number;
 

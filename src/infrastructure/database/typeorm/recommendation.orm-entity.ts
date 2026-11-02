@@ -9,12 +9,7 @@ import {
 } from 'typeorm';
 import { CollaboratorOrmEntity } from './collaborator.orm-entity';
 import { RequiredProfileOrmEntity } from './required-profile.orm-entity';
-
-// `numeric` llega como texto desde Postgres: se convierte a número al leer.
-const numeric = {
-  to: (value: number) => value,
-  from: (value: string | null) => (value === null ? null : Number(value)),
-};
+import { numericTransformer } from './transformers/numeric.transformer';
 
 @Entity({ name: 'recommendations' })
 @Unique(['requiredProfileId', 'collaboratorId'])
@@ -39,19 +34,44 @@ export class RecommendationOrmEntity {
   @Column({ type: 'int' })
   rank: number;
 
-  @Column({ type: 'numeric', precision: 5, scale: 2, transformer: numeric })
+  @Column({
+    type: 'numeric',
+    precision: 5,
+    scale: 2,
+    transformer: numericTransformer,
+  })
   score: number;
 
-  @Column({ type: 'numeric', precision: 5, scale: 4, transformer: numeric })
+  @Column({
+    type: 'numeric',
+    precision: 5,
+    scale: 4,
+    transformer: numericTransformer,
+  })
   skillScore: number;
 
-  @Column({ type: 'numeric', precision: 5, scale: 4, transformer: numeric })
+  @Column({
+    type: 'numeric',
+    precision: 5,
+    scale: 4,
+    transformer: numericTransformer,
+  })
   semanticScore: number;
 
-  @Column({ type: 'numeric', precision: 5, scale: 4, transformer: numeric })
+  @Column({
+    type: 'numeric',
+    precision: 5,
+    scale: 4,
+    transformer: numericTransformer,
+  })
   experienceScore: number;
 
-  @Column({ type: 'numeric', precision: 5, scale: 4, transformer: numeric })
+  @Column({
+    type: 'numeric',
+    precision: 5,
+    scale: 4,
+    transformer: numericTransformer,
+  })
   availabilityScore: number;
 
   @Column({ type: 'jsonb' })
