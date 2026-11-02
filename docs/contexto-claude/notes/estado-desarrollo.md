@@ -345,3 +345,8 @@ Extensión compatible (plan §2): no cambia las HU del seminario. Decisiones de 
 ### Build de producción con `scripts/` (corregido)
 - Desde que existe `scripts/synthetic` (importa `src/`), `nest build` emitía `dist/src/main.js` y `npm run start:prod` (`node dist/main`, el comando de Render) fallaba con «Cannot find module dist/main». `tsconfig.build.json` ahora excluye `scripts`; verificado `dist/main.js` y el arranque. **Importante si esta rama se fusiona.**
 - T10 verificado en navegador contra este back (ver la bitácora del front).
+
+### Sección 3 del plan · Documentos de tesis (.docx)
+- En `docs/tesis/documentos/` (generados por `docs/tesis/generador/`, ver `docs/tesis/README.md`): F1-01 entrevista, F1-02 consentimiento, F1-03 matriz documental, F1-04 matriz de variables y trazabilidad, F1-05 juicio de expertos, F2-01 diseño del modelo, F4-01 rúbrica, F4-02 SUS (+ hoja .xlsx), F4-03 protocolo del piloto, F4-04 informe sintético (SIMULACIÓN), F5-01 borrador del informe final.
+- Todos pasan el validador XSD de .docx y se revisaron renderizados. Las cifras del F2-01 (ejemplo 51,43) salen de `computeMatch`; las del F4-04, del JSON reproducible; las fórmulas de la hoja SUS se comprobaron en LibreOffice (ejemplo = 80).
+- Pendientes que no se inventan: resultados de entrevistas, del juicio de expertos y del piloto; nombres de los expertos; correos de contacto del consentimiento; marco teórico y problema completos del anteproyecto (F5-01 los marca [PENDIENTE]).
