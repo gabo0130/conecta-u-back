@@ -92,3 +92,11 @@ export interface NeedEntity {
   createdAt: Date;
   updatedAt: Date;
 }
+
+/** Forma esperada de la caracterización con IA: lo que pase de aquí se recorta. */
+export const NEED_CHARACTERIZATION_LIMITS = {
+  textMax: 1000,
+  itemMax: 300,
+  listMax: 10,
+  competenciesMax: 15,
+} as const;

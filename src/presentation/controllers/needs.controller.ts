@@ -16,6 +16,7 @@ import {
   ListNeedsQueryDto,
   UpdateNeedDto,
 } from '../../application/dto/needs.dto';
+import { CharacterizeNeedUseCase } from '../../application/use-cases/characterize-need.use-case';
 import { CreateNeedUseCase } from '../../application/use-cases/create-need.use-case';
 import { DiscardNeedUseCase } from '../../application/use-cases/discard-need.use-case';
 import { GetNeedUseCase } from '../../application/use-cases/get-need.use-case';
@@ -38,6 +39,7 @@ export class NeedsController {
     private readonly getUseCase: GetNeedUseCase,
     private readonly updateUseCase: UpdateNeedUseCase,
     private readonly discardUseCase: DiscardNeedUseCase,
+    private readonly characterizeUseCase: CharacterizeNeedUseCase,
   ) {}
 
   @Post()
@@ -72,6 +74,16 @@ export class NeedsController {
     @Body() dto: UpdateNeedDto,
   ) {
     return this.updateUseCase.execute(request.user!.userId, id, dto);
+  }
+
+  /** T2: caracterización con IA (503 si el servicio no responde). */
+  @Post(':id/characterization')
+  @HttpCode(200)
+  characterize(
+    @Req() request: AuthenticatedRequest,
+    @Param('id', UuidParamPipe) id: string,
+  ) {
+    return this.characterizeUseCase.execute(request.user!.userId, id);
   }
 
   @Post(':id/discard')

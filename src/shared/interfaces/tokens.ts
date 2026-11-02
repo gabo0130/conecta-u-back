@@ -46,3 +46,6 @@ export const INVITATION_REPOSITORY = Symbol('INVITATION_REPOSITORY');
 export const REPORTING_REPOSITORY = Symbol('REPORTING_REPOSITORY');
 export const REPORT_WRITER = Symbol('REPORT_WRITER');
 export const NEED_REPOSITORY = Symbol('NEED_REPOSITORY');
+export const NEED_CHARACTERIZER = Symbol('NEED_CHARACTERIZER');
+/** Cortacircuitos de cuota de Gemini, compartido por el análisis y la caracterización. */
+export const GEMINI_QUOTA_BREAKER = Symbol('GEMINI_QUOTA_BREAKER');

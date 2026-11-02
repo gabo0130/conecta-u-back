@@ -2372,6 +2372,30 @@
               "raw": "{\n  \"reason\": \"Se atenderá con otro proyecto\"\n}"
             }
           }
+        },
+        {
+          "name": "Characterize Need (T2)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/needs/{{needId}}/characterization",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "needs",
+                "{{needId}}",
+                "characterization"
+              ]
+            },
+            "description": "Solo el formulador dueño; la necesidad debe estar REGISTRADA o CARACTERIZADA (409 si no). La IA (Gemini o fake según AI_PROVIDER) extrae problema, objetivo, beneficiarios, resultados esperados, competencias del catálogo, tipo de proyecto sugerido e información faltante. 503 si la IA no responde o devuelve algo inválido dos veces."
+          }
         }
       ]
     }
