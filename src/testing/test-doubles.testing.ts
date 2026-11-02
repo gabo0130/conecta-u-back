@@ -1,3 +1,7 @@
+import { CertificateFiles } from '../application/support/certificate-files';
+import type { ExperienceCertificateRepository } from '../domain/repositories/experience-certificate.repository.interface';
+import type { FileStorage } from '../domain/repositories/file-storage.interface';
+import { AppLoggerService } from '../shared/logging/logger.service';
 // Dobles de prueba compartidos por los specs. El sufijo `.testing.ts` los deja fuera del build.
 import { CollaboratorSkillEntity } from '../domain/entities/collaborator-skill.entity';
 import {
@@ -65,6 +69,7 @@ export function createFakeUnitOfWork(): FakeUnitOfWork {
     collaborators: createMock(),
     collaboratorSkills: createMock(),
     experiences: createMock(),
+    certificates: createMock(),
     skills: createMock(),
   };
   const unitOfWork = createMock<UnitOfWork>();
@@ -252,3 +257,19 @@ export const IDENTITY = {
   phone: '3000000001',
   nationality: 'Colombiana',
 };
+
+/** `CertificateFiles` real sobre un almacenamiento y un repositorio mock. */
+export function createFakeCertificateFiles() {
+  const storage = createMock<FileStorage>();
+  storage.put.mockResolvedValue(undefined);
+  storage.delete.mockResolvedValue(undefined);
+  const repository = createMock<ExperienceCertificateRepository>();
+  repository.find.mockResolvedValue(null);
+  const appLogger = createMock<AppLoggerService>();
+  appLogger.forContext.mockReturnValue(createMock());
+  return {
+    files: new CertificateFiles(storage, repository, appLogger),
+    storage,
+    repository,
+  };
+}

@@ -6,10 +6,12 @@ import type {
 } from '../../../domain/repositories/unit-of-work.interface';
 import { CollaboratorSkillOrmEntity } from './collaborator-skill.orm-entity';
 import { CollaboratorOrmEntity } from './collaborator.orm-entity';
+import { ExperienceCertificateOrmEntity } from './experience-certificate.orm-entity';
 import { ExperienceOrmEntity } from './experience.orm-entity';
 import { SkillOrmEntity } from './skill.orm-entity';
 import { TypeOrmCollaboratorSkillRepository } from './typeorm-collaborator-skill.repository';
 import { TypeOrmCollaboratorRepository } from './typeorm-collaborator.repository';
+import { TypeOrmExperienceCertificateRepository } from './typeorm-experience-certificate.repository';
 import { TypeOrmExperienceRepository } from './typeorm-experience.repository';
 import { TypeOrmSkillRepository } from './typeorm-skill.repository';
 import { TypeOrmUserRepository } from './typeorm-user.repository';
@@ -40,6 +42,9 @@ export class TypeOrmUnitOfWork implements UnitOfWork {
       experiences: new TypeOrmExperienceRepository(
         manager.getRepository(ExperienceOrmEntity),
         skills,
+      ),
+      certificates: new TypeOrmExperienceCertificateRepository(
+        manager.getRepository(ExperienceCertificateOrmEntity),
       ),
       skills: new TypeOrmSkillRepository(skills),
     };

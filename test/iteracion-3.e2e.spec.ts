@@ -1,3 +1,5 @@
+import { readFile } from 'node:fs/promises';
+import { join } from 'node:path';
 import type { INestApplication } from '@nestjs/common';
 import { Workbook } from 'exceljs';
 import request from 'supertest';
@@ -11,6 +13,7 @@ import {
   seedScenario,
 } from './support/fixtures';
 import { createTestApp, login } from './support/test-app';
+import { TEST_STORAGE_DIR } from './support/test-env';
 
 // Iteración 3 (Examen) por HTTP con la base de pruebas: RF4 (certificados, v2.2 E8),
 // RF15–RF16 (estadísticas y reportes), RF17 (personas) y RF21–RF22 (convocatorias).
@@ -56,27 +59,79 @@ describe('Iteración 3 (integración)', () => {
 
   describe('RF4 · certificado de la experiencia', () => {
     let experienceId: string;
+    const work = {
+      type: 'LABORAL',
+      role: 'Desarrollador',
+      organization: 'Empresa de prueba',
+      startDate: '2024-01-01',
+      endDate: '2024-12-01',
+      current: false,
+      weeklyHours: 20,
+      level: 'INTERMEDIO',
+    };
+    const experienceCount = async () =>
+      (
+        await http()
+          .get('/api/collaborators/me')
+          .auth(collaborator, { type: 'bearer' })
+          .expect(200)
+      ).body.experiences.length as number;
 
     beforeAll(async () => {
+      const before = await experienceCount();
+      // Sin certificado o con un archivo falso no se guarda nada (bloqueo por validación).
+      await http()
+        .post('/api/collaborators/me/experience')
+        .auth(collaborator, { type: 'bearer' })
+        .send(work)
+        .expect(400);
+      await http()
+        .post('/api/collaborators/me/experience')
+        .auth(collaborator, { type: 'bearer' })
+        .field('data', JSON.stringify(work))
+        .attach('file', Buffer.from('texto renombrado'), 'falso.pdf')
+        .expect(422);
+      expect(await experienceCount()).toBe(before);
+
       const response = await http()
         .post('/api/collaborators/me/experience')
         .auth(collaborator, { type: 'bearer' })
-        .send({
-          type: 'LABORAL',
-          role: 'Desarrollador',
-          organization: 'Empresa de prueba',
-          startDate: '2024-01-01',
-          endDate: '2024-12-01',
-          current: false,
-          weeklyHours: 20,
-          level: 'INTERMEDIO',
+        .field('data', JSON.stringify(work))
+        .attach('file', PDF, {
+          filename: 'Certificado.pdf',
+          contentType: 'application/pdf',
         })
         .expect(201);
       experienceId = response.body.id;
       expect(response.body).toMatchObject({
-        certificate: null,
+        certificate: {
+          fileName: 'Certificado.pdf',
+          mimeType: 'application/pdf',
+        },
         certificateRequired: true,
       });
+    });
+
+    it('guarda el archivo en el almacenamiento y en la base solo sus metadatos', async () => {
+      const [row]: { storageKey: string; content: Buffer | null }[] = await app
+        .get(DataSource)
+        .query(
+          `SELECT "storageKey", content FROM experience_certificates WHERE "experienceId" = $1`,
+          [experienceId],
+        );
+      expect(row.content).toBeNull();
+      expect(row.storageKey).toMatch(/^certificates\//);
+      const stored = await readFile(join(TEST_STORAGE_DIR, row.storageKey));
+      expect(Buffer.compare(stored, PDF)).toBe(0);
+    });
+
+    it('rechaza un JSON mal formado en el campo data', async () => {
+      await http()
+        .post('/api/collaborators/me/experience')
+        .auth(collaborator, { type: 'bearer' })
+        .field('data', '{no es json')
+        .attach('file', PDF, 'c.pdf')
+        .expect(400);
     });
 
     const certificateUrl = () =>
@@ -173,19 +228,31 @@ describe('Iteración 3 (integración)', () => {
         .expect(400);
     });
 
-    it('lo borra y luego responde 404', async () => {
+    it('no deja quitar el certificado obligatorio, pero sí uno opcional', async () => {
       await http()
         .delete(certificateUrl())
+        .auth(collaborator, { type: 'bearer' })
+        .expect(422);
+
+      const optional = await http()
+        .post('/api/collaborators/me/experience')
+        .auth(collaborator, { type: 'bearer' })
+        .field('data', JSON.stringify({ ...work, type: 'PROYECTO_ACADEMICO' }))
+        .attach('file', PDF, 'soporte.pdf')
+        .expect(201);
+      const optionalUrl = `/api/collaborators/me/experience/${optional.body.id}/certificate`;
+      await http()
+        .delete(optionalUrl)
         .auth(collaborator, { type: 'bearer' })
         .expect(204);
       await http()
-        .get(certificateUrl())
+        .get(optionalUrl)
         .auth(collaborator, { type: 'bearer' })
         .expect(404);
       await http()
-        .delete(certificateUrl())
+        .delete(`/api/collaborators/me/experience/${optional.body.id}`)
         .auth(collaborator, { type: 'bearer' })
-        .expect(404);
+        .expect(204);
     });
   });
 

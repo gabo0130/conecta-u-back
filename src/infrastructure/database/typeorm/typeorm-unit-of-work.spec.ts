@@ -23,6 +23,6 @@ describe('TypeOrmUnitOfWork', () => {
 
     expect(result).toBe('done');
     expect(dataSource.transaction).toHaveBeenCalledTimes(1);
-    expect(manager.getRepository).toHaveBeenCalledTimes(5);
+    expect(manager.getRepository).toHaveBeenCalledTimes(6);
   });
 });

@@ -7,9 +7,10 @@ import {
   EXPERIENCE_CERTIFICATE_REPOSITORY,
 } from '../../shared/interfaces/tokens';
 import { toExperienceResponse } from '../mappers/collaborator-response.mapper';
+import { CertificateFiles } from '../support/certificate-files';
 import {
   EXPERIENCE_NOT_FOUND,
-  toCertificateToSave,
+  validateCertificate,
   type UploadedCertificate,
 } from '../support/experience-certificate-file';
 import { findMyCollaboratorOrFail } from '../support/my-collaborator';
@@ -22,6 +23,7 @@ export class UploadMyExperienceCertificateUseCase {
     private readonly collaboratorRepository: CollaboratorRepository,
     @Inject(EXPERIENCE_CERTIFICATE_REPOSITORY)
     private readonly certificateRepository: ExperienceCertificateRepository,
+    private readonly certificateFiles: CertificateFiles,
   ) {}
 
   async execute(
@@ -39,13 +41,17 @@ export class UploadMyExperienceCertificateUseCase {
     if (!experience) {
       throw new NotFoundException({ message: EXPERIENCE_NOT_FOUND });
     }
+    const certificate = validateCertificate(file);
+    const replacedKey = await this.certificateFiles.keyOf(experienceId);
 
-    const certificate = await this.certificateRepository.save(
-      experienceId,
-      toCertificateToSave(file),
+    const info = await this.certificateFiles.withUploaded(
+      collaborator.id,
+      certificate,
+      (saved) => this.certificateRepository.save(experienceId, saved),
     );
+    await this.certificateFiles.discard(replacedKey);
     return toExperienceResponse(
-      new ExperienceEntity({ ...experience, certificate }),
+      new ExperienceEntity({ ...experience, certificate: info }),
     );
   }
 }

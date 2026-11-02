@@ -1,6 +1,12 @@
 // Entorno de las pruebas de integración. Se aplica antes de importar la app (setupFiles) para que
 // estas variables ganen a las del `.env`, que apunta a la base compartida y a Gemini.
 
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+
+/** Carpeta donde las pruebas guardan los certificados (STORAGE_DRIVER=local). */
+export const TEST_STORAGE_DIR = join(tmpdir(), 'conecta-u-e2e-storage');
+
 const DEFAULT_TEST_DATABASE_URL =
   'postgres://test:test@localhost:5433/conecta_u_test';
 const LOCAL_HOSTS = new Set(['localhost', '127.0.0.1', '::1', '[::1]']);
@@ -31,6 +37,8 @@ export function applyTestEnv(): void {
     MATCH_WEIGHTS: '0.5,0.2,0.15,0.15',
     MATCH_TOP_N: '10',
     SMTP_HOST: '',
+    STORAGE_DRIVER: 'local',
+    STORAGE_LOCAL_DIR: TEST_STORAGE_DIR,
   });
 }
 

@@ -10,9 +10,10 @@ import { AdminUpdatePersonUseCase } from '../application/use-cases/admin-update-
 import { AdminController } from './controllers/admin.controller';
 import { PersistenceModule } from './persistence.module';
 import { SecurityModule } from './security.module';
+import { StorageModule } from './storage.module';
 
 @Module({
-  imports: [PersistenceModule, SecurityModule],
+  imports: [PersistenceModule, SecurityModule, StorageModule],
   controllers: [AdminController],
   providers: [
     AdminListProjectsUseCase,

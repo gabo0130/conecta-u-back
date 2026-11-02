@@ -1,5 +1,6 @@
 import type { CollaboratorSkillRepository } from './collaborator-skill.repository.interface';
 import type { CollaboratorRepository } from './collaborator.repository.interface';
+import type { ExperienceCertificateRepository } from './experience-certificate.repository.interface';
 import type { ExperienceRepository } from './experience.repository.interface';
 import type { SkillRepository } from './skill.repository.interface';
 import type { UserRepository } from './user.repository.interface';
@@ -10,6 +11,7 @@ export interface TransactionalRepositories {
   collaborators: CollaboratorRepository;
   collaboratorSkills: CollaboratorSkillRepository;
   experiences: ExperienceRepository;
+  certificates: ExperienceCertificateRepository;
   skills: SkillRepository;
 }
 

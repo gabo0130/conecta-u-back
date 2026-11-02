@@ -10,9 +10,9 @@ import { CERTIFICATE_MIME_TYPES } from '../../../domain/entities/experience-cert
 import { ExperienceOrmEntity } from './experience.orm-entity';
 
 /**
- * Certificado de una experiencia (v2.2, E8 / RT16). El contenido vive en la base (bytea) y no
- * en el disco: Render borra el disco en cada despliegue. `content` no se selecciona por
- * defecto, así cargar perfiles no trae los archivos.
+ * Certificado de una experiencia (v2.2, E8 / RT16). El archivo vive en un bucket privado
+ * (`storageKey`); aquí solo quedan sus metadatos. `content` es el contenido de los certificados
+ * subidos antes del bucket: no se selecciona por defecto y se vacía al migrarlos.
  */
 @Entity({ name: 'experience_certificates' })
 export class ExperienceCertificateOrmEntity {
@@ -38,8 +38,11 @@ export class ExperienceCertificateOrmEntity {
   @Column({ type: 'int' })
   sizeBytes: number;
 
-  @Column({ type: 'bytea', select: false })
-  content?: Buffer;
+  @Column({ type: 'varchar', length: 300, nullable: true })
+  storageKey: string | null;
+
+  @Column({ type: 'bytea', select: false, nullable: true })
+  content?: Buffer | null;
 
   @UpdateDateColumn({ type: 'timestamptz' })
   uploadedAt: Date;

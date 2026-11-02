@@ -122,12 +122,25 @@ describe('CollaboratorExperienceController', () => {
   it('delegates each route to its use case with the authenticated user', () => {
     const dto = { role: 'Dev' } as ExperienceDto;
 
-    void controller.create(request, dto);
+    const file = {
+      buffer: Buffer.from('%PDF-1.7'),
+      originalname: 'c.pdf',
+    } as Express.Multer.File;
+
+    void controller.create(request, dto, file);
     void controller.update(request, 'exp-1', dto);
     void controller.delete(request, 'exp-1');
 
-    expect(create.execute).toHaveBeenCalledWith('user-1', dto);
-    expect(update.execute).toHaveBeenCalledWith('user-1', 'exp-1', dto);
+    expect(create.execute).toHaveBeenCalledWith('user-1', dto, {
+      buffer: file.buffer,
+      originalName: 'c.pdf',
+    });
+    expect(update.execute).toHaveBeenCalledWith(
+      'user-1',
+      'exp-1',
+      dto,
+      undefined,
+    );
     expect(remove.execute).toHaveBeenCalledWith('user-1', 'exp-1');
   });
 

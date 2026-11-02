@@ -19,9 +19,10 @@ import { CollaboratorProfileController } from './controllers/collaborator-profil
 import { CollaboratorSkillsController } from './controllers/collaborator-skills.controller';
 import { PersistenceModule } from './persistence.module';
 import { SecurityModule } from './security.module';
+import { StorageModule } from './storage.module';
 
 @Module({
-  imports: [PersistenceModule, SecurityModule],
+  imports: [PersistenceModule, SecurityModule, StorageModule],
   controllers: [
     CollaboratorProfileController,
     CollaboratorSkillsController,

@@ -39,6 +39,7 @@ export const RECOMMENDATION_REPOSITORY = Symbol('RECOMMENDATION_REPOSITORY');
 /** Pesos del puntaje y tamaño de la lista de recomendaciones (`MATCH_WEIGHTS`, `MATCH_TOP_N`). */
 export const MATCH_SETTINGS = Symbol('MATCH_SETTINGS');
 export const ANALYSIS_TIMEOUTS = Symbol('ANALYSIS_TIMEOUTS');
+export const FILE_STORAGE = Symbol('FILE_STORAGE');
 export const EXPERIENCE_CERTIFICATE_REPOSITORY = Symbol(
   'EXPERIENCE_CERTIFICATE_REPOSITORY',
 );

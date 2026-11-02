@@ -1,14 +1,9 @@
 import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import type { CollaboratorEntity } from '../../domain/entities/collaborator.entity';
 import type { CollaboratorRepository } from '../../domain/repositories/collaborator.repository.interface';
-import type {
-  CertificateFile,
-  ExperienceCertificateRepository,
-} from '../../domain/repositories/experience-certificate.repository.interface';
-import {
-  COLLABORATOR_REPOSITORY,
-  EXPERIENCE_CERTIFICATE_REPOSITORY,
-} from '../../shared/interfaces/tokens';
+import type { CertificateFile } from '../../domain/repositories/experience-certificate.repository.interface';
+import { COLLABORATOR_REPOSITORY } from '../../shared/interfaces/tokens';
+import { CertificateFiles } from '../support/certificate-files';
 import {
   certificateNotFound,
   EXPERIENCE_NOT_FOUND,
@@ -24,8 +19,7 @@ export class GetExperienceCertificateUseCase {
   constructor(
     @Inject(COLLABORATOR_REPOSITORY)
     private readonly collaboratorRepository: CollaboratorRepository,
-    @Inject(EXPERIENCE_CERTIFICATE_REPOSITORY)
-    private readonly certificateRepository: ExperienceCertificateRepository,
+    private readonly certificateFiles: CertificateFiles,
   ) {}
 
   async forOwner(
@@ -58,7 +52,7 @@ export class GetExperienceCertificateUseCase {
     if (!collaborator.experiences.some((item) => item.id === experienceId)) {
       throw new NotFoundException({ message: EXPERIENCE_NOT_FOUND });
     }
-    const file = await this.certificateRepository.findFile(experienceId);
+    const file = await this.certificateFiles.read(experienceId);
     if (!file) throw certificateNotFound();
     return file;
   }

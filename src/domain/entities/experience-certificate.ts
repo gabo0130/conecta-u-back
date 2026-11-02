@@ -65,7 +65,7 @@ export function detectCertificateMimeType(
   return null;
 }
 
-const EXTENSION_BY_MIME: Record<CertificateMimeType, string> = {
+export const EXTENSION_BY_MIME: Record<CertificateMimeType, string> = {
   'application/pdf': 'pdf',
   'image/png': 'png',
   'image/jpeg': 'jpg',

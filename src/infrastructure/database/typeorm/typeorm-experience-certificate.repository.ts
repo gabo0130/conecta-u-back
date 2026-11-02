@@ -6,20 +6,19 @@ import type {
   ExperienceCertificateInfo,
 } from '../../../domain/entities/experience-certificate';
 import type {
-  CertificateFile,
   ExperienceCertificateRepository,
   SaveCertificateDto,
+  StoredCertificate,
 } from '../../../domain/repositories/experience-certificate.repository.interface';
 import { ExperienceCertificateOrmEntity } from './experience-certificate.orm-entity';
 
-function toInfo(
-  row: ExperienceCertificateOrmEntity,
-): ExperienceCertificateInfo {
+function toStored(row: ExperienceCertificateOrmEntity): StoredCertificate {
   return {
     fileName: row.fileName,
     mimeType: row.mimeType as CertificateMimeType,
     sizeBytes: row.sizeBytes,
     uploadedAt: row.uploadedAt,
+    storageKey: row.storageKey,
   };
 }
 
@@ -39,24 +38,31 @@ export class TypeOrmExperienceCertificateRepository implements ExperienceCertifi
         experienceId,
         fileName: data.fileName,
         mimeType: data.mimeType,
-        sizeBytes: data.content.length,
-        content: data.content,
+        sizeBytes: data.sizeBytes,
+        storageKey: data.storageKey,
+        content: null,
         uploadedAt: new Date(),
       },
       ['experienceId'],
     );
-    const saved = await this.repository.findOneByOrFail({ experienceId });
-    return toInfo(saved);
+    const { fileName, mimeType, sizeBytes, uploadedAt } = toStored(
+      await this.repository.findOneByOrFail({ experienceId }),
+    );
+    return { fileName, mimeType, sizeBytes, uploadedAt };
   }
 
-  async findFile(experienceId: string): Promise<CertificateFile | null> {
+  async find(experienceId: string): Promise<StoredCertificate | null> {
+    const row = await this.repository.findOneBy({ experienceId });
+    return row ? toStored(row) : null;
+  }
+
+  async findLegacyContent(experienceId: string): Promise<Buffer | null> {
     const row = await this.repository
       .createQueryBuilder('certificate')
       .addSelect('certificate.content')
       .where('certificate.experienceId = :experienceId', { experienceId })
       .getOne();
-    if (!row || !row.content) return null;
-    return { ...toInfo(row), content: row.content };
+    return row?.content ?? null;
   }
 
   async delete(experienceId: string): Promise<boolean> {
