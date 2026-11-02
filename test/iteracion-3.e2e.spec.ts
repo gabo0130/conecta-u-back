@@ -443,6 +443,52 @@ describe('Iteración 3 (integración)', () => {
   });
 
   describe('RF15–RF16 · estadísticas y reportes', () => {
+    it('filtra por tipo de proyecto, fechas y tipo de persona', async () => {
+      const ds = app.get(DataSource);
+      const [research]: { id: string }[] = await ds.query(
+        `SELECT id FROM project_types WHERE code = 'INVESTIGACION'`,
+      );
+      // Un tipo sin proyectos: el filtro debe dejar todo en cero.
+      const [other]: { id: string }[] = await ds.query(
+        `INSERT INTO project_types (code, name) VALUES ('EXTENSION_PRUEBA', 'Extensión') RETURNING id`,
+      );
+      const stats = (query: Record<string, string>) =>
+        http()
+          .get('/api/admin/stats')
+          .query(query)
+          .auth(admin, { type: 'bearer' })
+          .expect(200)
+          .then((response) => response.body);
+
+      expect((await stats({ projectTypeId: research.id })).projects.total).toBe(
+        2,
+      );
+      const otherType = await stats({ projectTypeId: other.id });
+      expect(otherType.projects.total).toBe(0);
+      expect(otherType.invitations).toEqual({ sent: 0, failed: 0 });
+      expect(
+        (await stats({ from: '2000-01-01', to: '2000-12-31' })).projects.total,
+      ).toBe(0);
+
+      const [{ docentes }] = await ds.query(
+        `SELECT COUNT(*)::int AS docentes FROM collaborators WHERE "personType" = 'DOCENTE'`,
+      );
+      expect((await stats({ personType: 'DOCENTE' })).people.total).toBe(
+        docentes,
+      );
+
+      await http()
+        .get('/api/admin/stats')
+        .query({ from: '2026-12-31', to: '2026-01-01' })
+        .auth(admin, { type: 'bearer' })
+        .expect(422);
+      await http()
+        .get('/api/admin/stats')
+        .query({ projectTypeId: 'no-es-uuid' })
+        .auth(admin, { type: 'bearer' })
+        .expect(422);
+    });
+
     it('devuelve indicadores coherentes con la base', async () => {
       const ds = app.get(DataSource);
       const [{ count }] = await ds.query(

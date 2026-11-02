@@ -1,5 +1,6 @@
 import { Controller, Get, Param, Query, Res, UseGuards } from '@nestjs/common';
 import type { Response } from 'express';
+import { StatsQueryDto } from '../../application/dto/stats-query.dto';
 import { ReportQueryDto } from '../../application/dto/report-query.dto';
 import { GenerateReportUseCase } from '../../application/use-cases/generate-report.use-case';
 import { GetPlatformStatsUseCase } from '../../application/use-cases/get-platform-stats.use-case';
@@ -17,9 +18,10 @@ export class AdminReportsController {
     private readonly reportUseCase: GenerateReportUseCase,
   ) {}
 
+  /** Filtros opcionales: from y to (AAAA-MM-DD), projectTypeId, categoryId, programId y personType. */
   @Get('stats')
-  stats() {
-    return this.statsUseCase.execute();
+  stats(@Query() query: StatsQueryDto) {
+    return this.statsUseCase.execute(query);
   }
 
   /** `kind`: proyectos, personas, habilidades, recomendaciones o convocatorias. */

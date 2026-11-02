@@ -9,23 +9,47 @@ import type {
   RecommendationReportRow,
   ReportingRepository,
   SkillBalance,
+  StatsFilters,
 } from '../../../domain/repositories/reporting.repository.interface';
 
 const TOP = 10;
 const CERTIFIED_TYPES = `('LABORAL','PRACTICA','DOCENCIA')`;
 
-// Personas que cuentan como oferta: activas y con autorización (las mismas que se recomiendan).
+/**
+ * Condiciones de los filtros con parámetros posicionales: un filtro vacío (`NULL`) no restringe.
+ * Proyecto: $n desde, $n+1 hasta, $n+2 tipo, $n+3 categoría. Persona: $n programa, $n+1 tipo.
+ */
+const projectWhere = (alias: string, n: number) =>
+  `($${n}::timestamptz IS NULL OR ${alias}."createdAt" >= $${n}) AND ($${n + 1}::timestamptz IS NULL OR ${alias}."createdAt" < $${n + 1}) AND ($${n + 2}::uuid IS NULL OR ${alias}."typeId" = $${n + 2}) AND ($${n + 3}::uuid IS NULL OR ${alias}."categoryId" = $${n + 3})`;
+const personWhere = (alias: string, n: number) =>
+  `($${n}::uuid IS NULL OR ${alias}."programId" = $${n}) AND ($${n + 1}::text IS NULL OR ${alias}."personType"::text = $${n + 1})`;
+
+const projectParams = (filters: StatsFilters) => [
+  filters.from ?? null,
+  filters.to ?? null,
+  filters.projectTypeId ?? null,
+  filters.categoryId ?? null,
+];
+const personParams = (filters: StatsFilters) => [
+  filters.programId ?? null,
+  filters.personType ?? null,
+];
+
+// Oferta: personas activas y con autorización (las mismas que se recomiendan) que cumplen los
+// filtros de persona ($1, $2). Demanda: perfiles activos de proyectos que cumplen los de proyecto ($3–$6).
 const SKILL_BALANCE_SQL = `
   WITH offered AS (
     SELECT cs."skillId", COUNT(DISTINCT cs."collaboratorId")::int AS n
     FROM collaborator_skills cs
     JOIN collaborators c ON c.id = cs."collaboratorId" AND c.active AND c."dataConsent"
+    WHERE ${personWhere('c', 1)}
     GROUP BY cs."skillId"
   ), demanded AS (
     SELECT rps."skillId", COUNT(DISTINCT rps."requiredProfileId")::int AS n
     FROM required_profile_skills rps
     JOIN required_profiles rp ON rp.id = rps."requiredProfileId" AND rp.active
-    WHERE rps."skillId" IS NOT NULL
+    JOIN projects p ON p.id = rp."projectId"
+    WHERE rps."skillId" IS NOT NULL AND ${projectWhere('p', 3)}
     GROUP BY rps."skillId"
   )
   SELECT s.id AS "skillId", s.name, s.type::text AS type,
@@ -68,8 +92,13 @@ export class TypeOrmReportingRepository implements ReportingRepository {
     return this.query<RawCount>(sql, params).then(toCounts);
   }
 
-  async getStats(now = new Date()): Promise<PlatformStats> {
+  async getStats(
+    filters: StatsFilters,
+    now = new Date(),
+  ): Promise<PlatformStats> {
     const since = new Date(now.getTime() - 30 * 86_400_000);
+    const project = projectParams(filters);
+    const person = personParams(filters);
     const [
       projectTotals,
       byStatus,
@@ -90,21 +119,29 @@ export class TypeOrmReportingRepository implements ReportingRepository {
       invitations,
     ] = await Promise.all([
       this.one<{ total: string; recent: string }>(
-        `SELECT COUNT(*) AS total, COUNT(*) FILTER (WHERE "createdAt" >= $1) AS recent FROM projects`,
-        [since],
+        `SELECT COUNT(*) AS total, COUNT(*) FILTER (WHERE p."createdAt" >= $5) AS recent
+         FROM projects p WHERE ${projectWhere('p', 1)}`,
+        [...project, since],
       ),
       this.counts(
-        `SELECT status::text AS key, status::text AS label, COUNT(*) AS count FROM projects GROUP BY status ORDER BY count DESC`,
+        `SELECT p.status::text AS key, p.status::text AS label, COUNT(*) AS count
+         FROM projects p WHERE ${projectWhere('p', 1)}
+         GROUP BY p.status ORDER BY count DESC`,
+        project,
       ),
       this.counts(
         `SELECT t.code AS key, t.name AS label, COUNT(p.id) AS count
-         FROM project_types t LEFT JOIN projects p ON p."typeId" = t.id
+         FROM project_types t LEFT JOIN projects p ON p."typeId" = t.id AND ${projectWhere('p', 1)}
+         WHERE $3::uuid IS NULL OR t.id = $3
          GROUP BY t.id ORDER BY count DESC, t.name`,
+        project,
       ),
       this.counts(
         `SELECT c.id::text AS key, c.name AS label, COUNT(p.id) AS count
-         FROM project_categories c LEFT JOIN projects p ON p."categoryId" = c.id
+         FROM project_categories c LEFT JOIN projects p ON p."categoryId" = c.id AND ${projectWhere('p', 1)}
+         WHERE $4::uuid IS NULL OR c.id = $4
          GROUP BY c.id ORDER BY count DESC, c.name`,
+        project,
       ),
       this.one<Record<string, string>>(
         `SELECT COUNT(*) AS total,
@@ -112,30 +149,39 @@ export class TypeOrmReportingRepository implements ReportingRepository {
                 COUNT(*) FILTER (WHERE "userId" IS NOT NULL) AS "withAccount",
                 COUNT(*) FILTER (WHERE "dataConsent") AS "withConsent",
                 COUNT(*) FILTER (WHERE "truthfulnessDeclared") AS "truthfulness"
-         FROM collaborators`,
+         FROM collaborators c WHERE ${personWhere('c', 1)}`,
+        person,
       ),
       this.counts(
-        `SELECT "personType"::text AS key, "personType"::text AS label, COUNT(*) AS count
-         FROM collaborators WHERE active GROUP BY "personType" ORDER BY count DESC`,
+        `SELECT c."personType"::text AS key, c."personType"::text AS label, COUNT(*) AS count
+         FROM collaborators c WHERE c.active AND ${personWhere('c', 1)}
+         GROUP BY c."personType" ORDER BY count DESC`,
+        person,
       ),
       this.counts(
-        `SELECT source::text AS key, source::text AS label, COUNT(*) AS count
-         FROM collaborators GROUP BY source ORDER BY count DESC`,
+        `SELECT c.source::text AS key, c.source::text AS label, COUNT(*) AS count
+         FROM collaborators c WHERE ${personWhere('c', 1)}
+         GROUP BY c.source ORDER BY count DESC`,
+        person,
       ),
       this.counts(
         `SELECT p.code AS key, p.name AS label, COUNT(*) AS count
          FROM collaborators c JOIN programs p ON p.id = c."programId"
-         WHERE c.active GROUP BY p.id ORDER BY count DESC, p.name LIMIT ${TOP}`,
+         WHERE c.active AND ${personWhere('c', 1)}
+         GROUP BY p.id ORDER BY count DESC, p.name LIMIT ${TOP}`,
+        person,
       ),
       this.one<{ avg: string | null; total: string | null }>(
-        `SELECT AVG("weeklyHours") AS avg,
-                SUM("weeklyHours") FILTER (WHERE "availabilityStatus" <> 'NO_DISPONIBLE') AS total
-         FROM collaborators WHERE active AND "dataConsent"`,
+        `SELECT AVG(c."weeklyHours") AS avg,
+                SUM(c."weeklyHours") FILTER (WHERE c."availabilityStatus" <> 'NO_DISPONIBLE') AS total
+         FROM collaborators c WHERE c.active AND c."dataConsent" AND ${personWhere('c', 1)}`,
+        person,
       ),
       this.counts(
-        `SELECT "availabilityStatus"::text AS key, "availabilityStatus"::text AS label, COUNT(*) AS count
-         FROM collaborators WHERE active AND "dataConsent"
-         GROUP BY "availabilityStatus" ORDER BY count DESC`,
+        `SELECT c."availabilityStatus"::text AS key, c."availabilityStatus"::text AS label, COUNT(*) AS count
+         FROM collaborators c WHERE c.active AND c."dataConsent" AND ${personWhere('c', 1)}
+         GROUP BY c."availabilityStatus" ORDER BY count DESC`,
+        person,
       ),
       this.one<{ total: string; active: string }>(
         `SELECT COUNT(*) AS total, COUNT(*) FILTER (WHERE active) AS active FROM users`,
@@ -144,28 +190,38 @@ export class TypeOrmReportingRepository implements ReportingRepository {
         `SELECT role::text AS key, role::text AS label, COUNT(*) AS count FROM users GROUP BY role ORDER BY count DESC`,
       ),
       this.one<Record<string, string | null>>(
-        `SELECT
-           (SELECT COUNT(*) FROM required_profiles WHERE active) AS "activeProfiles",
-           (SELECT COUNT(*) FROM project_analyses WHERE status = 'COMPLETADO') AS "analysesCompleted",
-           (SELECT COUNT(*) FROM project_analyses WHERE status = 'ERROR') AS "analysesFailed",
-           (SELECT COUNT(DISTINCT rp."projectId") FROM recommendations r
-              JOIN required_profiles rp ON rp.id = r."requiredProfileId") AS "projectsWithRecommendations",
-           (SELECT COUNT(*) FROM recommendations) AS recommendations,
-           (SELECT AVG(score) FROM recommendations WHERE rank = 1) AS "averageTopScore"`,
+        `WITH p AS (SELECT p.id FROM projects p WHERE ${projectWhere('p', 1)}),
+              rec AS (SELECT r.score, r.rank, rp."projectId" FROM recommendations r
+                      JOIN required_profiles rp ON rp.id = r."requiredProfileId"
+                      WHERE rp."projectId" IN (SELECT id FROM p))
+         SELECT
+           (SELECT COUNT(*) FROM required_profiles WHERE active AND "projectId" IN (SELECT id FROM p)) AS "activeProfiles",
+           (SELECT COUNT(*) FROM project_analyses WHERE status = 'COMPLETADO' AND "projectId" IN (SELECT id FROM p)) AS "analysesCompleted",
+           (SELECT COUNT(*) FROM project_analyses WHERE status = 'ERROR' AND "projectId" IN (SELECT id FROM p)) AS "analysesFailed",
+           (SELECT COUNT(DISTINCT "projectId") FROM rec) AS "projectsWithRecommendations",
+           (SELECT COUNT(*) FROM rec) AS recommendations,
+           (SELECT AVG(score) FROM rec WHERE rank = 1) AS "averageTopScore"`,
+        project,
       ),
       this.one<{ active: string; pending: string }>(
         `SELECT COUNT(*) FILTER (WHERE status = 'ACTIVA') AS active,
                 COUNT(*) FILTER (WHERE status = 'PENDIENTE') AS pending FROM skills`,
       ),
-      this.skillRows(),
+      this.skillRows(filters),
       this.one<{ required: string; uploaded: string }>(
         `SELECT COUNT(*) AS required, COUNT(ec."experienceId") AS uploaded
-         FROM experiences e LEFT JOIN experience_certificates ec ON ec."experienceId" = e.id
-         WHERE e.type::text IN ${CERTIFIED_TYPES}`,
+         FROM experiences e
+         JOIN collaborators c ON c.id = e."collaboratorId"
+         LEFT JOIN experience_certificates ec ON ec."experienceId" = e.id
+         WHERE e.type::text IN ${CERTIFIED_TYPES} AND ${personWhere('c', 1)}`,
+        person,
       ),
       this.one<{ sent: string; failed: string }>(
-        `SELECT COUNT(*) FILTER (WHERE status = 'ENVIADA') AS sent,
-                COUNT(*) FILTER (WHERE status = 'FALLIDA') AS failed FROM invitations`,
+        `SELECT COUNT(*) FILTER (WHERE i.status = 'ENVIADA') AS sent,
+                COUNT(*) FILTER (WHERE i.status = 'FALLIDA') AS failed
+         FROM invitations i JOIN projects p ON p.id = i."projectId"
+         WHERE ${projectWhere('p', 1)}`,
+        project,
       ),
     ]);
 
@@ -240,9 +296,10 @@ export class TypeOrmReportingRepository implements ReportingRepository {
     };
   }
 
-  async skillRows(): Promise<SkillBalance[]> {
+  async skillRows(filters: StatsFilters = {}): Promise<SkillBalance[]> {
     const rows = await this.query<SkillBalance>(
       `${SKILL_BALANCE_SQL} ORDER BY demanded DESC, offered DESC, name`,
+      [...personParams(filters), ...projectParams(filters)],
     );
     return rows.map((row) => ({
       ...row,

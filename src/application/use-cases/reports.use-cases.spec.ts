@@ -1,4 +1,7 @@
-import { NotFoundException } from '@nestjs/common';
+import {
+  NotFoundException,
+  UnprocessableEntityException,
+} from '@nestjs/common';
 import type { ReportingRepository } from '../../domain/repositories/reporting.repository.interface';
 import type { ReportWriter } from '../../domain/repositories/report-writer.interface';
 import { createMock } from '../../testing/test-doubles.testing';
@@ -23,6 +26,38 @@ describe('RF15–RF16 stats and reports', () => {
     ).resolves.toEqual({
       generatedAt: now,
     });
+  });
+
+  it('turns the dashboard filters into Colombian day bounds', async () => {
+    repository.getStats.mockResolvedValue({ generatedAt: now } as never);
+    await new GetPlatformStatsUseCase(repository).execute({
+      from: '2026-11-01',
+      to: '2026-11-30',
+      projectTypeId: 'type-1',
+      personType: 'DOCENTE',
+    });
+    expect(repository.getStats).toHaveBeenCalledWith(
+      {
+        from: new Date('2026-11-01T05:00:00Z'),
+        to: new Date('2026-12-01T05:00:00Z'),
+        projectTypeId: 'type-1',
+        categoryId: undefined,
+        programId: undefined,
+        personType: 'DOCENTE',
+      },
+      expect.any(Date),
+    );
+  });
+
+  it('rejects a start date after the end date or a date that does not exist', () => {
+    const useCase = new GetPlatformStatsUseCase(repository);
+    expect(() =>
+      useCase.execute({ from: '2026-11-30', to: '2026-11-01' }),
+    ).toThrow(UnprocessableEntityException);
+    expect(() => useCase.execute({ from: '2026-13-45' })).toThrow(
+      UnprocessableEntityException,
+    );
+    expect(repository.getStats).not.toHaveBeenCalled();
   });
 
   it('builds the skills report with offer, demand and ratio', async () => {

@@ -1,3 +1,4 @@
+import type { PersonType } from '../entities/person-type.type';
 /** Conteo por una dimensión (tipo, categoría, programa, estado…). */
 export interface CountBy {
   key: string;
@@ -121,12 +122,28 @@ export interface InvitationReportRow {
   sentAt: Date;
 }
 
+/**
+ * Filtros del dashboard (HU-14). Fechas y tipo/categoría acotan lo que depende de proyectos
+ * (proyectos, perfiles, recomendaciones, demanda de habilidades y convocatorias); programa y tipo
+ * de persona acotan lo que depende de personas (personas, disponibilidad, oferta y certificados).
+ */
+export interface StatsFilters {
+  /** Proyectos registrados desde este instante (incluido). */
+  from?: Date;
+  /** Proyectos registrados antes de este instante (excluido). */
+  to?: Date;
+  projectTypeId?: string;
+  categoryId?: string;
+  programId?: string;
+  personType?: PersonType;
+}
+
 /** Consultas de solo lectura para el dashboard y los reportes del ADMIN (RF15–RF16). */
 export interface ReportingRepository {
-  getStats(now?: Date): Promise<PlatformStats>;
+  getStats(filters: StatsFilters, now?: Date): Promise<PlatformStats>;
   projectRows(): Promise<ProjectReportRow[]>;
   personRows(): Promise<PersonReportRow[]>;
-  skillRows(): Promise<SkillBalance[]>;
+  skillRows(filters?: StatsFilters): Promise<SkillBalance[]>;
   recommendationRows(): Promise<RecommendationReportRow[]>;
   invitationRows(): Promise<InvitationReportRow[]>;
 }
