@@ -299,6 +299,7 @@ export class ImportCollaboratorsUseCase {
       semester: collaborator.semester,
       researchGroup: collaborator.researchGroup,
       summary: collaborator.summary,
+      interests: collaborator.interests,
       profileUrl: collaborator.profileUrl,
       availabilityStatus: collaborator.availabilityStatus,
       weeklyHours: collaborator.weeklyHours,

@@ -13,7 +13,8 @@ const EXPERIENCE_DESCRIPTION_MAX_LENGTH = 200;
 const TEXT_MAX_LENGTH = 4000;
 
 /**
- * Texto de una persona que se convierte en embedding: resumen, habilidades y experiencias.
+ * Texto de una persona que se convierte en embedding: resumen, intereses (tesis, D5),
+ * habilidades y experiencias.
  * Nunca incluye correo, teléfono ni otros datos de contacto. Devuelve `''` si el perfil no
  * tiene contenido que representar.
  */
@@ -24,6 +25,13 @@ export function collaboratorEmbeddingText(
 
   const summary = redactContactData(collaborator.summary ?? '');
   if (summary) parts.push(summary);
+
+  const interests = collaborator.interests
+    .map(redactContactData)
+    .filter(Boolean);
+  if (interests.length > 0) {
+    parts.push(`Intereses: ${interests.join(', ')}.`);
+  }
 
   if (collaborator.skills.length > 0) {
     const skills = collaborator.skills.map(

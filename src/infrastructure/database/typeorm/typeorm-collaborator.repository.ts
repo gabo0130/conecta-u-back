@@ -100,6 +100,7 @@ export class TypeOrmCollaboratorRepository implements CollaboratorRepository {
       semester: data.semester ?? null,
       researchGroup: data.researchGroup ?? null,
       summary: data.summary ?? null,
+      interests: data.interests ?? [],
       profileUrl: data.profileUrl ?? null,
       availabilityStatus: data.availabilityStatus ?? 'DISPONIBLE',
       weeklyHours: data.weeklyHours ?? 0,
@@ -132,11 +133,19 @@ export class TypeOrmCollaboratorRepository implements CollaboratorRepository {
       return null;
     }
 
-    // merge() modifica `collaborator` en el lugar: el resumen anterior se guarda antes.
+    // merge() modifica `collaborator` en el lugar: lo anterior se guarda antes.
     const previousSummary = collaborator.summary;
+    const previousInterests = collaborator.interests ?? [];
     const merged = this.repository.merge(collaborator, pickDefined(data));
-    // El resumen forma parte del texto del embedding (el resto de los campos, no).
-    if (data.summary !== undefined && data.summary !== previousSummary) {
+    // merge() combina los arreglos posición a posición: la lista nueva se asigna tal cual.
+    if (data.interests !== undefined) merged.interests = [...data.interests];
+    // El resumen y los intereses forman parte del texto del embedding (el resto, no).
+    const summaryChanged =
+      data.summary !== undefined && data.summary !== previousSummary;
+    const interestsChanged =
+      data.interests !== undefined &&
+      data.interests.join('\n') !== previousInterests.join('\n');
+    if (summaryChanged || interestsChanged) {
       merged.embeddingUpdatedAt = null;
     }
 

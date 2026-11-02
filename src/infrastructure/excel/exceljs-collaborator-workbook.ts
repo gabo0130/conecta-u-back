@@ -8,6 +8,7 @@ import {
   InvalidWorkbookError,
   type WorkbookRow,
 } from '../../domain/repositories/collaborator-workbook.interface';
+import { INTERESTS_MAX } from '../../domain/entities/collaborator-limits';
 import {
   COMMON_NATIONALITIES,
   DOCUMENT_TYPES,
@@ -16,6 +17,7 @@ import {
 import {
   AVAILABILITY_DISPLAY,
   COLLABORATOR_HEADERS,
+  COLLABORATOR_OPTIONAL_HEADERS,
   EXPERIENCE_HEADERS,
   EXPERIENCE_TYPE_DISPLAY,
   LEVEL_DISPLAY,
@@ -54,6 +56,8 @@ interface GuideField {
 interface SheetDefinition {
   name: string;
   headers: readonly string[];
+  /** Se escriben en la plantilla y se leen si están, pero su ausencia no rechaza el archivo. */
+  optionalHeaders?: readonly string[];
   enumFields: EnumField[];
   guideFields: GuideField[];
   /** Columnas con formato de texto: Excel no les quita ceros a la izquierda ni las vuelve notación científica. */
@@ -89,6 +93,7 @@ const enumValues = (display: Record<string, string>) => Object.values(display);
 const COLLABORATORS_SHEET: SheetDefinition = {
   name: SHEET_COLLABORATORS,
   headers: COLLABORATOR_HEADERS,
+  optionalHeaders: COLLABORATOR_OPTIONAL_HEADERS,
   textColumns: ['numero_documento', 'telefono', 'codigo'],
   enumFields: [
     {
@@ -200,6 +205,12 @@ const COLLABORATORS_SHEET: SheetDefinition = {
       required: false,
       description: 'Breve descripción del perfil.',
       valid: 'Texto libre',
+    },
+    {
+      header: 'intereses',
+      required: false,
+      description: `Temas que le interesan a la persona, separados por punto y coma (máximo ${INTERESTS_MAX}). Columna opcional: una plantilla anterior sin ella también se acepta.`,
+      valid: 'IA aplicada a la salud; Energías renovables',
     },
     {
       header: 'enlace',
@@ -386,7 +397,8 @@ export class ExcelJsCollaboratorWorkbook
   async read(content: Uint8Array): Promise<CollaboratorWorkbook> {
     const workbook = await this.load(content);
     const [collaborators, skills, experience] = SHEETS.map(
-      ({ name, headers }) => readSheet(workbook, name, headers),
+      ({ name, headers, optionalHeaders }) =>
+        readSheet(workbook, name, headers, optionalHeaders),
     );
     return { collaborators, skills, experience };
   }
@@ -451,7 +463,7 @@ function writeDataSheet(
   definition: SheetDefinition,
 ): void {
   const sheet = workbook.addWorksheet(definition.name);
-  sheet.addRow([...definition.headers]);
+  sheet.addRow([...definition.headers, ...(definition.optionalHeaders ?? [])]);
   sheet.views = [{ state: 'frozen', ySplit: 1 }];
 
   for (const header of definition.textColumns ?? []) {
@@ -485,6 +497,7 @@ function readSheet(
   workbook: ExcelJS.Workbook,
   sheetName: string,
   headers: readonly string[],
+  optionalHeaders: readonly string[] = [],
 ): WorkbookRow[] {
   const sheet = workbook.getWorksheet(sheetName);
   if (!sheet) {
@@ -505,6 +518,11 @@ function readSheet(
     const values: Record<string, CellValue> = {};
     for (const header of headers) {
       values[header] = toCellValue(sheetRow.getCell(columnIndex.get(header)!));
+    }
+    for (const header of optionalHeaders) {
+      const column = columnIndex.get(header);
+      values[header] =
+        column === undefined ? null : toCellValue(sheetRow.getCell(column));
     }
     if (Object.values(values).some((value) => value !== null)) {
       rows.push({ row: rowNumber, values });

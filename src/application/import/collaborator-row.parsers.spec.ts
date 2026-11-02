@@ -118,10 +118,31 @@ describe('parseCollaboratorRow', () => {
         semester: null,
         researchGroup: null,
         summary: 'Backend',
+        interests: [],
         profileUrl: null,
         availabilityStatus: 'NO_DISPONIBLE',
         weeklyHours: 0,
       },
+    });
+  });
+
+  it('lee los intereses opcionales separados por punto y coma o coma (tesis, T6)', () => {
+    const result = parseCollaboratorRow(
+      collaborator({
+        intereses: ' IA en salud ; Energía solar, ia en salud ;',
+      }),
+    );
+    expect(result).toMatchObject({
+      ok: true,
+      value: { interests: ['IA en salud', 'Energía solar'] },
+    });
+  });
+
+  it('rechaza más de 10 intereses', () => {
+    const many = Array.from({ length: 11 }, (_, i) => `Tema ${i}`).join(';');
+    expect(parseCollaboratorRow(collaborator({ intereses: many }))).toEqual({
+      ok: false,
+      reason: 'intereses: Puedes registrar hasta 10 intereses',
     });
   });
 

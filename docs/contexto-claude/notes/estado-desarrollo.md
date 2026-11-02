@@ -302,3 +302,11 @@ Extensión compatible (plan §2): no cambia las HU del seminario. Decisiones de 
 - `UnitOfWork` gana `projects` y `needs` (y `createFakeUnitOfWork` en los dobles de prueba).
 - Respuesta `{ need, project }`. La necesidad queda CONVERTIDA con `projectId`; ya no se edita, caracteriza ni convierte (409).
 - Pruebas: 4 unitarias y 2 e2e (422 sin entregables y 403 a otro líder sin crear nada; conversión → el proyecto se analiza y genera recomendaciones con el flujo normal; segunda conversión 409).
+
+### T6 · Intereses en el perfil (D5)
+- Migración `1791500000000-AddCollaboratorInterests`: `collaborators.interests text[] NOT NULL DEFAULT '{}'` + CHECK `cardinality ≤ 10`. Las personas existentes quedan sin intereses (su embedding no cambia).
+- Regla única en `collaborator-limits.ts` (`normalizeInterests`, `interestsError`: ≤ 10, 2–60 caracteres, sin repetidos sin distinguir mayúsculas ni tildes) que usan el decorador `@IsInterestList()` (DTO de crear/editar «Mi perfil» y de personas del ADMIN) y la importación.
+- Excel: columna **opcional** `intereses` (separados por `;` o `,`), con su fila en la hoja «Guía». `SheetDefinition.optionalHeaders`: la plantilla la escribe, el lector la toma si está y una plantilla anterior sin ella se sigue aceptando.
+- Respuesta de «Mi perfil» y vistas del ADMIN con `interests`. El texto del embedding agrega «Intereses: …» (redactado como el resto). Cambiar los intereses pone `embeddingUpdatedAt = null`.
+- **Fallo encontrado por las pruebas y corregido:** `repository.merge()` de TypeORM mezcla los arreglos posición a posición, así que quitar un interés no se guardaba; el repositorio asigna la lista nueva tal cual.
+- Pruebas: 13 unitarias (regla, decorador, parser, plantilla y lector, texto del embedding, invalidación en el repositorio) y 2 e2e (normaliza, marca el embedding desactualizado, quitar uno se guarda; 422 con 11).

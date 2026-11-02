@@ -9,8 +9,10 @@ import {
   RESEARCH_GROUP_MAX_LENGTH,
   SEMESTER,
   SKILL_EXPERIENCE_MONTHS,
+  interestsError,
   isIntegerInRange,
   isValidLastUsedYear,
+  normalizeInterests,
 } from '../../domain/entities/collaborator-limits';
 import type { ExperienceType } from '../../domain/entities/experience-type.type';
 import { experiencePeriodError } from '../../domain/entities/experience-period';
@@ -90,6 +92,7 @@ export interface ParsedCollaborator {
   semester: number | null;
   researchGroup: string | null;
   summary: string | null;
+  interests: string[];
   profileUrl: string | null;
   availabilityStatus: AvailabilityStatus;
   weeklyHours: number;
@@ -157,6 +160,13 @@ export function parseCollaboratorRow(
   );
   if (!researchGroup.ok) return researchGroup;
 
+  // Tesis (T6): columna opcional, separada por punto y coma (también se acepta coma).
+  const interests = normalizeInterests(
+    (optionalTextOf(values.intereses ?? null) ?? '').split(/[;,]/),
+  );
+  const interestsProblem = interestsError(interests);
+  if (interestsProblem) return reject(`intereses: ${interestsProblem}`);
+
   return {
     ok: true,
     value: {
@@ -169,6 +179,7 @@ export function parseCollaboratorRow(
       semester,
       researchGroup: researchGroup.value,
       summary: optionalTextOf(values.resumen),
+      interests,
       profileUrl,
       availabilityStatus,
       weeklyHours: weeklyHours!,

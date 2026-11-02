@@ -29,3 +29,35 @@ export function isValidLastUsedYear(year: number, now = new Date()): boolean {
     max: now.getUTCFullYear(),
   });
 }
+
+// Tesis (D5, T6): intereses del perfil, texto corto y libre ("IA aplicada a la salud").
+export const INTERESTS_MAX = 10;
+export const INTEREST_LENGTH = { min: 2, max: 60 } as const;
+
+/** Recorta, quita vacíos y repetidos (sin distinguir mayúsculas ni tildes), en el orden dado. */
+export function normalizeInterests(values: readonly string[]): string[] {
+  const seen = new Set<string>();
+  const result: string[] = [];
+  for (const raw of values) {
+    const value = raw.trim().replace(/\s+/g, ' ');
+    const key = value.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+    if (!value || seen.has(key)) continue;
+    seen.add(key);
+    result.push(value);
+  }
+  return result;
+}
+
+/** Motivo por el que una lista ya normalizada no es válida, o `null`. */
+export function interestsError(values: readonly string[]): string | null {
+  if (values.length > INTERESTS_MAX) {
+    return `Puedes registrar hasta ${INTERESTS_MAX} intereses`;
+  }
+  const invalid = values.find(
+    (value) =>
+      value.length < INTEREST_LENGTH.min || value.length > INTEREST_LENGTH.max,
+  );
+  return invalid === undefined
+    ? null
+    : `Cada interés debe tener entre ${INTEREST_LENGTH.min} y ${INTEREST_LENGTH.max} caracteres`;
+}

@@ -67,6 +67,10 @@ export class CollaboratorOrmEntity {
   @Column({ type: 'text', nullable: true })
   summary: string | null;
 
+  // Tesis (D5, T6): hasta 10 intereses; '{}' en las personas anteriores.
+  @Column({ type: 'text', array: true, default: () => "'{}'" })
+  interests: string[];
+
   @Column({ type: 'varchar', length: 300, nullable: true })
   profileUrl: string | null;
 

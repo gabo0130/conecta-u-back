@@ -45,6 +45,7 @@ export interface PersonForAccount extends Omit<
     semester?: number | null;
     researchGroup?: string | null;
     summary?: string | null;
+    interests?: string[];
     profileUrl?: string | null;
   };
 }

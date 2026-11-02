@@ -33,6 +33,12 @@ export const COLLABORATOR_HEADERS = [
   'autoriza_datos',
 ] as const;
 
+/**
+ * Columnas que se leen si están y no se exigen: una plantilla anterior sigue sirviendo.
+ * Tesis (T6): `intereses`, separados por punto y coma.
+ */
+export const COLLABORATOR_OPTIONAL_HEADERS = ['intereses'] as const;
+
 // Las hojas hijas se asocian a la persona por documento o, si viene vacío, por correo.
 export const SKILL_HEADERS = [
   'numero_documento',

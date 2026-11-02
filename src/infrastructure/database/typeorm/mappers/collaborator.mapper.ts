@@ -61,6 +61,7 @@ export function toCollaboratorEntity(
     semester: collaborator.semester,
     researchGroup: collaborator.researchGroup,
     summary: collaborator.summary,
+    interests: collaborator.interests ?? [],
     profileUrl: collaborator.profileUrl,
     availabilityStatus:
       collaborator.availabilityStatus as CollaboratorEntity['availabilityStatus'],

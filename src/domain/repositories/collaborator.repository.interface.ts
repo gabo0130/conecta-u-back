@@ -15,6 +15,7 @@ export interface CreateCollaboratorRepositoryDto {
   semester?: number | null;
   researchGroup?: string | null;
   summary?: string | null;
+  interests?: string[];
   profileUrl?: string | null;
   availabilityStatus?: AvailabilityStatus;
   weeklyHours?: number;
@@ -40,6 +41,7 @@ export interface UpdateCollaboratorRepositoryDto {
   semester?: number | null;
   researchGroup?: string | null;
   summary?: string | null;
+  interests?: string[];
   profileUrl?: string | null;
   availabilityStatus?: AvailabilityStatus;
   weeklyHours?: number;

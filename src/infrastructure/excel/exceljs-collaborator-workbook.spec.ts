@@ -3,6 +3,7 @@ import { ExcelJsCollaboratorWorkbook } from './exceljs-collaborator-workbook';
 import { InvalidWorkbookError } from '../../domain/repositories/collaborator-workbook.interface';
 import {
   COLLABORATOR_HEADERS,
+  COLLABORATOR_OPTIONAL_HEADERS,
   EXPERIENCE_HEADERS,
   SHEET_COLLABORATORS,
   SHEET_EXPERIENCE,
@@ -107,6 +108,35 @@ describe('ExcelJsCollaboratorWorkbook', () => {
       }),
     );
     expect(result.skills).toEqual([]);
+  });
+
+  it('la columna opcional "intereses": se escribe en la plantilla y se lee si está (tesis, T6)', async () => {
+    const template = new ExcelJS.Workbook();
+    await template.xlsx.load(
+      (await adapter.write()) as unknown as ExcelJS.Buffer,
+    );
+    expect(
+      (
+        template.getWorksheet(SHEET_COLLABORATORS)!.getRow(1)
+          .values as unknown[]
+      ).slice(1),
+    ).toEqual([...COLLABORATOR_HEADERS, ...COLLABORATOR_OPTIONAL_HEADERS]);
+
+    // Plantilla anterior, sin la columna: se acepta y el valor llega vacío.
+    const old = templateWorkbook();
+    old.getWorksheet(SHEET_COLLABORATORS)!.addRow(['ana@example.com']);
+    const oldResult = await adapter.read(await toBuffer(old));
+    expect(oldResult.collaborators[0].values.intereses).toBeNull();
+
+    // Con la columna, se lee.
+    const current = templateWorkbook();
+    const sheet = current.getWorksheet(SHEET_COLLABORATORS)!;
+    sheet.getRow(1).getCell(COLLABORATOR_HEADERS.length + 1).value =
+      'intereses';
+    const row = sheet.addRow(['ana@example.com']);
+    row.getCell(COLLABORATOR_HEADERS.length + 1).value = 'IoT; Robótica';
+    const result = await adapter.read(await toBuffer(current));
+    expect(result.collaborators[0].values.intereses).toBe('IoT; Robótica');
   });
 
   it('matches headers regardless of order, case and accents', async () => {

@@ -46,6 +46,7 @@ export class CreateMyCollaboratorProfileUseCase {
         semester: data.semester,
         researchGroup: data.researchGroup,
         summary: data.summary,
+        interests: data.interests,
         profileUrl: data.profileUrl,
       },
     });

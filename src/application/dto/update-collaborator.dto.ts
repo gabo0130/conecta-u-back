@@ -1,3 +1,4 @@
+import { IsInterestList } from './validators/interests.decorator';
 import {
   Equals,
   IsBoolean,
@@ -46,6 +47,9 @@ export class UpdateCollaboratorDto extends UpdateIdentificationDto {
 
   @IsOptionalText()
   summary?: string | null;
+
+  @IsInterestList()
+  interests?: string[];
 
   @IsOptional()
   @IsProfileUrl()

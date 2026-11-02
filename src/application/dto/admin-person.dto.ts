@@ -1,3 +1,4 @@
+import { IsInterestList } from './validators/interests.decorator';
 import {
   IsBoolean,
   IsEmail,
@@ -56,6 +57,9 @@ export class AdminCreatePersonDto extends AccountPersonDto {
   @IsOptionalText()
   summary?: string | null;
 
+  @IsInterestList()
+  interests?: string[];
+
   @IsOptionalNonNull()
   @IsIn(AVAILABILITY_STATUSES)
   availabilityStatus?: AvailabilityStatus;
@@ -96,6 +100,9 @@ export class AdminUpdatePersonProfileDto {
 
   @IsOptionalText()
   summary?: string | null;
+
+  @IsInterestList()
+  interests?: string[];
 
   @IsOptionalNonNull()
   @IsIn(AVAILABILITY_STATUSES)

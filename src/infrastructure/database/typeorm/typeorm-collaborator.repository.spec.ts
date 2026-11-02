@@ -46,6 +46,23 @@ describe('TypeOrmCollaboratorRepository.update embedding invalidation', () => {
     expect(saved().embeddingUpdatedAt).toBeNull();
   });
 
+  it('marca el embedding desactualizado si cambian los intereses (tesis, T6)', async () => {
+    const { collaborators, saved } = setup({ interests: ['Robótica', 'IoT'] });
+
+    await collaborators.update('c1', { interests: ['Robótica'] });
+
+    expect(saved().interests).toEqual(['Robótica']);
+    expect(saved().embeddingUpdatedAt).toBeNull();
+  });
+
+  it('conserva el embedding si los intereses no cambian', async () => {
+    const { collaborators, saved } = setup({ interests: ['Robótica'] });
+
+    await collaborators.update('c1', { interests: ['Robótica'] });
+
+    expect(saved().embeddingUpdatedAt).toEqual(new Date('2026-01-01'));
+  });
+
   it('keeps the embedding when the summary stays the same', async () => {
     const { collaborators, saved } = setup();
 

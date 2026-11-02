@@ -16,6 +16,8 @@ export interface CollaboratorProps {
   semester?: number | null;
   researchGroup?: string | null;
   summary?: string | null;
+  /** Tesis (D5): intereses temáticos; entran en el texto del embedding. */
+  interests?: string[];
   profileUrl?: string | null;
   availabilityStatus?: AvailabilityStatus;
   weeklyHours?: number;
@@ -46,6 +48,7 @@ export class CollaboratorEntity {
   readonly semester: number | null;
   readonly researchGroup: string | null;
   readonly summary: string | null;
+  readonly interests: string[];
   readonly profileUrl: string | null;
   readonly availabilityStatus: AvailabilityStatus;
   readonly weeklyHours: number;
@@ -77,6 +80,7 @@ export class CollaboratorEntity {
     this.semester = props.semester ?? null;
     this.researchGroup = props.researchGroup ?? null;
     this.summary = props.summary ?? null;
+    this.interests = props.interests ?? [];
     this.profileUrl = props.profileUrl ?? null;
     this.availabilityStatus = props.availabilityStatus ?? 'DISPONIBLE';
     this.weeklyHours = props.weeklyHours ?? 0;

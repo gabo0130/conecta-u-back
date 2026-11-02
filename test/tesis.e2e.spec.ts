@@ -1,5 +1,6 @@
 import type { INestApplication } from '@nestjs/common';
 import request from 'supertest';
+import { DataSource } from 'typeorm';
 import {
   EMAILS,
   resetData,
@@ -417,6 +418,59 @@ describe('Tesis (integración)', () => {
         .post(`/api/needs/${needId}/characterization`)
         .auth(owner, { type: 'bearer' })
         .expect(409);
+    });
+  });
+
+  describe('T6 · intereses en el perfil', () => {
+    const embeddingUpdatedAt = async (): Promise<Date | null> => {
+      const [row]: { embeddingUpdatedAt: Date | null }[] = await app
+        .get(DataSource)
+        .query(`SELECT "embeddingUpdatedAt" FROM collaborators WHERE id = $1`, [
+          scenario.candidates.available,
+        ]);
+      return row.embeddingUpdatedAt;
+    };
+    const patchMe = (body: object) =>
+      http()
+        .patch('/api/collaborators/me')
+        .auth(collaborator, { type: 'bearer' })
+        .send({ truthfulnessDeclared: true, ...body });
+
+    it('guarda los intereses normalizados y marca el embedding desactualizado', async () => {
+      await http()
+        .post('/api/admin/embeddings/rebuild')
+        .auth(admin, { type: 'bearer' })
+        .send({})
+        .expect(200);
+      expect(await embeddingUpdatedAt()).not.toBeNull();
+
+      const saved = await patchMe({
+        interests: [
+          ' IA aplicada a la salud ',
+          'ia aplicada a la salud',
+          'IoT',
+        ],
+      }).expect(200);
+      expect(saved.body.interests).toEqual(['IA aplicada a la salud', 'IoT']);
+      expect(await embeddingUpdatedAt()).toBeNull();
+
+      const profile = await http()
+        .get('/api/collaborators/me')
+        .auth(collaborator, { type: 'bearer' })
+        .expect(200);
+      expect(profile.body.interests).toEqual(['IA aplicada a la salud', 'IoT']);
+
+      // Quitar uno también se guarda (la lista se reemplaza, no se mezcla).
+      await patchMe({ interests: ['IoT'] })
+        .expect(200)
+        .expect(({ body }) => expect(body.interests).toEqual(['IoT']));
+    });
+
+    it('rechaza más de 10 intereses (422)', async () => {
+      const response = await patchMe({
+        interests: Array.from({ length: 11 }, (_, i) => `Tema ${i}`),
+      }).expect(422);
+      expect(response.body.message).toBe('Puedes registrar hasta 10 intereses');
     });
   });
 });

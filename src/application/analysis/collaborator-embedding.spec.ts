@@ -47,6 +47,16 @@ describe('collaboratorEmbeddingText', () => {
     expect(text).toContain('Portal académico');
   });
 
+  it('incluye los intereses (tesis, T6) sin datos de contacto', () => {
+    const text = collaboratorEmbeddingText(
+      buildCollaborator({
+        summary: 'Desarrolladora web',
+        interests: ['IA aplicada a la salud', 'ana@ufps.edu.co'],
+      }),
+    );
+    expect(text).toBe('Desarrolladora web Intereses: IA aplicada a la salud.');
+  });
+
   it('never includes contact data', () => {
     const text = collaboratorEmbeddingText(
       buildCollaborator({
