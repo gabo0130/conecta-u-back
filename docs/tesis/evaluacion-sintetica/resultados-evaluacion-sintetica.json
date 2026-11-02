@@ -1,0 +1,5910 @@
+{
+  "simulation": true,
+  "notice": "SIMULACIÓN con datos sintéticos: la pertinencia \"verdadera\" la fija el arquetipo con el que se generó cada persona. No reemplaza el piloto con usuarios reales ni la valoración de los expertos; sirve para verificar el funcionamiento del recomendador y compararlo con líneas base.",
+  "options": {
+    "count": 150,
+    "seed": 20261102,
+    "ks": [
+      5,
+      10
+    ]
+  },
+  "dataset": {
+    "people": 150,
+    "eligiblePeople": 120,
+    "needs": 20,
+    "profiles": 48,
+    "archetypes": 15
+  },
+  "settings": {
+    "weights": {
+      "skills": 0.5,
+      "semantic": 0.2,
+      "experience": 0.15,
+      "availability": 0.15
+    },
+    "topN": 10,
+    "embedding": "fake/hash-v1@768",
+    "evaluationDate": "2026-11-02"
+  },
+  "semanticDiagnostics": {
+    "semanticFloor": 0.5,
+    "cosine": {
+      "p50": 0.1474,
+      "p90": 0.2597,
+      "p99": 0.3714,
+      "max": 0.5111
+    },
+    "shareAboveFloor": 0.0002
+  },
+  "summary": {
+    "hibrido": {
+      "@5": {
+        "precision": 0.9,
+        "recall": 0.3695,
+        "hitRate": 0.9792,
+        "ndcg": 0.8647,
+        "coverage": 0.9774
+      },
+      "@10": {
+        "precision": 0.7563,
+        "recall": 0.6137,
+        "hitRate": 1,
+        "ndcg": 0.8108,
+        "coverage": 0.9931
+      }
+    },
+    "hibrido_sin_semantica": {
+      "@5": {
+        "precision": 0.9,
+        "recall": 0.3695,
+        "hitRate": 0.9792,
+        "ndcg": 0.8647,
+        "coverage": 0.9774
+      },
+      "@10": {
+        "precision": 0.7563,
+        "recall": 0.6137,
+        "hitRate": 1,
+        "ndcg": 0.8108,
+        "coverage": 0.9931
+      }
+    },
+    "solo_habilidades": {
+      "@5": {
+        "precision": 0.9083,
+        "recall": 0.3729,
+        "hitRate": 0.9792,
+        "ndcg": 0.8577,
+        "coverage": 0.9705
+      },
+      "@10": {
+        "precision": 0.7604,
+        "recall": 0.6159,
+        "hitRate": 1,
+        "ndcg": 0.8047,
+        "coverage": 0.9931
+      }
+    },
+    "aleatorio": {
+      "@5": {
+        "precision": 0.1,
+        "recall": 0.0368,
+        "hitRate": 0.4167,
+        "ndcg": 0.061,
+        "coverage": 0.2535
+      },
+      "@10": {
+        "precision": 0.1063,
+        "recall": 0.0766,
+        "hitRate": 0.6667,
+        "ndcg": 0.0757,
+        "coverage": 0.4149
+      }
+    }
+  },
+  "cases": [
+    {
+      "needId": "N01",
+      "needKind": "ADMINISTRATIVA",
+      "profile": "Desarrollador backend",
+      "archetype": "backend",
+      "relevantCount": 13,
+      "rankings": {
+        "hibrido": [
+          "S031",
+          "S049",
+          "S091",
+          "S061",
+          "S046",
+          "S048",
+          "S121",
+          "S066",
+          "S094",
+          "S109"
+        ],
+        "hibrido_sin_semantica": [
+          "S031",
+          "S049",
+          "S091",
+          "S061",
+          "S046",
+          "S048",
+          "S121",
+          "S066",
+          "S094",
+          "S109"
+        ],
+        "solo_habilidades": [
+          "S031",
+          "S049",
+          "S091",
+          "S061",
+          "S046",
+          "S048",
+          "S121",
+          "S066",
+          "S094",
+          "S109"
+        ],
+        "aleatorio": [
+          "S118",
+          "S015",
+          "S105",
+          "S043",
+          "S147",
+          "S122",
+          "S041",
+          "S045",
+          "S032",
+          "S094"
+        ]
+      },
+      "metrics": {
+        "hibrido": {
+          "@5": {
+            "precision": 1,
+            "recall": 0.38461538461538464,
+            "hitRate": 1,
+            "ndcg": 0.8573424901769816,
+            "coverage": 1
+          },
+          "@10": {
+            "precision": 0.7,
+            "recall": 0.5384615384615384,
+            "hitRate": 1,
+            "ndcg": 0.7147496918681622,
+            "coverage": 1
+          }
+        },
+        "hibrido_sin_semantica": {
+          "@5": {
+            "precision": 1,
+            "recall": 0.38461538461538464,
+            "hitRate": 1,
+            "ndcg": 0.8573424901769816,
+            "coverage": 1
+          },
+          "@10": {
+            "precision": 0.7,
+            "recall": 0.5384615384615384,
+            "hitRate": 1,
+            "ndcg": 0.7147496918681622,
+            "coverage": 1
+          }
+        },
+        "solo_habilidades": {
+          "@5": {
+            "precision": 1,
+            "recall": 0.38461538461538464,
+            "hitRate": 1,
+            "ndcg": 0.8573424901769816,
+            "coverage": 1
+          },
+          "@10": {
+            "precision": 0.7,
+            "recall": 0.5384615384615384,
+            "hitRate": 1,
+            "ndcg": 0.7147496918681622,
+            "coverage": 1
+          }
+        },
+        "aleatorio": {
+          "@5": {
+            "precision": 0,
+            "recall": 0,
+            "hitRate": 0,
+            "ndcg": 0,
+            "coverage": 0
+          },
+          "@10": {
+            "precision": 0,
+            "recall": 0,
+            "hitRate": 0,
+            "ndcg": 0,
+            "coverage": 0.25
+          }
+        }
+      }
+    },
+    {
+      "needId": "N01",
+      "needKind": "ADMINISTRATIVA",
+      "profile": "Desarrollador frontend",
+      "archetype": "frontend",
+      "relevantCount": 15,
+      "rankings": {
+        "hibrido": [
+          "S062",
+          "S047",
+          "S092",
+          "S077",
+          "S138",
+          "S048",
+          "S123",
+          "S118",
+          "S116",
+          "S086"
+        ],
+        "hibrido_sin_semantica": [
+          "S062",
+          "S047",
+          "S092",
+          "S077",
+          "S138",
+          "S048",
+          "S123",
+          "S118",
+          "S116",
+          "S086"
+        ],
+        "solo_habilidades": [
+          "S062",
+          "S077",
+          "S047",
+          "S032",
+          "S092",
+          "S138",
+          "S118",
+          "S093",
+          "S048",
+          "S123"
+        ],
+        "aleatorio": [
+          "S070",
+          "S071",
+          "S035",
+          "S055",
+          "S006",
+          "S024",
+          "S142",
+          "S098",
+          "S059",
+          "S010"
+        ]
+      },
+      "metrics": {
+        "hibrido": {
+          "@5": {
+            "precision": 1,
+            "recall": 0.3333333333333333,
+            "hitRate": 1,
+            "ndcg": 0.9125299483251055,
+            "coverage": 1
+          },
+          "@10": {
+            "precision": 0.9,
+            "recall": 0.6,
+            "hitRate": 1,
+            "ndcg": 0.7923935461056429,
+            "coverage": 1
+          }
+        },
+        "hibrido_sin_semantica": {
+          "@5": {
+            "precision": 1,
+            "recall": 0.3333333333333333,
+            "hitRate": 1,
+            "ndcg": 0.9125299483251055,
+            "coverage": 1
+          },
+          "@10": {
+            "precision": 0.9,
+            "recall": 0.6,
+            "hitRate": 1,
+            "ndcg": 0.7923935461056429,
+            "coverage": 1
+          }
+        },
+        "solo_habilidades": {
+          "@5": {
+            "precision": 1,
+            "recall": 0.3333333333333333,
+            "hitRate": 1,
+            "ndcg": 1,
+            "coverage": 1
+          },
+          "@10": {
+            "precision": 1,
+            "recall": 0.6666666666666666,
+            "hitRate": 1,
+            "ndcg": 0.8833221200890947,
+            "coverage": 1
+          }
+        },
+        "aleatorio": {
+          "@5": {
+            "precision": 0,
+            "recall": 0,
+            "hitRate": 0,
+            "ndcg": 0,
+            "coverage": 0.6666666666666666
+          },
+          "@10": {
+            "precision": 0,
+            "recall": 0,
+            "hitRate": 0,
+            "ndcg": 0,
+            "coverage": 0.6666666666666666
+          }
+        }
+      }
+    },
+    {
+      "needId": "N01",
+      "needKind": "ADMINISTRATIVA",
+      "profile": "Diseñador UX",
+      "archetype": "ux",
+      "relevantCount": 11,
+      "rankings": {
+        "hibrido": [
+          "S082",
+          "S052",
+          "S007",
+          "S097",
+          "S022",
+          "S112",
+          "S142",
+          "S067",
+          "S122",
+          "S086"
+        ],
+        "hibrido_sin_semantica": [
+          "S082",
+          "S052",
+          "S007",
+          "S097",
+          "S022",
+          "S112",
+          "S142",
+          "S067",
+          "S122",
+          "S086"
+        ],
+        "solo_habilidades": [
+          "S082",
+          "S007",
+          "S052",
+          "S112",
+          "S022",
+          "S142",
+          "S097",
+          "S067",
+          "S122",
+          "S086"
+        ],
+        "aleatorio": [
+          "S129",
+          "S145",
+          "S080",
+          "S139",
+          "S079",
+          "S125",
+          "S140",
+          "S048",
+          "S071",
+          "S130"
+        ]
+      },
+      "metrics": {
+        "hibrido": {
+          "@5": {
+            "precision": 1,
+            "recall": 0.45454545454545453,
+            "hitRate": 1,
+            "ndcg": 1,
+            "coverage": 1
+          },
+          "@10": {
+            "precision": 0.8,
+            "recall": 0.7272727272727273,
+            "hitRate": 1,
+            "ndcg": 0.9526046846973931,
+            "coverage": 1
+          }
+        },
+        "hibrido_sin_semantica": {
+          "@5": {
+            "precision": 1,
+            "recall": 0.45454545454545453,
+            "hitRate": 1,
+            "ndcg": 1,
+            "coverage": 1
+          },
+          "@10": {
+            "precision": 0.8,
+            "recall": 0.7272727272727273,
+            "hitRate": 1,
+            "ndcg": 0.9526046846973931,
+            "coverage": 1
+          }
+        },
+        "solo_habilidades": {
+          "@5": {
+            "precision": 1,
+            "recall": 0.45454545454545453,
+            "hitRate": 1,
+            "ndcg": 1,
+            "coverage": 1
+          },
+          "@10": {
+            "precision": 0.8,
+            "recall": 0.7272727272727273,
+            "hitRate": 1,
+            "ndcg": 0.9526046846973931,
+            "coverage": 1
+          }
+        },
+        "aleatorio": {
+          "@5": {
+            "precision": 0.2,
+            "recall": 0.09090909090909091,
+            "hitRate": 1,
+            "ndcg": 0.05652670087893601,
+            "coverage": 0
+          },
+          "@10": {
+            "precision": 0.1,
+            "recall": 0.09090909090909091,
+            "hitRate": 1,
+            "ndcg": 0.04015906726941507,
+            "coverage": 0
+          }
+        }
+      }
+    },
+    {
+      "needId": "N02",
+      "needKind": "INVESTIGATIVA",
+      "profile": "Científico de datos",
+      "archetype": "data",
+      "relevantCount": 13,
+      "rankings": {
+        "hibrido": [
+          "S139",
+          "S019",
+          "S109",
+          "S034",
+          "S079",
+          "S009",
+          "S094",
+          "S039",
+          "S049",
+          "S135"
+        ],
+        "hibrido_sin_semantica": [
+          "S139",
+          "S019",
+          "S109",
+          "S034",
+          "S079",
+          "S009",
+          "S094",
+          "S039",
+          "S049",
+          "S135"
+        ],
+        "solo_habilidades": [
+          "S139",
+          "S019",
+          "S034",
+          "S109",
+          "S079",
+          "S020",
+          "S094",
+          "S006",
+          "S054",
+          "S039"
+        ],
+        "aleatorio": [
+          "S027",
+          "S092",
+          "S029",
+          "S139",
+          "S108",
+          "S081",
+          "S022",
+          "S125",
+          "S051",
+          "S071"
+        ]
+      },
+      "metrics": {
+        "hibrido": {
+          "@5": {
+            "precision": 1,
+            "recall": 0.38461538461538464,
+            "hitRate": 1,
+            "ndcg": 1,
+            "coverage": 1
+          },
+          "@10": {
+            "precision": 0.7,
+            "recall": 0.5384615384615384,
+            "hitRate": 1,
+            "ndcg": 0.8632968461919064,
+            "coverage": 1
+          }
+        },
+        "hibrido_sin_semantica": {
+          "@5": {
+            "precision": 1,
+            "recall": 0.38461538461538464,
+            "hitRate": 1,
+            "ndcg": 1,
+            "coverage": 1
+          },
+          "@10": {
+            "precision": 0.7,
+            "recall": 0.5384615384615384,
+            "hitRate": 1,
+            "ndcg": 0.8632968461919064,
+            "coverage": 1
+          }
+        },
+        "solo_habilidades": {
+          "@5": {
+            "precision": 1,
+            "recall": 0.38461538461538464,
+            "hitRate": 1,
+            "ndcg": 1,
+            "coverage": 1
+          },
+          "@10": {
+            "precision": 0.7,
+            "recall": 0.5384615384615384,
+            "hitRate": 1,
+            "ndcg": 0.8193722398938575,
+            "coverage": 1
+          }
+        },
+        "aleatorio": {
+          "@5": {
+            "precision": 0.2,
+            "recall": 0.07692307692307693,
+            "hitRate": 1,
+            "ndcg": 0.14606834984270645,
+            "coverage": 1
+          },
+          "@10": {
+            "precision": 0.1,
+            "recall": 0.07692307692307693,
+            "hitRate": 1,
+            "ndcg": 0.10377341320217726,
+            "coverage": 1
+          }
+        }
+      }
+    },
+    {
+      "needId": "N02",
+      "needKind": "INVESTIGATIVA",
+      "profile": "Analista de visualización",
+      "archetype": "data",
+      "relevantCount": 21,
+      "rankings": {
+        "hibrido": [
+          "S049",
+          "S113",
+          "S038",
+          "S094",
+          "S057",
+          "S069",
+          "S079",
+          "S072",
+          "S044",
+          "S019"
+        ],
+        "hibrido_sin_semantica": [
+          "S049",
+          "S113",
+          "S038",
+          "S094",
+          "S057",
+          "S069",
+          "S079",
+          "S072",
+          "S044",
+          "S019"
+        ],
+        "solo_habilidades": [
+          "S069",
+          "S079",
+          "S124",
+          "S113",
+          "S072",
+          "S044",
+          "S038",
+          "S049",
+          "S019",
+          "S102"
+        ],
+        "aleatorio": [
+          "S149",
+          "S066",
+          "S113",
+          "S109",
+          "S040",
+          "S054",
+          "S071",
+          "S097",
+          "S062",
+          "S130"
+        ]
+      },
+      "metrics": {
+        "hibrido": {
+          "@5": {
+            "precision": 0.8,
+            "recall": 0.19047619047619047,
+            "hitRate": 1,
+            "ndcg": 0.6130840109067678,
+            "coverage": 1
+          },
+          "@10": {
+            "precision": 0.7,
+            "recall": 0.3333333333333333,
+            "hitRate": 1,
+            "ndcg": 0.6141414590685876,
+            "coverage": 1
+          }
+        },
+        "hibrido_sin_semantica": {
+          "@5": {
+            "precision": 0.8,
+            "recall": 0.19047619047619047,
+            "hitRate": 1,
+            "ndcg": 0.6130840109067678,
+            "coverage": 1
+          },
+          "@10": {
+            "precision": 0.7,
+            "recall": 0.3333333333333333,
+            "hitRate": 1,
+            "ndcg": 0.6141414590685876,
+            "coverage": 1
+          }
+        },
+        "solo_habilidades": {
+          "@5": {
+            "precision": 0.8,
+            "recall": 0.19047619047619047,
+            "hitRate": 1,
+            "ndcg": 0.5453092190767764,
+            "coverage": 1
+          },
+          "@10": {
+            "precision": 0.7,
+            "recall": 0.3333333333333333,
+            "hitRate": 1,
+            "ndcg": 0.5627316424135318,
+            "coverage": 1
+          }
+        },
+        "aleatorio": {
+          "@5": {
+            "precision": 0.4,
+            "recall": 0.09523809523809523,
+            "hitRate": 1,
+            "ndcg": 0.20259505072164247,
+            "coverage": 0.3333333333333333
+          },
+          "@10": {
+            "precision": 0.2,
+            "recall": 0.09523809523809523,
+            "hitRate": 1,
+            "ndcg": 0.14393248047159232,
+            "coverage": 0.3333333333333333
+          }
+        }
+      }
+    },
+    {
+      "needId": "N02",
+      "needKind": "INVESTIGATIVA",
+      "profile": "Investigador educativo",
+      "archetype": "research",
+      "relevantCount": 14,
+      "rankings": {
+        "hibrido": [
+          "S039",
+          "S054",
+          "S084",
+          "S114",
+          "S024",
+          "S009",
+          "S025",
+          "S129",
+          "S099",
+          "S069"
+        ],
+        "hibrido_sin_semantica": [
+          "S039",
+          "S054",
+          "S084",
+          "S114",
+          "S024",
+          "S009",
+          "S025",
+          "S129",
+          "S099",
+          "S069"
+        ],
+        "solo_habilidades": [
+          "S039",
+          "S084",
+          "S114",
+          "S054",
+          "S024",
+          "S009",
+          "S025",
+          "S129",
+          "S069",
+          "S144"
+        ],
+        "aleatorio": [
+          "S094",
+          "S020",
+          "S040",
+          "S058",
+          "S122",
+          "S017",
+          "S066",
+          "S092",
+          "S095",
+          "S041"
+        ]
+      },
+      "metrics": {
+        "hibrido": {
+          "@5": {
+            "precision": 1,
+            "recall": 0.35714285714285715,
+            "hitRate": 1,
+            "ndcg": 1,
+            "coverage": 1
+          },
+          "@10": {
+            "precision": 1,
+            "recall": 0.7142857142857143,
+            "hitRate": 1,
+            "ndcg": 0.9510907186004267,
+            "coverage": 1
+          }
+        },
+        "hibrido_sin_semantica": {
+          "@5": {
+            "precision": 1,
+            "recall": 0.35714285714285715,
+            "hitRate": 1,
+            "ndcg": 1,
+            "coverage": 1
+          },
+          "@10": {
+            "precision": 1,
+            "recall": 0.7142857142857143,
+            "hitRate": 1,
+            "ndcg": 0.9510907186004267,
+            "coverage": 1
+          }
+        },
+        "solo_habilidades": {
+          "@5": {
+            "precision": 1,
+            "recall": 0.35714285714285715,
+            "hitRate": 1,
+            "ndcg": 1,
+            "coverage": 1
+          },
+          "@10": {
+            "precision": 1,
+            "recall": 0.7142857142857143,
+            "hitRate": 1,
+            "ndcg": 0.9510907186004267,
+            "coverage": 1
+          }
+        },
+        "aleatorio": {
+          "@5": {
+            "precision": 0,
+            "recall": 0,
+            "hitRate": 0,
+            "ndcg": 0,
+            "coverage": 0
+          },
+          "@10": {
+            "precision": 0,
+            "recall": 0,
+            "hitRate": 0,
+            "ndcg": 0,
+            "coverage": 0
+          }
+        }
+      }
+    },
+    {
+      "needId": "N03",
+      "needKind": "INNOVACION",
+      "profile": "Ingeniero IoT",
+      "archetype": "iot",
+      "relevantCount": 10,
+      "rankings": {
+        "hibrido": [
+          "S036",
+          "S006",
+          "S096",
+          "S066",
+          "S126",
+          "S051",
+          "S050",
+          "S081",
+          "S099"
+        ],
+        "hibrido_sin_semantica": [
+          "S036",
+          "S006",
+          "S096",
+          "S066",
+          "S126",
+          "S051",
+          "S050",
+          "S081",
+          "S099"
+        ],
+        "solo_habilidades": [
+          "S036",
+          "S096",
+          "S051",
+          "S006",
+          "S066",
+          "S126",
+          "S050",
+          "S081",
+          "S099"
+        ],
+        "aleatorio": [
+          "S103",
+          "S062",
+          "S129",
+          "S056",
+          "S144",
+          "S065",
+          "S115",
+          "S009",
+          "S147",
+          "S098"
+        ]
+      },
+      "metrics": {
+        "hibrido": {
+          "@5": {
+            "precision": 1,
+            "recall": 0.5,
+            "hitRate": 1,
+            "ndcg": 1,
+            "coverage": 1
+          },
+          "@10": {
+            "precision": 0.8,
+            "recall": 0.8,
+            "hitRate": 1,
+            "ndcg": 0.9470511754820309,
+            "coverage": 1
+          }
+        },
+        "hibrido_sin_semantica": {
+          "@5": {
+            "precision": 1,
+            "recall": 0.5,
+            "hitRate": 1,
+            "ndcg": 1,
+            "coverage": 1
+          },
+          "@10": {
+            "precision": 0.8,
+            "recall": 0.8,
+            "hitRate": 1,
+            "ndcg": 0.9470511754820309,
+            "coverage": 1
+          }
+        },
+        "solo_habilidades": {
+          "@5": {
+            "precision": 1,
+            "recall": 0.5,
+            "hitRate": 1,
+            "ndcg": 1,
+            "coverage": 1
+          },
+          "@10": {
+            "precision": 0.8,
+            "recall": 0.8,
+            "hitRate": 1,
+            "ndcg": 0.9470511754820309,
+            "coverage": 1
+          }
+        },
+        "aleatorio": {
+          "@5": {
+            "precision": 0,
+            "recall": 0,
+            "hitRate": 0,
+            "ndcg": 0,
+            "coverage": 0
+          },
+          "@10": {
+            "precision": 0,
+            "recall": 0,
+            "hitRate": 0,
+            "ndcg": 0,
+            "coverage": 0
+          }
+        }
+      }
+    },
+    {
+      "needId": "N03",
+      "needKind": "INNOVACION",
+      "profile": "Desarrollador móvil",
+      "archetype": "mobile",
+      "relevantCount": 16,
+      "rankings": {
+        "hibrido": [
+          "S123",
+          "S138",
+          "S092",
+          "S108",
+          "S052",
+          "S048",
+          "S093",
+          "S098"
+        ],
+        "hibrido_sin_semantica": [
+          "S123",
+          "S138",
+          "S092",
+          "S108",
+          "S052",
+          "S048",
+          "S093",
+          "S098"
+        ],
+        "solo_habilidades": [
+          "S123",
+          "S092",
+          "S138",
+          "S108",
+          "S052",
+          "S093",
+          "S048",
+          "S098"
+        ],
+        "aleatorio": [
+          "S019",
+          "S090",
+          "S062",
+          "S093",
+          "S097",
+          "S115",
+          "S089",
+          "S006",
+          "S081",
+          "S067"
+        ]
+      },
+      "metrics": {
+        "hibrido": {
+          "@5": {
+            "precision": 1,
+            "recall": 0.3125,
+            "hitRate": 1,
+            "ndcg": 0.7994765465672333,
+            "coverage": 1
+          },
+          "@10": {
+            "precision": 0.8,
+            "recall": 0.5,
+            "hitRate": 1,
+            "ndcg": 0.9056825333501715,
+            "coverage": 1
+          }
+        },
+        "hibrido_sin_semantica": {
+          "@5": {
+            "precision": 1,
+            "recall": 0.3125,
+            "hitRate": 1,
+            "ndcg": 0.7994765465672333,
+            "coverage": 1
+          },
+          "@10": {
+            "precision": 0.8,
+            "recall": 0.5,
+            "hitRate": 1,
+            "ndcg": 0.9056825333501715,
+            "coverage": 1
+          }
+        },
+        "solo_habilidades": {
+          "@5": {
+            "precision": 1,
+            "recall": 0.3125,
+            "hitRate": 1,
+            "ndcg": 0.7698724385020871,
+            "coverage": 1
+          },
+          "@10": {
+            "precision": 0.8,
+            "recall": 0.5,
+            "hitRate": 1,
+            "ndcg": 0.8806013524137077,
+            "coverage": 1
+          }
+        },
+        "aleatorio": {
+          "@5": {
+            "precision": 0.4,
+            "recall": 0.125,
+            "hitRate": 1,
+            "ndcg": 0.20259505072164247,
+            "coverage": 0.6666666666666666
+          },
+          "@10": {
+            "precision": 0.2,
+            "recall": 0.125,
+            "hitRate": 1,
+            "ndcg": 0.17164250018273472,
+            "coverage": 0.6666666666666666
+          }
+        }
+      }
+    },
+    {
+      "needId": "N03",
+      "needKind": "INNOVACION",
+      "profile": "Especialista agroambiental",
+      "archetype": "environment",
+      "relevantCount": 12,
+      "rankings": {
+        "hibrido": [
+          "S147",
+          "S012",
+          "S057",
+          "S123",
+          "S072",
+          "S117",
+          "S027",
+          "S102",
+          "S099",
+          "S087"
+        ],
+        "hibrido_sin_semantica": [
+          "S147",
+          "S012",
+          "S057",
+          "S123",
+          "S072",
+          "S117",
+          "S027",
+          "S102",
+          "S099",
+          "S087"
+        ],
+        "solo_habilidades": [
+          "S123",
+          "S147",
+          "S012",
+          "S057",
+          "S072",
+          "S027",
+          "S117",
+          "S102",
+          "S087",
+          "S099"
+        ],
+        "aleatorio": [
+          "S051",
+          "S126",
+          "S147",
+          "S087",
+          "S140",
+          "S109",
+          "S123",
+          "S097",
+          "S062",
+          "S125"
+        ]
+      },
+      "metrics": {
+        "hibrido": {
+          "@5": {
+            "precision": 1,
+            "recall": 0.4166666666666667,
+            "hitRate": 1,
+            "ndcg": 0.9026211001048622,
+            "coverage": 1
+          },
+          "@10": {
+            "precision": 1,
+            "recall": 0.8333333333333334,
+            "hitRate": 1,
+            "ndcg": 0.9772520197531691,
+            "coverage": 1
+          }
+        },
+        "hibrido_sin_semantica": {
+          "@5": {
+            "precision": 1,
+            "recall": 0.4166666666666667,
+            "hitRate": 1,
+            "ndcg": 0.9026211001048622,
+            "coverage": 1
+          },
+          "@10": {
+            "precision": 1,
+            "recall": 0.8333333333333334,
+            "hitRate": 1,
+            "ndcg": 0.9772520197531691,
+            "coverage": 1
+          }
+        },
+        "solo_habilidades": {
+          "@5": {
+            "precision": 1,
+            "recall": 0.4166666666666667,
+            "hitRate": 1,
+            "ndcg": 0.7738931964842558,
+            "coverage": 1
+          },
+          "@10": {
+            "precision": 1,
+            "recall": 0.8333333333333334,
+            "hitRate": 1,
+            "ndcg": 0.8877200663062658,
+            "coverage": 1
+          }
+        },
+        "aleatorio": {
+          "@5": {
+            "precision": 0.4,
+            "recall": 0.16666666666666666,
+            "hitRate": 1,
+            "ndcg": 0.3156484524795145,
+            "coverage": 1
+          },
+          "@10": {
+            "precision": 0.3,
+            "recall": 0.25,
+            "hitRate": 1,
+            "ndcg": 0.2510233265233659,
+            "coverage": 1
+          }
+        }
+      }
+    },
+    {
+      "needId": "N04",
+      "needKind": "INFRAESTRUCTURA",
+      "profile": "Ingeniero DevOps",
+      "archetype": "devops",
+      "relevantCount": 18,
+      "rankings": {
+        "hibrido": [
+          "S125",
+          "S035",
+          "S065",
+          "S050",
+          "S005",
+          "S080",
+          "S031",
+          "S140",
+          "S121",
+          "S066"
+        ],
+        "hibrido_sin_semantica": [
+          "S125",
+          "S035",
+          "S065",
+          "S050",
+          "S005",
+          "S080",
+          "S031",
+          "S140",
+          "S121",
+          "S066"
+        ],
+        "solo_habilidades": [
+          "S125",
+          "S050",
+          "S065",
+          "S005",
+          "S035",
+          "S140",
+          "S020",
+          "S080",
+          "S031",
+          "S121"
+        ],
+        "aleatorio": [
+          "S105",
+          "S145",
+          "S019",
+          "S024",
+          "S047",
+          "S058",
+          "S046",
+          "S131",
+          "S124",
+          "S044"
+        ]
+      },
+      "metrics": {
+        "hibrido": {
+          "@5": {
+            "precision": 1,
+            "recall": 0.2777777777777778,
+            "hitRate": 1,
+            "ndcg": 1,
+            "coverage": 1
+          },
+          "@10": {
+            "precision": 0.9,
+            "recall": 0.5,
+            "hitRate": 1,
+            "ndcg": 0.8806523108627603,
+            "coverage": 1
+          }
+        },
+        "hibrido_sin_semantica": {
+          "@5": {
+            "precision": 1,
+            "recall": 0.2777777777777778,
+            "hitRate": 1,
+            "ndcg": 1,
+            "coverage": 1
+          },
+          "@10": {
+            "precision": 0.9,
+            "recall": 0.5,
+            "hitRate": 1,
+            "ndcg": 0.8806523108627603,
+            "coverage": 1
+          }
+        },
+        "solo_habilidades": {
+          "@5": {
+            "precision": 1,
+            "recall": 0.2777777777777778,
+            "hitRate": 1,
+            "ndcg": 1,
+            "coverage": 1
+          },
+          "@10": {
+            "precision": 1,
+            "recall": 0.5555555555555556,
+            "hitRate": 1,
+            "ndcg": 0.9538741420719156,
+            "coverage": 1
+          }
+        },
+        "aleatorio": {
+          "@5": {
+            "precision": 0,
+            "recall": 0,
+            "hitRate": 0,
+            "ndcg": 0,
+            "coverage": 0.3333333333333333
+          },
+          "@10": {
+            "precision": 0.1,
+            "recall": 0.05555555555555555,
+            "hitRate": 1,
+            "ndcg": 0.025537797225347766,
+            "coverage": 0.3333333333333333
+          }
+        }
+      }
+    },
+    {
+      "needId": "N04",
+      "needKind": "INFRAESTRUCTURA",
+      "profile": "Analista de seguridad",
+      "archetype": "devops",
+      "relevantCount": 10,
+      "rankings": {
+        "hibrido": [
+          "S035",
+          "S095",
+          "S140",
+          "S050",
+          "S005",
+          "S065",
+          "S080",
+          "S020"
+        ],
+        "hibrido_sin_semantica": [
+          "S035",
+          "S095",
+          "S140",
+          "S050",
+          "S005",
+          "S065",
+          "S080",
+          "S020"
+        ],
+        "solo_habilidades": [
+          "S095",
+          "S035",
+          "S140",
+          "S065",
+          "S080",
+          "S005",
+          "S050",
+          "S020"
+        ],
+        "aleatorio": [
+          "S097",
+          "S020",
+          "S123",
+          "S055",
+          "S091",
+          "S108",
+          "S040",
+          "S031",
+          "S008",
+          "S109"
+        ]
+      },
+      "metrics": {
+        "hibrido": {
+          "@5": {
+            "precision": 1,
+            "recall": 0.5,
+            "hitRate": 1,
+            "ndcg": 1,
+            "coverage": 1
+          },
+          "@10": {
+            "precision": 0.8,
+            "recall": 0.8,
+            "hitRate": 1,
+            "ndcg": 0.9086649763494136,
+            "coverage": 1
+          }
+        },
+        "hibrido_sin_semantica": {
+          "@5": {
+            "precision": 1,
+            "recall": 0.5,
+            "hitRate": 1,
+            "ndcg": 1,
+            "coverage": 1
+          },
+          "@10": {
+            "precision": 0.8,
+            "recall": 0.8,
+            "hitRate": 1,
+            "ndcg": 0.9086649763494136,
+            "coverage": 1
+          }
+        },
+        "solo_habilidades": {
+          "@5": {
+            "precision": 1,
+            "recall": 0.5,
+            "hitRate": 1,
+            "ndcg": 1,
+            "coverage": 1
+          },
+          "@10": {
+            "precision": 0.8,
+            "recall": 0.8,
+            "hitRate": 1,
+            "ndcg": 0.9086649763494136,
+            "coverage": 1
+          }
+        },
+        "aleatorio": {
+          "@5": {
+            "precision": 0.2,
+            "recall": 0.1,
+            "hitRate": 1,
+            "ndcg": 0.21398626473452753,
+            "coverage": 0.5
+          },
+          "@10": {
+            "precision": 0.1,
+            "recall": 0.1,
+            "hitRate": 1,
+            "ndcg": 0.14501300499131864,
+            "coverage": 0.5
+          }
+        }
+      }
+    },
+    {
+      "needId": "N05",
+      "needKind": "ACADEMICA",
+      "profile": "Desarrollador full stack",
+      "archetype": "backend",
+      "relevantCount": 20,
+      "rankings": {
+        "hibrido": [
+          "S123",
+          "S094",
+          "S138",
+          "S079",
+          "S112",
+          "S108",
+          "S093",
+          "S001",
+          "S016",
+          "S088"
+        ],
+        "hibrido_sin_semantica": [
+          "S123",
+          "S094",
+          "S138",
+          "S079",
+          "S112",
+          "S108",
+          "S093",
+          "S001",
+          "S016",
+          "S088"
+        ],
+        "solo_habilidades": [
+          "S138",
+          "S112",
+          "S093",
+          "S079",
+          "S108",
+          "S094",
+          "S069",
+          "S123",
+          "S001",
+          "S016"
+        ],
+        "aleatorio": [
+          "S082",
+          "S114",
+          "S031",
+          "S050",
+          "S011",
+          "S092",
+          "S124",
+          "S036",
+          "S118",
+          "S057"
+        ]
+      },
+      "metrics": {
+        "hibrido": {
+          "@5": {
+            "precision": 0.2,
+            "recall": 0.05,
+            "hitRate": 1,
+            "ndcg": 0.04868944994756881,
+            "coverage": 0.75
+          },
+          "@10": {
+            "precision": 0.3,
+            "recall": 0.15,
+            "hitRate": 1,
+            "ndcg": 0.18313829205780327,
+            "coverage": 1
+          }
+        },
+        "hibrido_sin_semantica": {
+          "@5": {
+            "precision": 0.2,
+            "recall": 0.05,
+            "hitRate": 1,
+            "ndcg": 0.04868944994756881,
+            "coverage": 0.75
+          },
+          "@10": {
+            "precision": 0.3,
+            "recall": 0.15,
+            "hitRate": 1,
+            "ndcg": 0.18313829205780327,
+            "coverage": 1
+          }
+        },
+        "solo_habilidades": {
+          "@5": {
+            "precision": 0.2,
+            "recall": 0.05,
+            "hitRate": 1,
+            "ndcg": 0.04868944994756881,
+            "coverage": 0.75
+          },
+          "@10": {
+            "precision": 0.3,
+            "recall": 0.15,
+            "hitRate": 1,
+            "ndcg": 0.1767770836418794,
+            "coverage": 1
+          }
+        },
+        "aleatorio": {
+          "@5": {
+            "precision": 0.2,
+            "recall": 0.05,
+            "hitRate": 1,
+            "ndcg": 0.16958010263680803,
+            "coverage": 0
+          },
+          "@10": {
+            "precision": 0.2,
+            "recall": 0.1,
+            "hitRate": 1,
+            "ndcg": 0.1490870985860856,
+            "coverage": 0
+          }
+        }
+      }
+    },
+    {
+      "needId": "N05",
+      "needKind": "ACADEMICA",
+      "profile": "Scrum Master",
+      "archetype": "pm",
+      "relevantCount": 10,
+      "rankings": {
+        "hibrido": [
+          "S143",
+          "S008",
+          "S083",
+          "S038",
+          "S128",
+          "S098",
+          "S113",
+          "S053",
+          "S072",
+          "S041"
+        ],
+        "hibrido_sin_semantica": [
+          "S143",
+          "S008",
+          "S083",
+          "S038",
+          "S128",
+          "S098",
+          "S113",
+          "S053",
+          "S072",
+          "S041"
+        ],
+        "solo_habilidades": [
+          "S143",
+          "S083",
+          "S008",
+          "S098",
+          "S113",
+          "S128",
+          "S072",
+          "S038",
+          "S053",
+          "S011"
+        ],
+        "aleatorio": [
+          "S059",
+          "S060",
+          "S036",
+          "S052",
+          "S028",
+          "S022",
+          "S040",
+          "S066",
+          "S044",
+          "S057"
+        ]
+      },
+      "metrics": {
+        "hibrido": {
+          "@5": {
+            "precision": 1,
+            "recall": 0.5,
+            "hitRate": 1,
+            "ndcg": 1,
+            "coverage": 1
+          },
+          "@10": {
+            "precision": 0.9,
+            "recall": 0.9,
+            "hitRate": 1,
+            "ndcg": 0.9767828523893562,
+            "coverage": 1
+          }
+        },
+        "hibrido_sin_semantica": {
+          "@5": {
+            "precision": 1,
+            "recall": 0.5,
+            "hitRate": 1,
+            "ndcg": 1,
+            "coverage": 1
+          },
+          "@10": {
+            "precision": 0.9,
+            "recall": 0.9,
+            "hitRate": 1,
+            "ndcg": 0.9767828523893562,
+            "coverage": 1
+          }
+        },
+        "solo_habilidades": {
+          "@5": {
+            "precision": 1,
+            "recall": 0.5,
+            "hitRate": 1,
+            "ndcg": 1,
+            "coverage": 1
+          },
+          "@10": {
+            "precision": 0.9,
+            "recall": 0.9,
+            "hitRate": 1,
+            "ndcg": 0.9715937647473958,
+            "coverage": 1
+          }
+        },
+        "aleatorio": {
+          "@5": {
+            "precision": 0,
+            "recall": 0,
+            "hitRate": 0,
+            "ndcg": 0,
+            "coverage": 0
+          },
+          "@10": {
+            "precision": 0,
+            "recall": 0,
+            "hitRate": 0,
+            "ndcg": 0,
+            "coverage": 0
+          }
+        }
+      }
+    },
+    {
+      "needId": "N06",
+      "needKind": "BIENESTAR",
+      "profile": "Promotor de salud comunitaria",
+      "archetype": "health",
+      "relevantCount": 12,
+      "rankings": {
+        "hibrido": [
+          "S135",
+          "S124",
+          "S105",
+          "S060",
+          "S150",
+          "S120",
+          "S067",
+          "S022",
+          "S142",
+          "S007"
+        ],
+        "hibrido_sin_semantica": [
+          "S135",
+          "S124",
+          "S105",
+          "S060",
+          "S150",
+          "S120",
+          "S067",
+          "S022",
+          "S142",
+          "S007"
+        ],
+        "solo_habilidades": [
+          "S135",
+          "S124",
+          "S105",
+          "S150",
+          "S060",
+          "S120",
+          "S067",
+          "S022",
+          "S142",
+          "S007"
+        ],
+        "aleatorio": [
+          "S061",
+          "S005",
+          "S019",
+          "S010",
+          "S103",
+          "S017",
+          "S139",
+          "S140",
+          "S130",
+          "S087"
+        ]
+      },
+      "metrics": {
+        "hibrido": {
+          "@5": {
+            "precision": 1,
+            "recall": 0.4166666666666667,
+            "hitRate": 1,
+            "ndcg": 0.8573424901769816,
+            "coverage": 1
+          },
+          "@10": {
+            "precision": 0.6,
+            "recall": 0.5,
+            "hitRate": 1,
+            "ndcg": 0.6628697455168318,
+            "coverage": 1
+          }
+        },
+        "hibrido_sin_semantica": {
+          "@5": {
+            "precision": 1,
+            "recall": 0.4166666666666667,
+            "hitRate": 1,
+            "ndcg": 0.8573424901769816,
+            "coverage": 1
+          },
+          "@10": {
+            "precision": 0.6,
+            "recall": 0.5,
+            "hitRate": 1,
+            "ndcg": 0.6628697455168318,
+            "coverage": 1
+          }
+        },
+        "solo_habilidades": {
+          "@5": {
+            "precision": 1,
+            "recall": 0.4166666666666667,
+            "hitRate": 1,
+            "ndcg": 0.8573424901769816,
+            "coverage": 1
+          },
+          "@10": {
+            "precision": 0.6,
+            "recall": 0.5,
+            "hitRate": 1,
+            "ndcg": 0.6628697455168318,
+            "coverage": 1
+          }
+        },
+        "aleatorio": {
+          "@5": {
+            "precision": 0,
+            "recall": 0,
+            "hitRate": 0,
+            "ndcg": 0,
+            "coverage": 0
+          },
+          "@10": {
+            "precision": 0,
+            "recall": 0,
+            "hitRate": 0,
+            "ndcg": 0,
+            "coverage": 0
+          }
+        }
+      }
+    },
+    {
+      "needId": "N06",
+      "needKind": "BIENESTAR",
+      "profile": "Productor audiovisual",
+      "archetype": "communication",
+      "relevantCount": 9,
+      "rankings": {
+        "hibrido": [
+          "S088",
+          "S133",
+          "S103",
+          "S118",
+          "S028",
+          "S058",
+          "S013",
+          "S125",
+          "S043",
+          "S145"
+        ],
+        "hibrido_sin_semantica": [
+          "S088",
+          "S133",
+          "S103",
+          "S118",
+          "S028",
+          "S058",
+          "S013",
+          "S125",
+          "S043",
+          "S145"
+        ],
+        "solo_habilidades": [
+          "S088",
+          "S133",
+          "S103",
+          "S028",
+          "S118",
+          "S125",
+          "S013",
+          "S058",
+          "S043",
+          "S145"
+        ],
+        "aleatorio": [
+          "S016",
+          "S128",
+          "S114",
+          "S001",
+          "S117",
+          "S066",
+          "S014",
+          "S099",
+          "S079",
+          "S121"
+        ]
+      },
+      "metrics": {
+        "hibrido": {
+          "@5": {
+            "precision": 1,
+            "recall": 0.5555555555555556,
+            "hitRate": 1,
+            "ndcg": 1,
+            "coverage": 1
+          },
+          "@10": {
+            "precision": 0.9,
+            "recall": 1,
+            "hitRate": 1,
+            "ndcg": 0.997626119825604,
+            "coverage": 1
+          }
+        },
+        "hibrido_sin_semantica": {
+          "@5": {
+            "precision": 1,
+            "recall": 0.5555555555555556,
+            "hitRate": 1,
+            "ndcg": 1,
+            "coverage": 1
+          },
+          "@10": {
+            "precision": 0.9,
+            "recall": 1,
+            "hitRate": 1,
+            "ndcg": 0.997626119825604,
+            "coverage": 1
+          }
+        },
+        "solo_habilidades": {
+          "@5": {
+            "precision": 1,
+            "recall": 0.5555555555555556,
+            "hitRate": 1,
+            "ndcg": 1,
+            "coverage": 1
+          },
+          "@10": {
+            "precision": 0.9,
+            "recall": 1,
+            "hitRate": 1,
+            "ndcg": 0.9909258663273284,
+            "coverage": 1
+          }
+        },
+        "aleatorio": {
+          "@5": {
+            "precision": 0,
+            "recall": 0,
+            "hitRate": 0,
+            "ndcg": 0,
+            "coverage": 0
+          },
+          "@10": {
+            "precision": 0,
+            "recall": 0,
+            "hitRate": 0,
+            "ndcg": 0,
+            "coverage": 0
+          }
+        }
+      }
+    },
+    {
+      "needId": "N07",
+      "needKind": "INFRAESTRUCTURA",
+      "profile": "Ingeniero estructural",
+      "archetype": "civil",
+      "relevantCount": 8,
+      "rankings": {
+        "hibrido": [
+          "S040",
+          "S025",
+          "S115",
+          "S010",
+          "S070",
+          "S055",
+          "S130",
+          "S145",
+          "S087",
+          "S112"
+        ],
+        "hibrido_sin_semantica": [
+          "S040",
+          "S025",
+          "S115",
+          "S010",
+          "S070",
+          "S055",
+          "S130",
+          "S145",
+          "S087",
+          "S112"
+        ],
+        "solo_habilidades": [
+          "S040",
+          "S115",
+          "S055",
+          "S010",
+          "S025",
+          "S070",
+          "S145",
+          "S130",
+          "S087",
+          "S112"
+        ],
+        "aleatorio": [
+          "S016",
+          "S079",
+          "S086",
+          "S025",
+          "S092",
+          "S131",
+          "S096",
+          "S028",
+          "S014",
+          "S027"
+        ]
+      },
+      "metrics": {
+        "hibrido": {
+          "@5": {
+            "precision": 1,
+            "recall": 0.625,
+            "hitRate": 1,
+            "ndcg": 1,
+            "coverage": 1
+          },
+          "@10": {
+            "precision": 0.8,
+            "recall": 1,
+            "hitRate": 1,
+            "ndcg": 1,
+            "coverage": 1
+          }
+        },
+        "hibrido_sin_semantica": {
+          "@5": {
+            "precision": 1,
+            "recall": 0.625,
+            "hitRate": 1,
+            "ndcg": 1,
+            "coverage": 1
+          },
+          "@10": {
+            "precision": 0.8,
+            "recall": 1,
+            "hitRate": 1,
+            "ndcg": 1,
+            "coverage": 1
+          }
+        },
+        "solo_habilidades": {
+          "@5": {
+            "precision": 1,
+            "recall": 0.625,
+            "hitRate": 1,
+            "ndcg": 1,
+            "coverage": 1
+          },
+          "@10": {
+            "precision": 0.8,
+            "recall": 1,
+            "hitRate": 1,
+            "ndcg": 1,
+            "coverage": 1
+          }
+        },
+        "aleatorio": {
+          "@5": {
+            "precision": 0.2,
+            "recall": 0.125,
+            "hitRate": 1,
+            "ndcg": 0.14606834984270645,
+            "coverage": 0.6666666666666666
+          },
+          "@10": {
+            "precision": 0.1,
+            "recall": 0.125,
+            "hitRate": 1,
+            "ndcg": 0.1089364926177559,
+            "coverage": 0.6666666666666666
+          }
+        }
+      }
+    },
+    {
+      "needId": "N07",
+      "needKind": "INFRAESTRUCTURA",
+      "profile": "Especialista ambiental",
+      "archetype": "environment",
+      "relevantCount": 12,
+      "rankings": {
+        "hibrido": [
+          "S147",
+          "S012",
+          "S072",
+          "S057",
+          "S117",
+          "S102",
+          "S123",
+          "S027",
+          "S134",
+          "S017"
+        ],
+        "hibrido_sin_semantica": [
+          "S147",
+          "S012",
+          "S072",
+          "S057",
+          "S117",
+          "S102",
+          "S123",
+          "S027",
+          "S134",
+          "S017"
+        ],
+        "solo_habilidades": [
+          "S072",
+          "S147",
+          "S117",
+          "S057",
+          "S012",
+          "S123",
+          "S027",
+          "S134",
+          "S102",
+          "S093"
+        ],
+        "aleatorio": [
+          "S101",
+          "S028",
+          "S031",
+          "S145",
+          "S118",
+          "S044",
+          "S034",
+          "S114",
+          "S150",
+          "S082"
+        ]
+      },
+      "metrics": {
+        "hibrido": {
+          "@5": {
+            "precision": 1,
+            "recall": 0.4166666666666667,
+            "hitRate": 1,
+            "ndcg": 1,
+            "coverage": 1
+          },
+          "@10": {
+            "precision": 0.9,
+            "recall": 0.75,
+            "hitRate": 1,
+            "ndcg": 0.9232374293634695,
+            "coverage": 1
+          }
+        },
+        "hibrido_sin_semantica": {
+          "@5": {
+            "precision": 1,
+            "recall": 0.4166666666666667,
+            "hitRate": 1,
+            "ndcg": 1,
+            "coverage": 1
+          },
+          "@10": {
+            "precision": 0.9,
+            "recall": 0.75,
+            "hitRate": 1,
+            "ndcg": 0.9232374293634695,
+            "coverage": 1
+          }
+        },
+        "solo_habilidades": {
+          "@5": {
+            "precision": 1,
+            "recall": 0.4166666666666667,
+            "hitRate": 1,
+            "ndcg": 1,
+            "coverage": 1
+          },
+          "@10": {
+            "precision": 0.9,
+            "recall": 0.75,
+            "hitRate": 1,
+            "ndcg": 0.9172442933856985,
+            "coverage": 1
+          }
+        },
+        "aleatorio": {
+          "@5": {
+            "precision": 0,
+            "recall": 0,
+            "hitRate": 0,
+            "ndcg": 0,
+            "coverage": 0
+          },
+          "@10": {
+            "precision": 0.1,
+            "recall": 0.08333333333333333,
+            "hitRate": 1,
+            "ndcg": 0.02860989677784037,
+            "coverage": 0
+          }
+        }
+      }
+    },
+    {
+      "needId": "N08",
+      "needKind": "ADMINISTRATIVA",
+      "profile": "Asesor contable",
+      "archetype": "finance_legal",
+      "relevantCount": 11,
+      "rankings": {
+        "hibrido": [
+          "S089",
+          "S029",
+          "S044",
+          "S149",
+          "S059",
+          "S014",
+          "S134",
+          "S022",
+          "S119",
+          "S038"
+        ],
+        "hibrido_sin_semantica": [
+          "S089",
+          "S029",
+          "S044",
+          "S149",
+          "S059",
+          "S014",
+          "S134",
+          "S022",
+          "S119",
+          "S038"
+        ],
+        "solo_habilidades": [
+          "S089",
+          "S149",
+          "S029",
+          "S014",
+          "S059",
+          "S044",
+          "S134",
+          "S022",
+          "S119",
+          "S006"
+        ],
+        "aleatorio": [
+          "S089",
+          "S008",
+          "S038",
+          "S150",
+          "S028",
+          "S067",
+          "S136",
+          "S115",
+          "S039",
+          "S093"
+        ]
+      },
+      "metrics": {
+        "hibrido": {
+          "@5": {
+            "precision": 1,
+            "recall": 0.45454545454545453,
+            "hitRate": 1,
+            "ndcg": 1,
+            "coverage": 1
+          },
+          "@10": {
+            "precision": 0.9,
+            "recall": 0.8181818181818182,
+            "hitRate": 1,
+            "ndcg": 0.9744640869413792,
+            "coverage": 1
+          }
+        },
+        "hibrido_sin_semantica": {
+          "@5": {
+            "precision": 1,
+            "recall": 0.45454545454545453,
+            "hitRate": 1,
+            "ndcg": 1,
+            "coverage": 1
+          },
+          "@10": {
+            "precision": 0.9,
+            "recall": 0.8181818181818182,
+            "hitRate": 1,
+            "ndcg": 0.9744640869413792,
+            "coverage": 1
+          }
+        },
+        "solo_habilidades": {
+          "@5": {
+            "precision": 1,
+            "recall": 0.45454545454545453,
+            "hitRate": 1,
+            "ndcg": 1,
+            "coverage": 1
+          },
+          "@10": {
+            "precision": 0.9,
+            "recall": 0.8181818181818182,
+            "hitRate": 1,
+            "ndcg": 0.9744640869413792,
+            "coverage": 1
+          }
+        },
+        "aleatorio": {
+          "@5": {
+            "precision": 0.2,
+            "recall": 0.09090909090909091,
+            "hitRate": 1,
+            "ndcg": 0.33916020527361607,
+            "coverage": 1
+          },
+          "@10": {
+            "precision": 0.1,
+            "recall": 0.09090909090909091,
+            "hitRate": 1,
+            "ndcg": 0.24095440361649045,
+            "coverage": 1
+          }
+        }
+      }
+    },
+    {
+      "needId": "N08",
+      "needKind": "ADMINISTRATIVA",
+      "profile": "Asesor jurídico",
+      "archetype": "finance_legal",
+      "relevantCount": 11,
+      "rankings": {
+        "hibrido": [
+          "S059",
+          "S134",
+          "S089",
+          "S044"
+        ],
+        "hibrido_sin_semantica": [
+          "S059",
+          "S134",
+          "S089",
+          "S044"
+        ],
+        "solo_habilidades": [
+          "S134",
+          "S089",
+          "S059",
+          "S044"
+        ],
+        "aleatorio": [
+          "S038",
+          "S139",
+          "S011",
+          "S129",
+          "S133",
+          "S034",
+          "S032",
+          "S066",
+          "S008",
+          "S006"
+        ]
+      },
+      "metrics": {
+        "hibrido": {
+          "@5": {
+            "precision": 0.8,
+            "recall": 0.36363636363636365,
+            "hitRate": 1,
+            "ndcg": 0.8687949224876581,
+            "coverage": 1
+          },
+          "@10": {
+            "precision": 0.4,
+            "recall": 0.36363636363636365,
+            "hitRate": 1,
+            "ndcg": 0.6172303211226228,
+            "coverage": 1
+          }
+        },
+        "hibrido_sin_semantica": {
+          "@5": {
+            "precision": 0.8,
+            "recall": 0.36363636363636365,
+            "hitRate": 1,
+            "ndcg": 0.8687949224876581,
+            "coverage": 1
+          },
+          "@10": {
+            "precision": 0.4,
+            "recall": 0.36363636363636365,
+            "hitRate": 1,
+            "ndcg": 0.6172303211226228,
+            "coverage": 1
+          }
+        },
+        "solo_habilidades": {
+          "@5": {
+            "precision": 0.8,
+            "recall": 0.36363636363636365,
+            "hitRate": 1,
+            "ndcg": 0.8687949224876581,
+            "coverage": 1
+          },
+          "@10": {
+            "precision": 0.4,
+            "recall": 0.36363636363636365,
+            "hitRate": 1,
+            "ndcg": 0.6172303211226228,
+            "coverage": 1
+          }
+        },
+        "aleatorio": {
+          "@5": {
+            "precision": 0.2,
+            "recall": 0.09090909090909091,
+            "hitRate": 1,
+            "ndcg": 0.04373502583744726,
+            "coverage": 0
+          },
+          "@10": {
+            "precision": 0.1,
+            "recall": 0.09090909090909091,
+            "hitRate": 1,
+            "ndcg": 0.03107129581818804,
+            "coverage": 0
+          }
+        }
+      }
+    },
+    {
+      "needId": "N09",
+      "needKind": "TECNOLOGICA",
+      "profile": "Ingeniero de aprendizaje automático",
+      "archetype": "data",
+      "relevantCount": 13,
+      "rankings": {
+        "hibrido": [
+          "S139",
+          "S049",
+          "S109",
+          "S079",
+          "S091",
+          "S124",
+          "S019",
+          "S094",
+          "S006",
+          "S001"
+        ],
+        "hibrido_sin_semantica": [
+          "S139",
+          "S049",
+          "S109",
+          "S079",
+          "S091",
+          "S124",
+          "S019",
+          "S094",
+          "S006",
+          "S001"
+        ],
+        "solo_habilidades": [
+          "S139",
+          "S109",
+          "S091",
+          "S079",
+          "S019",
+          "S006",
+          "S049",
+          "S124",
+          "S034",
+          "S020"
+        ],
+        "aleatorio": [
+          "S149",
+          "S089",
+          "S038",
+          "S010",
+          "S012",
+          "S115",
+          "S140",
+          "S022",
+          "S050",
+          "S095"
+        ]
+      },
+      "metrics": {
+        "hibrido": {
+          "@5": {
+            "precision": 1,
+            "recall": 0.38461538461538464,
+            "hitRate": 1,
+            "ndcg": 0.9125299483251055,
+            "coverage": 1
+          },
+          "@10": {
+            "precision": 0.8,
+            "recall": 0.6153846153846154,
+            "hitRate": 1,
+            "ndcg": 0.8904620930610171,
+            "coverage": 1
+          }
+        },
+        "hibrido_sin_semantica": {
+          "@5": {
+            "precision": 1,
+            "recall": 0.38461538461538464,
+            "hitRate": 1,
+            "ndcg": 0.9125299483251055,
+            "coverage": 1
+          },
+          "@10": {
+            "precision": 0.8,
+            "recall": 0.6153846153846154,
+            "hitRate": 1,
+            "ndcg": 0.8904620930610171,
+            "coverage": 1
+          }
+        },
+        "solo_habilidades": {
+          "@5": {
+            "precision": 1,
+            "recall": 0.38461538461538464,
+            "hitRate": 1,
+            "ndcg": 0.8869465982421278,
+            "coverage": 1
+          },
+          "@10": {
+            "precision": 0.9,
+            "recall": 0.6923076923076923,
+            "hitRate": 1,
+            "ndcg": 0.8822085105115749,
+            "coverage": 1
+          }
+        },
+        "aleatorio": {
+          "@5": {
+            "precision": 0,
+            "recall": 0,
+            "hitRate": 0,
+            "ndcg": 0,
+            "coverage": 0
+          },
+          "@10": {
+            "precision": 0,
+            "recall": 0,
+            "hitRate": 0,
+            "ndcg": 0,
+            "coverage": 0
+          }
+        }
+      }
+    },
+    {
+      "needId": "N09",
+      "needKind": "TECNOLOGICA",
+      "profile": "Ingeniero electrónico",
+      "archetype": "iot",
+      "relevantCount": 10,
+      "rankings": {
+        "hibrido": [
+          "S051",
+          "S081",
+          "S006",
+          "S036",
+          "S066",
+          "S119",
+          "S139",
+          "S016"
+        ],
+        "hibrido_sin_semantica": [
+          "S051",
+          "S081",
+          "S006",
+          "S036",
+          "S066",
+          "S119",
+          "S139",
+          "S016"
+        ],
+        "solo_habilidades": [
+          "S051",
+          "S006",
+          "S036",
+          "S081",
+          "S066",
+          "S119",
+          "S139",
+          "S016"
+        ],
+        "aleatorio": [
+          "S082",
+          "S115",
+          "S135",
+          "S098",
+          "S096",
+          "S039",
+          "S050",
+          "S031",
+          "S105",
+          "S059"
+        ]
+      },
+      "metrics": {
+        "hibrido": {
+          "@5": {
+            "precision": 1,
+            "recall": 0.5,
+            "hitRate": 1,
+            "ndcg": 1,
+            "coverage": 1
+          },
+          "@10": {
+            "precision": 0.7,
+            "recall": 0.7,
+            "hitRate": 1,
+            "ndcg": 0.8067067634474486,
+            "coverage": 1
+          }
+        },
+        "hibrido_sin_semantica": {
+          "@5": {
+            "precision": 1,
+            "recall": 0.5,
+            "hitRate": 1,
+            "ndcg": 1,
+            "coverage": 1
+          },
+          "@10": {
+            "precision": 0.7,
+            "recall": 0.7,
+            "hitRate": 1,
+            "ndcg": 0.8067067634474486,
+            "coverage": 1
+          }
+        },
+        "solo_habilidades": {
+          "@5": {
+            "precision": 1,
+            "recall": 0.5,
+            "hitRate": 1,
+            "ndcg": 1,
+            "coverage": 1
+          },
+          "@10": {
+            "precision": 0.7,
+            "recall": 0.7,
+            "hitRate": 1,
+            "ndcg": 0.8067067634474486,
+            "coverage": 1
+          }
+        },
+        "aleatorio": {
+          "@5": {
+            "precision": 0.2,
+            "recall": 0.1,
+            "hitRate": 1,
+            "ndcg": 0.13120507751234178,
+            "coverage": 0
+          },
+          "@10": {
+            "precision": 0.2,
+            "recall": 0.2,
+            "hitRate": 1,
+            "ndcg": 0.12639150102631144,
+            "coverage": 0
+          }
+        }
+      }
+    },
+    {
+      "needId": "N09",
+      "needKind": "TECNOLOGICA",
+      "profile": "Analista de procesos",
+      "archetype": "industrial",
+      "relevantCount": 12,
+      "rankings": {
+        "hibrido": [
+          "S086",
+          "S056",
+          "S116",
+          "S011",
+          "S146",
+          "S101",
+          "S041",
+          "S071",
+          "S131",
+          "S055"
+        ],
+        "hibrido_sin_semantica": [
+          "S086",
+          "S056",
+          "S116",
+          "S011",
+          "S146",
+          "S101",
+          "S041",
+          "S071",
+          "S131",
+          "S055"
+        ],
+        "solo_habilidades": [
+          "S056",
+          "S116",
+          "S086",
+          "S101",
+          "S011",
+          "S146",
+          "S055",
+          "S041",
+          "S131",
+          "S071"
+        ],
+        "aleatorio": [
+          "S129",
+          "S075",
+          "S118",
+          "S142",
+          "S139",
+          "S130",
+          "S146",
+          "S057",
+          "S122",
+          "S005"
+        ]
+      },
+      "metrics": {
+        "hibrido": {
+          "@5": {
+            "precision": 1,
+            "recall": 0.4166666666666667,
+            "hitRate": 1,
+            "ndcg": 1,
+            "coverage": 1
+          },
+          "@10": {
+            "precision": 1,
+            "recall": 0.8333333333333334,
+            "hitRate": 1,
+            "ndcg": 1,
+            "coverage": 1
+          }
+        },
+        "hibrido_sin_semantica": {
+          "@5": {
+            "precision": 1,
+            "recall": 0.4166666666666667,
+            "hitRate": 1,
+            "ndcg": 1,
+            "coverage": 1
+          },
+          "@10": {
+            "precision": 1,
+            "recall": 0.8333333333333334,
+            "hitRate": 1,
+            "ndcg": 1,
+            "coverage": 1
+          }
+        },
+        "solo_habilidades": {
+          "@5": {
+            "precision": 1,
+            "recall": 0.4166666666666667,
+            "hitRate": 1,
+            "ndcg": 1,
+            "coverage": 1
+          },
+          "@10": {
+            "precision": 1,
+            "recall": 0.8333333333333334,
+            "hitRate": 1,
+            "ndcg": 0.993216879066224,
+            "coverage": 1
+          }
+        },
+        "aleatorio": {
+          "@5": {
+            "precision": 0,
+            "recall": 0,
+            "hitRate": 0,
+            "ndcg": 0,
+            "coverage": 0
+          },
+          "@10": {
+            "precision": 0.1,
+            "recall": 0.08333333333333333,
+            "hitRate": 1,
+            "ndcg": 0.0766133916760433,
+            "coverage": 1
+          }
+        }
+      }
+    },
+    {
+      "needId": "N10",
+      "needKind": "ACADEMICA",
+      "profile": "Diseñador instruccional",
+      "archetype": "research",
+      "relevantCount": 14,
+      "rankings": {
+        "hibrido": [
+          "S009",
+          "S099",
+          "S114",
+          "S129",
+          "S084",
+          "S024",
+          "S054",
+          "S069",
+          "S051",
+          "S094"
+        ],
+        "hibrido_sin_semantica": [
+          "S009",
+          "S099",
+          "S114",
+          "S129",
+          "S084",
+          "S024",
+          "S054",
+          "S069",
+          "S051",
+          "S094"
+        ],
+        "solo_habilidades": [
+          "S009",
+          "S099",
+          "S114",
+          "S129",
+          "S024",
+          "S069",
+          "S144",
+          "S084",
+          "S054",
+          "S051"
+        ],
+        "aleatorio": [
+          "S011",
+          "S040",
+          "S147",
+          "S058",
+          "S010",
+          "S029",
+          "S038",
+          "S134",
+          "S043",
+          "S072"
+        ]
+      },
+      "metrics": {
+        "hibrido": {
+          "@5": {
+            "precision": 1,
+            "recall": 0.35714285714285715,
+            "hitRate": 1,
+            "ndcg": 1,
+            "coverage": 1
+          },
+          "@10": {
+            "precision": 0.9,
+            "recall": 0.6428571428571429,
+            "hitRate": 1,
+            "ndcg": 0.8922097294981223,
+            "coverage": 1
+          }
+        },
+        "hibrido_sin_semantica": {
+          "@5": {
+            "precision": 1,
+            "recall": 0.35714285714285715,
+            "hitRate": 1,
+            "ndcg": 1,
+            "coverage": 1
+          },
+          "@10": {
+            "precision": 0.9,
+            "recall": 0.6428571428571429,
+            "hitRate": 1,
+            "ndcg": 0.8922097294981223,
+            "coverage": 1
+          }
+        },
+        "solo_habilidades": {
+          "@5": {
+            "precision": 1,
+            "recall": 0.35714285714285715,
+            "hitRate": 1,
+            "ndcg": 1,
+            "coverage": 1
+          },
+          "@10": {
+            "precision": 1,
+            "recall": 0.7142857142857143,
+            "hitRate": 1,
+            "ndcg": 0.9575861412006988,
+            "coverage": 1
+          }
+        },
+        "aleatorio": {
+          "@5": {
+            "precision": 0,
+            "recall": 0,
+            "hitRate": 0,
+            "ndcg": 0,
+            "coverage": 0
+          },
+          "@10": {
+            "precision": 0,
+            "recall": 0,
+            "hitRate": 0,
+            "ndcg": 0,
+            "coverage": 0
+          }
+        }
+      }
+    },
+    {
+      "needId": "N10",
+      "needKind": "ACADEMICA",
+      "profile": "Desarrollador web de recursos",
+      "archetype": "frontend",
+      "relevantCount": 10,
+      "rankings": {
+        "hibrido": [
+          "S047",
+          "S062",
+          "S122",
+          "S138",
+          "S123",
+          "S092",
+          "S098",
+          "S036",
+          "S017",
+          "S077"
+        ],
+        "hibrido_sin_semantica": [
+          "S047",
+          "S062",
+          "S122",
+          "S138",
+          "S123",
+          "S092",
+          "S098",
+          "S036",
+          "S017",
+          "S077"
+        ],
+        "solo_habilidades": [
+          "S047",
+          "S062",
+          "S122",
+          "S138",
+          "S123",
+          "S098",
+          "S092",
+          "S017",
+          "S077",
+          "S032"
+        ],
+        "aleatorio": [
+          "S053",
+          "S005",
+          "S066",
+          "S015",
+          "S144",
+          "S024",
+          "S036",
+          "S092",
+          "S116",
+          "S051"
+        ]
+      },
+      "metrics": {
+        "hibrido": {
+          "@5": {
+            "precision": 0.6,
+            "recall": 0.3,
+            "hitRate": 1,
+            "ndcg": 0.7227265726449517,
+            "coverage": 1
+          },
+          "@10": {
+            "precision": 0.6,
+            "recall": 0.6,
+            "hitRate": 1,
+            "ndcg": 0.7810524561312434,
+            "coverage": 1
+          }
+        },
+        "hibrido_sin_semantica": {
+          "@5": {
+            "precision": 0.6,
+            "recall": 0.3,
+            "hitRate": 1,
+            "ndcg": 0.7227265726449517,
+            "coverage": 1
+          },
+          "@10": {
+            "precision": 0.6,
+            "recall": 0.6,
+            "hitRate": 1,
+            "ndcg": 0.7810524561312434,
+            "coverage": 1
+          }
+        },
+        "solo_habilidades": {
+          "@5": {
+            "precision": 0.6,
+            "recall": 0.3,
+            "hitRate": 1,
+            "ndcg": 0.7227265726449517,
+            "coverage": 1
+          },
+          "@10": {
+            "precision": 0.7,
+            "recall": 0.7,
+            "hitRate": 1,
+            "ndcg": 0.8553169102869753,
+            "coverage": 1
+          }
+        },
+        "aleatorio": {
+          "@5": {
+            "precision": 0,
+            "recall": 0,
+            "hitRate": 0,
+            "ndcg": 0,
+            "coverage": 0
+          },
+          "@10": {
+            "precision": 0.1,
+            "recall": 0.1,
+            "hitRate": 1,
+            "ndcg": 0.08007021759828019,
+            "coverage": 0.6666666666666666
+          }
+        }
+      }
+    },
+    {
+      "needId": "N11",
+      "needKind": "INNOVACION",
+      "profile": "Gestor de emprendimiento",
+      "archetype": "pm",
+      "relevantCount": 18,
+      "rankings": {
+        "hibrido": [
+          "S053",
+          "S038",
+          "S008",
+          "S113",
+          "S098"
+        ],
+        "hibrido_sin_semantica": [
+          "S053",
+          "S038",
+          "S008",
+          "S113",
+          "S098"
+        ],
+        "solo_habilidades": [
+          "S113",
+          "S053",
+          "S038",
+          "S008",
+          "S098"
+        ],
+        "aleatorio": [
+          "S117",
+          "S032",
+          "S119",
+          "S035",
+          "S139",
+          "S129",
+          "S028",
+          "S096",
+          "S038",
+          "S118"
+        ]
+      },
+      "metrics": {
+        "hibrido": {
+          "@5": {
+            "precision": 1,
+            "recall": 0.2777777777777778,
+            "hitRate": 1,
+            "ndcg": 1,
+            "coverage": 0.6666666666666666
+          },
+          "@10": {
+            "precision": 0.5,
+            "recall": 0.2777777777777778,
+            "hitRate": 1,
+            "ndcg": 0.7104442085771869,
+            "coverage": 0.6666666666666666
+          }
+        },
+        "hibrido_sin_semantica": {
+          "@5": {
+            "precision": 1,
+            "recall": 0.2777777777777778,
+            "hitRate": 1,
+            "ndcg": 1,
+            "coverage": 0.6666666666666666
+          },
+          "@10": {
+            "precision": 0.5,
+            "recall": 0.2777777777777778,
+            "hitRate": 1,
+            "ndcg": 0.7104442085771869,
+            "coverage": 0.6666666666666666
+          }
+        },
+        "solo_habilidades": {
+          "@5": {
+            "precision": 1,
+            "recall": 0.2777777777777778,
+            "hitRate": 1,
+            "ndcg": 1,
+            "coverage": 0.6666666666666666
+          },
+          "@10": {
+            "precision": 0.5,
+            "recall": 0.2777777777777778,
+            "hitRate": 1,
+            "ndcg": 0.7104442085771869,
+            "coverage": 0.6666666666666666
+          }
+        },
+        "aleatorio": {
+          "@5": {
+            "precision": 0,
+            "recall": 0,
+            "hitRate": 0,
+            "ndcg": 0,
+            "coverage": 0
+          },
+          "@10": {
+            "precision": 0.3,
+            "recall": 0.16666666666666666,
+            "hitRate": 1,
+            "ndcg": 0.12252436219947638,
+            "coverage": 0.3333333333333333
+          }
+        }
+      }
+    },
+    {
+      "needId": "N11",
+      "needKind": "INNOVACION",
+      "profile": "Diseñador de experiencia",
+      "archetype": "ux",
+      "relevantCount": 11,
+      "rankings": {
+        "hibrido": [
+          "S052",
+          "S097",
+          "S082",
+          "S067",
+          "S112",
+          "S007",
+          "S022",
+          "S012",
+          "S080",
+          "S142"
+        ],
+        "hibrido_sin_semantica": [
+          "S052",
+          "S097",
+          "S082",
+          "S067",
+          "S112",
+          "S007",
+          "S022",
+          "S012",
+          "S080",
+          "S142"
+        ],
+        "solo_habilidades": [
+          "S112",
+          "S067",
+          "S052",
+          "S097",
+          "S082",
+          "S007",
+          "S012",
+          "S080",
+          "S142",
+          "S122"
+        ],
+        "aleatorio": [
+          "S119",
+          "S093",
+          "S088",
+          "S008",
+          "S057",
+          "S113",
+          "S071",
+          "S080",
+          "S121",
+          "S116"
+        ]
+      },
+      "metrics": {
+        "hibrido": {
+          "@5": {
+            "precision": 1,
+            "recall": 0.45454545454545453,
+            "hitRate": 1,
+            "ndcg": 1,
+            "coverage": 1
+          },
+          "@10": {
+            "precision": 1,
+            "recall": 0.9090909090909091,
+            "hitRate": 1,
+            "ndcg": 0.9957591943893841,
+            "coverage": 1
+          }
+        },
+        "hibrido_sin_semantica": {
+          "@5": {
+            "precision": 1,
+            "recall": 0.45454545454545453,
+            "hitRate": 1,
+            "ndcg": 1,
+            "coverage": 1
+          },
+          "@10": {
+            "precision": 1,
+            "recall": 0.9090909090909091,
+            "hitRate": 1,
+            "ndcg": 0.9957591943893841,
+            "coverage": 1
+          }
+        },
+        "solo_habilidades": {
+          "@5": {
+            "precision": 1,
+            "recall": 0.45454545454545453,
+            "hitRate": 1,
+            "ndcg": 1,
+            "coverage": 1
+          },
+          "@10": {
+            "precision": 0.9,
+            "recall": 0.8181818181818182,
+            "hitRate": 1,
+            "ndcg": 0.9209186639154925,
+            "coverage": 1
+          }
+        },
+        "aleatorio": {
+          "@5": {
+            "precision": 0,
+            "recall": 0,
+            "hitRate": 0,
+            "ndcg": 0,
+            "coverage": 0
+          },
+          "@10": {
+            "precision": 0.1,
+            "recall": 0.09090909090909091,
+            "hitRate": 1,
+            "ndcg": 0.025337550415951638,
+            "coverage": 0.3333333333333333
+          }
+        }
+      }
+    },
+    {
+      "needId": "N11",
+      "needKind": "INNOVACION",
+      "profile": "Desarrollador móvil",
+      "archetype": "mobile",
+      "relevantCount": 10,
+      "rankings": {
+        "hibrido": [
+          "S123",
+          "S108",
+          "S092",
+          "S048",
+          "S138",
+          "S052",
+          "S098",
+          "S093"
+        ],
+        "hibrido_sin_semantica": [
+          "S123",
+          "S108",
+          "S092",
+          "S048",
+          "S138",
+          "S052",
+          "S098",
+          "S093"
+        ],
+        "solo_habilidades": [
+          "S108",
+          "S123",
+          "S092",
+          "S048",
+          "S138",
+          "S098",
+          "S052",
+          "S093"
+        ],
+        "aleatorio": [
+          "S043",
+          "S075",
+          "S144",
+          "S114",
+          "S020",
+          "S142",
+          "S095",
+          "S047",
+          "S012",
+          "S139"
+        ]
+      },
+      "metrics": {
+        "hibrido": {
+          "@5": {
+            "precision": 1,
+            "recall": 0.5,
+            "hitRate": 1,
+            "ndcg": 0.8869465982421278,
+            "coverage": 1
+          },
+          "@10": {
+            "precision": 0.8,
+            "recall": 0.8,
+            "hitRate": 1,
+            "ndcg": 0.9081301538706109,
+            "coverage": 1
+          }
+        },
+        "hibrido_sin_semantica": {
+          "@5": {
+            "precision": 1,
+            "recall": 0.5,
+            "hitRate": 1,
+            "ndcg": 0.8869465982421278,
+            "coverage": 1
+          },
+          "@10": {
+            "precision": 0.8,
+            "recall": 0.8,
+            "hitRate": 1,
+            "ndcg": 0.9081301538706109,
+            "coverage": 1
+          }
+        },
+        "solo_habilidades": {
+          "@5": {
+            "precision": 1,
+            "recall": 0.5,
+            "hitRate": 1,
+            "ndcg": 0.8869465982421278,
+            "coverage": 1
+          },
+          "@10": {
+            "precision": 0.8,
+            "recall": 0.8,
+            "hitRate": 1,
+            "ndcg": 0.9081301538706109,
+            "coverage": 1
+          }
+        },
+        "aleatorio": {
+          "@5": {
+            "precision": 0,
+            "recall": 0,
+            "hitRate": 0,
+            "ndcg": 0,
+            "coverage": 0
+          },
+          "@10": {
+            "precision": 0,
+            "recall": 0,
+            "hitRate": 0,
+            "ndcg": 0,
+            "coverage": 0
+          }
+        }
+      }
+    },
+    {
+      "needId": "N12",
+      "needKind": "ADMINISTRATIVA",
+      "profile": "Ingeniero de mejora continua",
+      "archetype": "industrial",
+      "relevantCount": 12,
+      "rankings": {
+        "hibrido": [
+          "S086",
+          "S056",
+          "S146",
+          "S101",
+          "S011",
+          "S116",
+          "S131",
+          "S041",
+          "S071",
+          "S102"
+        ],
+        "hibrido_sin_semantica": [
+          "S086",
+          "S056",
+          "S146",
+          "S101",
+          "S011",
+          "S116",
+          "S131",
+          "S041",
+          "S071",
+          "S102"
+        ],
+        "solo_habilidades": [
+          "S086",
+          "S101",
+          "S056",
+          "S146",
+          "S116",
+          "S131",
+          "S011",
+          "S055",
+          "S102",
+          "S006"
+        ],
+        "aleatorio": [
+          "S094",
+          "S031",
+          "S015",
+          "S121",
+          "S052",
+          "S066",
+          "S146",
+          "S043",
+          "S147",
+          "S124"
+        ]
+      },
+      "metrics": {
+        "hibrido": {
+          "@5": {
+            "precision": 1,
+            "recall": 0.4166666666666667,
+            "hitRate": 1,
+            "ndcg": 1,
+            "coverage": 1
+          },
+          "@10": {
+            "precision": 1,
+            "recall": 0.8333333333333334,
+            "hitRate": 1,
+            "ndcg": 1,
+            "coverage": 1
+          }
+        },
+        "hibrido_sin_semantica": {
+          "@5": {
+            "precision": 1,
+            "recall": 0.4166666666666667,
+            "hitRate": 1,
+            "ndcg": 1,
+            "coverage": 1
+          },
+          "@10": {
+            "precision": 1,
+            "recall": 0.8333333333333334,
+            "hitRate": 1,
+            "ndcg": 1,
+            "coverage": 1
+          }
+        },
+        "solo_habilidades": {
+          "@5": {
+            "precision": 1,
+            "recall": 0.4166666666666667,
+            "hitRate": 1,
+            "ndcg": 1,
+            "coverage": 1
+          },
+          "@10": {
+            "precision": 1,
+            "recall": 0.8333333333333334,
+            "hitRate": 1,
+            "ndcg": 0.9055364737414761,
+            "coverage": 1
+          }
+        },
+        "aleatorio": {
+          "@5": {
+            "precision": 0,
+            "recall": 0,
+            "hitRate": 0,
+            "ndcg": 0,
+            "coverage": 0
+          },
+          "@10": {
+            "precision": 0.1,
+            "recall": 0.08333333333333333,
+            "hitRate": 1,
+            "ndcg": 0.0766133916760433,
+            "coverage": 1
+          }
+        }
+      }
+    },
+    {
+      "needId": "N12",
+      "needKind": "ADMINISTRATIVA",
+      "profile": "Auditor de calidad",
+      "archetype": "industrial",
+      "relevantCount": 20,
+      "rankings": {
+        "hibrido": [
+          "S041",
+          "S056",
+          "S086",
+          "S146",
+          "S134",
+          "S149",
+          "S089",
+          "S029",
+          "S119",
+          "S071"
+        ],
+        "hibrido_sin_semantica": [
+          "S041",
+          "S056",
+          "S086",
+          "S146",
+          "S134",
+          "S149",
+          "S089",
+          "S029",
+          "S119",
+          "S071"
+        ],
+        "solo_habilidades": [
+          "S041",
+          "S056",
+          "S146",
+          "S134",
+          "S149",
+          "S089",
+          "S014",
+          "S029",
+          "S119",
+          "S086"
+        ],
+        "aleatorio": [
+          "S069",
+          "S138",
+          "S031",
+          "S089",
+          "S105",
+          "S101",
+          "S130",
+          "S046",
+          "S038",
+          "S086"
+        ]
+      },
+      "metrics": {
+        "hibrido": {
+          "@5": {
+            "precision": 1,
+            "recall": 0.25,
+            "hitRate": 1,
+            "ndcg": 0.9125299483251055,
+            "coverage": 1
+          },
+          "@10": {
+            "precision": 1,
+            "recall": 0.5,
+            "hitRate": 1,
+            "ndcg": 0.7848966600369693,
+            "coverage": 1
+          }
+        },
+        "hibrido_sin_semantica": {
+          "@5": {
+            "precision": 1,
+            "recall": 0.25,
+            "hitRate": 1,
+            "ndcg": 0.9125299483251055,
+            "coverage": 1
+          },
+          "@10": {
+            "precision": 1,
+            "recall": 0.5,
+            "hitRate": 1,
+            "ndcg": 0.7848966600369693,
+            "coverage": 1
+          }
+        },
+        "solo_habilidades": {
+          "@5": {
+            "precision": 1,
+            "recall": 0.25,
+            "hitRate": 1,
+            "ndcg": 0.8151510484299677,
+            "coverage": 1
+          },
+          "@10": {
+            "precision": 1,
+            "recall": 0.5,
+            "hitRate": 1,
+            "ndcg": 0.718905476378235,
+            "coverage": 1
+          }
+        },
+        "aleatorio": {
+          "@5": {
+            "precision": 0.2,
+            "recall": 0.05,
+            "hitRate": 1,
+            "ndcg": 0.04868944994756881,
+            "coverage": 0.5
+          },
+          "@10": {
+            "precision": 0.3,
+            "recall": 0.15,
+            "hitRate": 1,
+            "ndcg": 0.18130502433593204,
+            "coverage": 1
+          }
+        }
+      }
+    },
+    {
+      "needId": "N13",
+      "needKind": "INVESTIGATIVA",
+      "profile": "Investigador ambiental",
+      "archetype": "environment",
+      "relevantCount": 12,
+      "rankings": {
+        "hibrido": [
+          "S057",
+          "S099",
+          "S117",
+          "S012",
+          "S147",
+          "S102",
+          "S079",
+          "S025",
+          "S039",
+          "S123"
+        ],
+        "hibrido_sin_semantica": [
+          "S057",
+          "S099",
+          "S117",
+          "S012",
+          "S147",
+          "S102",
+          "S079",
+          "S025",
+          "S039",
+          "S123"
+        ],
+        "solo_habilidades": [
+          "S057",
+          "S099",
+          "S117",
+          "S102",
+          "S079",
+          "S051",
+          "S025",
+          "S039",
+          "S123",
+          "S135"
+        ],
+        "aleatorio": [
+          "S011",
+          "S113",
+          "S049",
+          "S009",
+          "S135",
+          "S069",
+          "S047",
+          "S077",
+          "S015",
+          "S065"
+        ]
+      },
+      "metrics": {
+        "hibrido": {
+          "@5": {
+            "precision": 1,
+            "recall": 0.4166666666666667,
+            "hitRate": 1,
+            "ndcg": 0.8573424901769816,
+            "coverage": 1
+          },
+          "@10": {
+            "precision": 0.7,
+            "recall": 0.5833333333333334,
+            "hitRate": 1,
+            "ndcg": 0.7181408448575453,
+            "coverage": 1
+          }
+        },
+        "hibrido_sin_semantica": {
+          "@5": {
+            "precision": 1,
+            "recall": 0.4166666666666667,
+            "hitRate": 1,
+            "ndcg": 0.8573424901769816,
+            "coverage": 1
+          },
+          "@10": {
+            "precision": 0.7,
+            "recall": 0.5833333333333334,
+            "hitRate": 1,
+            "ndcg": 0.7181408448575453,
+            "coverage": 1
+          }
+        },
+        "solo_habilidades": {
+          "@5": {
+            "precision": 0.8,
+            "recall": 0.3333333333333333,
+            "hitRate": 1,
+            "ndcg": 0.7261374126646398,
+            "coverage": 1
+          },
+          "@10": {
+            "precision": 0.5,
+            "recall": 0.4166666666666667,
+            "hitRate": 1,
+            "ndcg": 0.5400582871507793,
+            "coverage": 1
+          }
+        },
+        "aleatorio": {
+          "@5": {
+            "precision": 0,
+            "recall": 0,
+            "hitRate": 0,
+            "ndcg": 0,
+            "coverage": 0.5
+          },
+          "@10": {
+            "precision": 0,
+            "recall": 0,
+            "hitRate": 0,
+            "ndcg": 0,
+            "coverage": 0.5
+          }
+        }
+      }
+    },
+    {
+      "needId": "N13",
+      "needKind": "INVESTIGATIVA",
+      "profile": "Analista SIG",
+      "archetype": "environment",
+      "relevantCount": 20,
+      "rankings": {
+        "hibrido": [
+          "S012",
+          "S147",
+          "S102",
+          "S057",
+          "S072",
+          "S027",
+          "S049",
+          "S117",
+          "S134",
+          "S044"
+        ],
+        "hibrido_sin_semantica": [
+          "S012",
+          "S147",
+          "S102",
+          "S057",
+          "S072",
+          "S027",
+          "S049",
+          "S117",
+          "S134",
+          "S044"
+        ],
+        "solo_habilidades": [
+          "S027",
+          "S012",
+          "S057",
+          "S072",
+          "S147",
+          "S102",
+          "S117",
+          "S134",
+          "S044",
+          "S069"
+        ],
+        "aleatorio": [
+          "S108",
+          "S058",
+          "S099",
+          "S007",
+          "S126",
+          "S057",
+          "S054",
+          "S139",
+          "S089",
+          "S119"
+        ]
+      },
+      "metrics": {
+        "hibrido": {
+          "@5": {
+            "precision": 1,
+            "recall": 0.25,
+            "hitRate": 1,
+            "ndcg": 1,
+            "coverage": 1
+          },
+          "@10": {
+            "precision": 1,
+            "recall": 0.5,
+            "hitRate": 1,
+            "ndcg": 0.9464545769741133,
+            "coverage": 1
+          }
+        },
+        "hibrido_sin_semantica": {
+          "@5": {
+            "precision": 1,
+            "recall": 0.25,
+            "hitRate": 1,
+            "ndcg": 1,
+            "coverage": 1
+          },
+          "@10": {
+            "precision": 1,
+            "recall": 0.5,
+            "hitRate": 1,
+            "ndcg": 0.9464545769741133,
+            "coverage": 1
+          }
+        },
+        "solo_habilidades": {
+          "@5": {
+            "precision": 1,
+            "recall": 0.25,
+            "hitRate": 1,
+            "ndcg": 1,
+            "coverage": 1
+          },
+          "@10": {
+            "precision": 0.9,
+            "recall": 0.45,
+            "hitRate": 1,
+            "ndcg": 0.926107751557453,
+            "coverage": 1
+          }
+        },
+        "aleatorio": {
+          "@5": {
+            "precision": 0.2,
+            "recall": 0.05,
+            "hitRate": 1,
+            "ndcg": 0.05652670087893601,
+            "coverage": 0
+          },
+          "@10": {
+            "precision": 0.3,
+            "recall": 0.15,
+            "hitRate": 1,
+            "ndcg": 0.15132630801888783,
+            "coverage": 1
+          }
+        }
+      }
+    },
+    {
+      "needId": "N13",
+      "needKind": "INVESTIGATIVA",
+      "profile": "Desarrollador web",
+      "archetype": "frontend",
+      "relevantCount": 18,
+      "rankings": {
+        "hibrido": [
+          "S047",
+          "S062",
+          "S122",
+          "S138",
+          "S092",
+          "S123",
+          "S017",
+          "S077",
+          "S098",
+          "S032"
+        ],
+        "hibrido_sin_semantica": [
+          "S047",
+          "S062",
+          "S122",
+          "S138",
+          "S092",
+          "S123",
+          "S017",
+          "S077",
+          "S098",
+          "S032"
+        ],
+        "solo_habilidades": [
+          "S047",
+          "S062",
+          "S122",
+          "S138",
+          "S092",
+          "S123",
+          "S017",
+          "S077",
+          "S098",
+          "S032"
+        ],
+        "aleatorio": [
+          "S057",
+          "S008",
+          "S119",
+          "S029",
+          "S046",
+          "S113",
+          "S011",
+          "S096",
+          "S053",
+          "S136"
+        ]
+      },
+      "metrics": {
+        "hibrido": {
+          "@5": {
+            "precision": 0.8,
+            "recall": 0.2222222222222222,
+            "hitRate": 1,
+            "ndcg": 0.8539316501572934,
+            "coverage": 1
+          },
+          "@10": {
+            "precision": 0.7,
+            "recall": 0.3888888888888889,
+            "hitRate": 1,
+            "ndcg": 0.8771001632036495,
+            "coverage": 1
+          }
+        },
+        "hibrido_sin_semantica": {
+          "@5": {
+            "precision": 0.8,
+            "recall": 0.2222222222222222,
+            "hitRate": 1,
+            "ndcg": 0.8539316501572934,
+            "coverage": 1
+          },
+          "@10": {
+            "precision": 0.7,
+            "recall": 0.3888888888888889,
+            "hitRate": 1,
+            "ndcg": 0.8771001632036495,
+            "coverage": 1
+          }
+        },
+        "solo_habilidades": {
+          "@5": {
+            "precision": 0.8,
+            "recall": 0.2222222222222222,
+            "hitRate": 1,
+            "ndcg": 0.8539316501572934,
+            "coverage": 1
+          },
+          "@10": {
+            "precision": 0.7,
+            "recall": 0.3888888888888889,
+            "hitRate": 1,
+            "ndcg": 0.8771001632036495,
+            "coverage": 1
+          }
+        },
+        "aleatorio": {
+          "@5": {
+            "precision": 0.2,
+            "recall": 0.05555555555555555,
+            "hitRate": 1,
+            "ndcg": 0.04373502583744726,
+            "coverage": 0
+          },
+          "@10": {
+            "precision": 0.2,
+            "recall": 0.1111111111111111,
+            "hitRate": 1,
+            "ndcg": 0.05718636841444405,
+            "coverage": 0
+          }
+        }
+      }
+    },
+    {
+      "needId": "N14",
+      "needKind": "BIENESTAR",
+      "profile": "Formador docente",
+      "archetype": "research",
+      "relevantCount": 14,
+      "rankings": {
+        "hibrido": [
+          "S069",
+          "S024",
+          "S009",
+          "S028",
+          "S013",
+          "S103",
+          "S043",
+          "S058",
+          "S051",
+          "S099"
+        ],
+        "hibrido_sin_semantica": [
+          "S069",
+          "S024",
+          "S009",
+          "S028",
+          "S013",
+          "S103",
+          "S043",
+          "S058",
+          "S051",
+          "S099"
+        ],
+        "solo_habilidades": [
+          "S069",
+          "S024",
+          "S144",
+          "S009",
+          "S051",
+          "S133",
+          "S028",
+          "S013",
+          "S103",
+          "S043"
+        ],
+        "aleatorio": [
+          "S115",
+          "S128",
+          "S117",
+          "S113",
+          "S133",
+          "S105",
+          "S080",
+          "S019",
+          "S061",
+          "S020"
+        ]
+      },
+      "metrics": {
+        "hibrido": {
+          "@5": {
+            "precision": 0.6,
+            "recall": 0.21428571428571427,
+            "hitRate": 1,
+            "ndcg": 0.7227265726449517,
+            "coverage": 1
+          },
+          "@10": {
+            "precision": 0.5,
+            "recall": 0.35714285714285715,
+            "hitRate": 1,
+            "ndcg": 0.5547056226710895,
+            "coverage": 1
+          }
+        },
+        "hibrido_sin_semantica": {
+          "@5": {
+            "precision": 0.6,
+            "recall": 0.21428571428571427,
+            "hitRate": 1,
+            "ndcg": 0.7227265726449517,
+            "coverage": 1
+          },
+          "@10": {
+            "precision": 0.5,
+            "recall": 0.35714285714285715,
+            "hitRate": 1,
+            "ndcg": 0.5547056226710895,
+            "coverage": 1
+          }
+        },
+        "solo_habilidades": {
+          "@5": {
+            "precision": 1,
+            "recall": 0.35714285714285715,
+            "hitRate": 1,
+            "ndcg": 0.9125299483251055,
+            "coverage": 0.6666666666666666
+          },
+          "@10": {
+            "precision": 0.5,
+            "recall": 0.35714285714285715,
+            "hitRate": 1,
+            "ndcg": 0.5921694969040993,
+            "coverage": 1
+          }
+        },
+        "aleatorio": {
+          "@5": {
+            "precision": 0,
+            "recall": 0,
+            "hitRate": 0,
+            "ndcg": 0,
+            "coverage": 0.3333333333333333
+          },
+          "@10": {
+            "precision": 0,
+            "recall": 0,
+            "hitRate": 0,
+            "ndcg": 0,
+            "coverage": 0.3333333333333333
+          }
+        }
+      }
+    },
+    {
+      "needId": "N14",
+      "needKind": "BIENESTAR",
+      "profile": "Comunicador",
+      "archetype": "communication",
+      "relevantCount": 9,
+      "rankings": {
+        "hibrido": [
+          "S133",
+          "S125",
+          "S013",
+          "S088",
+          "S103",
+          "S043"
+        ],
+        "hibrido_sin_semantica": [
+          "S133",
+          "S125",
+          "S013",
+          "S088",
+          "S103",
+          "S043"
+        ],
+        "solo_habilidades": [
+          "S133",
+          "S125",
+          "S013",
+          "S088",
+          "S103",
+          "S043"
+        ],
+        "aleatorio": [
+          "S109",
+          "S087",
+          "S032",
+          "S077",
+          "S055",
+          "S083",
+          "S048",
+          "S054",
+          "S082",
+          "S079"
+        ]
+      },
+      "metrics": {
+        "hibrido": {
+          "@5": {
+            "precision": 1,
+            "recall": 0.5555555555555556,
+            "hitRate": 1,
+            "ndcg": 0.8573424901769816,
+            "coverage": 1
+          },
+          "@10": {
+            "precision": 0.6,
+            "recall": 0.6666666666666666,
+            "hitRate": 1,
+            "ndcg": 0.7114413357554493,
+            "coverage": 1
+          }
+        },
+        "hibrido_sin_semantica": {
+          "@5": {
+            "precision": 1,
+            "recall": 0.5555555555555556,
+            "hitRate": 1,
+            "ndcg": 0.8573424901769816,
+            "coverage": 1
+          },
+          "@10": {
+            "precision": 0.6,
+            "recall": 0.6666666666666666,
+            "hitRate": 1,
+            "ndcg": 0.7114413357554493,
+            "coverage": 1
+          }
+        },
+        "solo_habilidades": {
+          "@5": {
+            "precision": 1,
+            "recall": 0.5555555555555556,
+            "hitRate": 1,
+            "ndcg": 0.8573424901769816,
+            "coverage": 1
+          },
+          "@10": {
+            "precision": 0.6,
+            "recall": 0.6666666666666666,
+            "hitRate": 1,
+            "ndcg": 0.7114413357554493,
+            "coverage": 1
+          }
+        },
+        "aleatorio": {
+          "@5": {
+            "precision": 0,
+            "recall": 0,
+            "hitRate": 0,
+            "ndcg": 0,
+            "coverage": 0
+          },
+          "@10": {
+            "precision": 0,
+            "recall": 0,
+            "hitRate": 0,
+            "ndcg": 0,
+            "coverage": 0
+          }
+        }
+      }
+    },
+    {
+      "needId": "N15",
+      "needKind": "TECNOLOGICA",
+      "profile": "Desarrollador de hardware",
+      "archetype": "iot",
+      "relevantCount": 10,
+      "rankings": {
+        "hibrido": [
+          "S051",
+          "S036",
+          "S006",
+          "S066",
+          "S126",
+          "S096",
+          "S139",
+          "S050",
+          "S081",
+          "S016"
+        ],
+        "hibrido_sin_semantica": [
+          "S051",
+          "S036",
+          "S006",
+          "S066",
+          "S126",
+          "S096",
+          "S139",
+          "S050",
+          "S081",
+          "S016"
+        ],
+        "solo_habilidades": [
+          "S051",
+          "S036",
+          "S006",
+          "S066",
+          "S126",
+          "S096",
+          "S139",
+          "S050",
+          "S081",
+          "S016"
+        ],
+        "aleatorio": [
+          "S123",
+          "S010",
+          "S088",
+          "S124",
+          "S146",
+          "S101",
+          "S007",
+          "S102",
+          "S048",
+          "S099"
+        ]
+      },
+      "metrics": {
+        "hibrido": {
+          "@5": {
+            "precision": 1,
+            "recall": 0.5,
+            "hitRate": 1,
+            "ndcg": 1,
+            "coverage": 1
+          },
+          "@10": {
+            "precision": 0.9,
+            "recall": 0.9,
+            "hitRate": 1,
+            "ndcg": 0.9700774357888464,
+            "coverage": 1
+          }
+        },
+        "hibrido_sin_semantica": {
+          "@5": {
+            "precision": 1,
+            "recall": 0.5,
+            "hitRate": 1,
+            "ndcg": 1,
+            "coverage": 1
+          },
+          "@10": {
+            "precision": 0.9,
+            "recall": 0.9,
+            "hitRate": 1,
+            "ndcg": 0.9700774357888464,
+            "coverage": 1
+          }
+        },
+        "solo_habilidades": {
+          "@5": {
+            "precision": 1,
+            "recall": 0.5,
+            "hitRate": 1,
+            "ndcg": 1,
+            "coverage": 1
+          },
+          "@10": {
+            "precision": 0.9,
+            "recall": 0.9,
+            "hitRate": 1,
+            "ndcg": 0.9700774357888464,
+            "coverage": 1
+          }
+        },
+        "aleatorio": {
+          "@5": {
+            "precision": 0,
+            "recall": 0,
+            "hitRate": 0,
+            "ndcg": 0,
+            "coverage": 0
+          },
+          "@10": {
+            "precision": 0,
+            "recall": 0,
+            "hitRate": 0,
+            "ndcg": 0,
+            "coverage": 0.3333333333333333
+          }
+        }
+      }
+    },
+    {
+      "needId": "N15",
+      "needKind": "TECNOLOGICA",
+      "profile": "Desarrollador backend",
+      "archetype": "backend",
+      "relevantCount": 13,
+      "rankings": {
+        "hibrido": [
+          "S031",
+          "S061",
+          "S049",
+          "S091",
+          "S048",
+          "S066",
+          "S046",
+          "S121",
+          "S134",
+          "S136"
+        ],
+        "hibrido_sin_semantica": [
+          "S031",
+          "S061",
+          "S049",
+          "S091",
+          "S048",
+          "S066",
+          "S046",
+          "S121",
+          "S134",
+          "S136"
+        ],
+        "solo_habilidades": [
+          "S031",
+          "S061",
+          "S049",
+          "S091",
+          "S046",
+          "S048",
+          "S066",
+          "S136",
+          "S011",
+          "S121"
+        ],
+        "aleatorio": [
+          "S105",
+          "S032",
+          "S070",
+          "S133",
+          "S006",
+          "S147",
+          "S122",
+          "S050",
+          "S144",
+          "S079"
+        ]
+      },
+      "metrics": {
+        "hibrido": {
+          "@5": {
+            "precision": 0.8,
+            "recall": 0.3076923076923077,
+            "hitRate": 1,
+            "ndcg": 0.7557415207297861,
+            "coverage": 1
+          },
+          "@10": {
+            "precision": 0.8,
+            "recall": 0.6153846153846154,
+            "hitRate": 1,
+            "ndcg": 0.7915043119802492,
+            "coverage": 1
+          }
+        },
+        "hibrido_sin_semantica": {
+          "@5": {
+            "precision": 0.8,
+            "recall": 0.3076923076923077,
+            "hitRate": 1,
+            "ndcg": 0.7557415207297861,
+            "coverage": 1
+          },
+          "@10": {
+            "precision": 0.8,
+            "recall": 0.6153846153846154,
+            "hitRate": 1,
+            "ndcg": 0.7915043119802492,
+            "coverage": 1
+          }
+        },
+        "solo_habilidades": {
+          "@5": {
+            "precision": 1,
+            "recall": 0.38461538461538464,
+            "hitRate": 1,
+            "ndcg": 0.8869465982421278,
+            "coverage": 1
+          },
+          "@10": {
+            "precision": 0.8,
+            "recall": 0.6153846153846154,
+            "hitRate": 1,
+            "ndcg": 0.8025628796310861,
+            "coverage": 1
+          }
+        },
+        "aleatorio": {
+          "@5": {
+            "precision": 0,
+            "recall": 0,
+            "hitRate": 0,
+            "ndcg": 0,
+            "coverage": 0
+          },
+          "@10": {
+            "precision": 0.1,
+            "recall": 0.07692307692307693,
+            "hitRate": 1,
+            "ndcg": 0.02321714761064369,
+            "coverage": 0
+          }
+        }
+      }
+    },
+    {
+      "needId": "N16",
+      "needKind": "INVESTIGATIVA",
+      "profile": "Investigador cualitativo",
+      "archetype": "research",
+      "relevantCount": 22,
+      "rankings": {
+        "hibrido": [
+          "S039",
+          "S054",
+          "S099",
+          "S144",
+          "S114",
+          "S024",
+          "S129",
+          "S009",
+          "S084",
+          "S135"
+        ],
+        "hibrido_sin_semantica": [
+          "S039",
+          "S054",
+          "S099",
+          "S144",
+          "S114",
+          "S024",
+          "S129",
+          "S009",
+          "S084",
+          "S135"
+        ],
+        "solo_habilidades": [
+          "S039",
+          "S054",
+          "S024",
+          "S129",
+          "S114",
+          "S009",
+          "S144",
+          "S099",
+          "S084",
+          "S069"
+        ],
+        "aleatorio": [
+          "S097",
+          "S102",
+          "S133",
+          "S001",
+          "S070",
+          "S138",
+          "S031",
+          "S144",
+          "S103",
+          "S052"
+        ]
+      },
+      "metrics": {
+        "hibrido": {
+          "@5": {
+            "precision": 1,
+            "recall": 0.22727272727272727,
+            "hitRate": 1,
+            "ndcg": 1,
+            "coverage": 1
+          },
+          "@10": {
+            "precision": 1,
+            "recall": 0.45454545454545453,
+            "hitRate": 1,
+            "ndcg": 0.9575861412006988,
+            "coverage": 1
+          }
+        },
+        "hibrido_sin_semantica": {
+          "@5": {
+            "precision": 1,
+            "recall": 0.22727272727272727,
+            "hitRate": 1,
+            "ndcg": 1,
+            "coverage": 1
+          },
+          "@10": {
+            "precision": 1,
+            "recall": 0.45454545454545453,
+            "hitRate": 1,
+            "ndcg": 0.9575861412006988,
+            "coverage": 1
+          }
+        },
+        "solo_habilidades": {
+          "@5": {
+            "precision": 1,
+            "recall": 0.22727272727272727,
+            "hitRate": 1,
+            "ndcg": 1,
+            "coverage": 1
+          },
+          "@10": {
+            "precision": 1,
+            "recall": 0.45454545454545453,
+            "hitRate": 1,
+            "ndcg": 1,
+            "coverage": 1
+          }
+        },
+        "aleatorio": {
+          "@5": {
+            "precision": 0,
+            "recall": 0,
+            "hitRate": 0,
+            "ndcg": 0,
+            "coverage": 0
+          },
+          "@10": {
+            "precision": 0.1,
+            "recall": 0.045454545454545456,
+            "hitRate": 1,
+            "ndcg": 0.06943122193677725,
+            "coverage": 1
+          }
+        }
+      }
+    },
+    {
+      "needId": "N16",
+      "needKind": "INVESTIGATIVA",
+      "profile": "Trabajador social",
+      "archetype": "health",
+      "relevantCount": 12,
+      "rankings": {
+        "hibrido": [
+          "S150",
+          "S105",
+          "S015",
+          "S044",
+          "S117",
+          "S090",
+          "S027",
+          "S060",
+          "S072",
+          "S075"
+        ],
+        "hibrido_sin_semantica": [
+          "S150",
+          "S105",
+          "S015",
+          "S044",
+          "S117",
+          "S090",
+          "S027",
+          "S060",
+          "S072",
+          "S075"
+        ],
+        "solo_habilidades": [
+          "S150",
+          "S027",
+          "S105",
+          "S015",
+          "S044",
+          "S117",
+          "S090",
+          "S060",
+          "S072",
+          "S075"
+        ],
+        "aleatorio": [
+          "S056",
+          "S039",
+          "S041",
+          "S017",
+          "S136",
+          "S065",
+          "S096",
+          "S090",
+          "S103",
+          "S102"
+        ]
+      },
+      "metrics": {
+        "hibrido": {
+          "@5": {
+            "precision": 0.6,
+            "recall": 0.25,
+            "hitRate": 1,
+            "ndcg": 0.7227265726449517,
+            "coverage": 1
+          },
+          "@10": {
+            "precision": 0.6,
+            "recall": 0.5,
+            "hitRate": 1,
+            "ndcg": 0.7105892025357378,
+            "coverage": 1
+          }
+        },
+        "hibrido_sin_semantica": {
+          "@5": {
+            "precision": 0.6,
+            "recall": 0.25,
+            "hitRate": 1,
+            "ndcg": 0.7227265726449517,
+            "coverage": 1
+          },
+          "@10": {
+            "precision": 0.6,
+            "recall": 0.5,
+            "hitRate": 1,
+            "ndcg": 0.7105892025357378,
+            "coverage": 1
+          }
+        },
+        "solo_habilidades": {
+          "@5": {
+            "precision": 0.6,
+            "recall": 0.25,
+            "hitRate": 1,
+            "ndcg": 0.6548086577531306,
+            "coverage": 1
+          },
+          "@10": {
+            "precision": 0.6,
+            "recall": 0.5,
+            "hitRate": 1,
+            "ndcg": 0.6593056424773781,
+            "coverage": 1
+          }
+        },
+        "aleatorio": {
+          "@5": {
+            "precision": 0,
+            "recall": 0,
+            "hitRate": 0,
+            "ndcg": 0,
+            "coverage": 0
+          },
+          "@10": {
+            "precision": 0.1,
+            "recall": 0.08333333333333333,
+            "hitRate": 1,
+            "ndcg": 0.07250650249565932,
+            "coverage": 0.5
+          }
+        }
+      }
+    },
+    {
+      "needId": "N17",
+      "needKind": "INFRAESTRUCTURA",
+      "profile": "Topógrafo",
+      "archetype": "civil",
+      "relevantCount": 8,
+      "rankings": {
+        "hibrido": [
+          "S025",
+          "S115",
+          "S010",
+          "S055",
+          "S070",
+          "S040",
+          "S130",
+          "S145",
+          "S052",
+          "S087"
+        ],
+        "hibrido_sin_semantica": [
+          "S025",
+          "S115",
+          "S010",
+          "S055",
+          "S070",
+          "S040",
+          "S130",
+          "S145",
+          "S052",
+          "S087"
+        ],
+        "solo_habilidades": [
+          "S055",
+          "S025",
+          "S010",
+          "S070",
+          "S115",
+          "S130",
+          "S145",
+          "S040",
+          "S087",
+          "S046"
+        ],
+        "aleatorio": [
+          "S113",
+          "S142",
+          "S005",
+          "S118",
+          "S031",
+          "S016",
+          "S011",
+          "S091",
+          "S049",
+          "S120"
+        ]
+      },
+      "metrics": {
+        "hibrido": {
+          "@5": {
+            "precision": 1,
+            "recall": 0.625,
+            "hitRate": 1,
+            "ndcg": 1,
+            "coverage": 1
+          },
+          "@10": {
+            "precision": 0.8,
+            "recall": 1,
+            "hitRate": 1,
+            "ndcg": 1,
+            "coverage": 1
+          }
+        },
+        "hibrido_sin_semantica": {
+          "@5": {
+            "precision": 1,
+            "recall": 0.625,
+            "hitRate": 1,
+            "ndcg": 1,
+            "coverage": 1
+          },
+          "@10": {
+            "precision": 0.8,
+            "recall": 1,
+            "hitRate": 1,
+            "ndcg": 1,
+            "coverage": 1
+          }
+        },
+        "solo_habilidades": {
+          "@5": {
+            "precision": 1,
+            "recall": 0.625,
+            "hitRate": 1,
+            "ndcg": 1,
+            "coverage": 1
+          },
+          "@10": {
+            "precision": 0.8,
+            "recall": 1,
+            "hitRate": 1,
+            "ndcg": 1,
+            "coverage": 1
+          }
+        },
+        "aleatorio": {
+          "@5": {
+            "precision": 0,
+            "recall": 0,
+            "hitRate": 0,
+            "ndcg": 0,
+            "coverage": 0
+          },
+          "@10": {
+            "precision": 0,
+            "recall": 0,
+            "hitRate": 0,
+            "ndcg": 0,
+            "coverage": 0
+          }
+        }
+      }
+    },
+    {
+      "needId": "N17",
+      "needKind": "INFRAESTRUCTURA",
+      "profile": "Diseñador urbano",
+      "archetype": "civil",
+      "relevantCount": 8,
+      "rankings": {
+        "hibrido": [
+          "S130",
+          "S040",
+          "S010",
+          "S070",
+          "S115",
+          "S025",
+          "S055",
+          "S145",
+          "S140"
+        ],
+        "hibrido_sin_semantica": [
+          "S130",
+          "S040",
+          "S010",
+          "S070",
+          "S115",
+          "S025",
+          "S055",
+          "S145",
+          "S140"
+        ],
+        "solo_habilidades": [
+          "S130",
+          "S010",
+          "S070",
+          "S055",
+          "S025",
+          "S040",
+          "S115",
+          "S145",
+          "S140"
+        ],
+        "aleatorio": [
+          "S029",
+          "S120",
+          "S053",
+          "S135",
+          "S096",
+          "S115",
+          "S007",
+          "S099",
+          "S122",
+          "S149"
+        ]
+      },
+      "metrics": {
+        "hibrido": {
+          "@5": {
+            "precision": 1,
+            "recall": 0.625,
+            "hitRate": 1,
+            "ndcg": 1,
+            "coverage": 1
+          },
+          "@10": {
+            "precision": 0.8,
+            "recall": 1,
+            "hitRate": 1,
+            "ndcg": 1,
+            "coverage": 1
+          }
+        },
+        "hibrido_sin_semantica": {
+          "@5": {
+            "precision": 1,
+            "recall": 0.625,
+            "hitRate": 1,
+            "ndcg": 1,
+            "coverage": 1
+          },
+          "@10": {
+            "precision": 0.8,
+            "recall": 1,
+            "hitRate": 1,
+            "ndcg": 1,
+            "coverage": 1
+          }
+        },
+        "solo_habilidades": {
+          "@5": {
+            "precision": 1,
+            "recall": 0.625,
+            "hitRate": 1,
+            "ndcg": 1,
+            "coverage": 1
+          },
+          "@10": {
+            "precision": 0.8,
+            "recall": 1,
+            "hitRate": 1,
+            "ndcg": 1,
+            "coverage": 1
+          }
+        },
+        "aleatorio": {
+          "@5": {
+            "precision": 0,
+            "recall": 0,
+            "hitRate": 0,
+            "ndcg": 0,
+            "coverage": 0
+          },
+          "@10": {
+            "precision": 0.1,
+            "recall": 0.125,
+            "hitRate": 1,
+            "ndcg": 0.09010000865236768,
+            "coverage": 0.3333333333333333
+          }
+        }
+      }
+    },
+    {
+      "needId": "N17",
+      "needKind": "INFRAESTRUCTURA",
+      "profile": "Gestor comunitario",
+      "archetype": "health",
+      "relevantCount": 19,
+      "rankings": {
+        "hibrido": [
+          "S150",
+          "S143",
+          "S105",
+          "S015",
+          "S120",
+          "S007",
+          "S060",
+          "S022",
+          "S058",
+          "S090"
+        ],
+        "hibrido_sin_semantica": [
+          "S150",
+          "S143",
+          "S105",
+          "S015",
+          "S120",
+          "S007",
+          "S060",
+          "S022",
+          "S058",
+          "S090"
+        ],
+        "solo_habilidades": [
+          "S150",
+          "S143",
+          "S112",
+          "S105",
+          "S015",
+          "S120",
+          "S007",
+          "S060",
+          "S022",
+          "S058"
+        ],
+        "aleatorio": [
+          "S121",
+          "S125",
+          "S130",
+          "S067",
+          "S017",
+          "S009",
+          "S040",
+          "S150",
+          "S072",
+          "S087"
+        ]
+      },
+      "metrics": {
+        "hibrido": {
+          "@5": {
+            "precision": 1,
+            "recall": 0.2631578947368421,
+            "hitRate": 1,
+            "ndcg": 0.8573424901769816,
+            "coverage": 1
+          },
+          "@10": {
+            "precision": 0.7,
+            "recall": 0.3684210526315789,
+            "hitRate": 1,
+            "ndcg": 0.7240511252370687,
+            "coverage": 1
+          }
+        },
+        "hibrido_sin_semantica": {
+          "@5": {
+            "precision": 1,
+            "recall": 0.2631578947368421,
+            "hitRate": 1,
+            "ndcg": 0.8573424901769816,
+            "coverage": 1
+          },
+          "@10": {
+            "precision": 0.7,
+            "recall": 0.3684210526315789,
+            "hitRate": 1,
+            "ndcg": 0.7240511252370687,
+            "coverage": 1
+          }
+        },
+        "solo_habilidades": {
+          "@5": {
+            "precision": 0.8,
+            "recall": 0.21052631578947367,
+            "hitRate": 1,
+            "ndcg": 0.6877623875401735,
+            "coverage": 1
+          },
+          "@10": {
+            "precision": 0.6,
+            "recall": 0.3157894736842105,
+            "hitRate": 1,
+            "ndcg": 0.6204561604984261,
+            "coverage": 1
+          }
+        },
+        "aleatorio": {
+          "@5": {
+            "precision": 0,
+            "recall": 0,
+            "hitRate": 0,
+            "ndcg": 0,
+            "coverage": 0.5
+          },
+          "@10": {
+            "precision": 0.1,
+            "recall": 0.05263157894736842,
+            "hitRate": 1,
+            "ndcg": 0.07250650249565932,
+            "coverage": 1
+          }
+        }
+      }
+    },
+    {
+      "needId": "N18",
+      "needKind": "ADMINISTRATIVA",
+      "profile": "Analista de datos",
+      "archetype": "data",
+      "relevantCount": 13,
+      "rankings": {
+        "hibrido": [
+          "S094",
+          "S038",
+          "S113",
+          "S044",
+          "S001",
+          "S101",
+          "S053",
+          "S143",
+          "S019",
+          "S128"
+        ],
+        "hibrido_sin_semantica": [
+          "S094",
+          "S038",
+          "S113",
+          "S044",
+          "S001",
+          "S101",
+          "S053",
+          "S143",
+          "S019",
+          "S128"
+        ],
+        "solo_habilidades": [
+          "S094",
+          "S001",
+          "S038",
+          "S098",
+          "S113",
+          "S053",
+          "S143",
+          "S019",
+          "S059",
+          "S101"
+        ],
+        "aleatorio": [
+          "S131",
+          "S092",
+          "S094",
+          "S058",
+          "S010",
+          "S086",
+          "S109",
+          "S150",
+          "S049",
+          "S045"
+        ]
+      },
+      "metrics": {
+        "hibrido": {
+          "@5": {
+            "precision": 0.2,
+            "recall": 0.07692307692307693,
+            "hitRate": 1,
+            "ndcg": 0.33916020527361607,
+            "coverage": 1
+          },
+          "@10": {
+            "precision": 0.2,
+            "recall": 0.15384615384615385,
+            "hitRate": 1,
+            "ndcg": 0.3134889066923798,
+            "coverage": 1
+          }
+        },
+        "hibrido_sin_semantica": {
+          "@5": {
+            "precision": 0.2,
+            "recall": 0.07692307692307693,
+            "hitRate": 1,
+            "ndcg": 0.33916020527361607,
+            "coverage": 1
+          },
+          "@10": {
+            "precision": 0.2,
+            "recall": 0.15384615384615385,
+            "hitRate": 1,
+            "ndcg": 0.3134889066923798,
+            "coverage": 1
+          }
+        },
+        "solo_habilidades": {
+          "@5": {
+            "precision": 0.2,
+            "recall": 0.07692307692307693,
+            "hitRate": 1,
+            "ndcg": 0.33916020527361607,
+            "coverage": 1
+          },
+          "@10": {
+            "precision": 0.2,
+            "recall": 0.15384615384615385,
+            "hitRate": 1,
+            "ndcg": 0.31696705486434534,
+            "coverage": 1
+          }
+        },
+        "aleatorio": {
+          "@5": {
+            "precision": 0.2,
+            "recall": 0.07692307692307693,
+            "hitRate": 1,
+            "ndcg": 0.16958010263680803,
+            "coverage": 0.6666666666666666
+          },
+          "@10": {
+            "precision": 0.3,
+            "recall": 0.23076923076923078,
+            "hitRate": 1,
+            "ndcg": 0.2733298394229647,
+            "coverage": 0.6666666666666666
+          }
+        }
+      }
+    },
+    {
+      "needId": "N18",
+      "needKind": "ADMINISTRATIVA",
+      "profile": "Gestor del proyecto",
+      "archetype": "pm",
+      "relevantCount": 10,
+      "rankings": {
+        "hibrido": [
+          "S143",
+          "S001",
+          "S128",
+          "S083",
+          "S113",
+          "S008",
+          "S098"
+        ],
+        "hibrido_sin_semantica": [
+          "S143",
+          "S001",
+          "S128",
+          "S083",
+          "S113",
+          "S008",
+          "S098"
+        ],
+        "solo_habilidades": [
+          "S143",
+          "S083",
+          "S001",
+          "S113",
+          "S128",
+          "S098",
+          "S008"
+        ],
+        "aleatorio": [
+          "S096",
+          "S043",
+          "S072",
+          "S143",
+          "S125",
+          "S038",
+          "S145",
+          "S131",
+          "S069",
+          "S080"
+        ]
+      },
+      "metrics": {
+        "hibrido": {
+          "@5": {
+            "precision": 1,
+            "recall": 0.5,
+            "hitRate": 1,
+            "ndcg": 0.8573424901769816,
+            "coverage": 1
+          },
+          "@10": {
+            "precision": 0.7,
+            "recall": 0.7,
+            "hitRate": 1,
+            "ndcg": 0.7752418317857316,
+            "coverage": 1
+          }
+        },
+        "hibrido_sin_semantica": {
+          "@5": {
+            "precision": 1,
+            "recall": 0.5,
+            "hitRate": 1,
+            "ndcg": 0.8573424901769816,
+            "coverage": 1
+          },
+          "@10": {
+            "precision": 0.7,
+            "recall": 0.7,
+            "hitRate": 1,
+            "ndcg": 0.7752418317857316,
+            "coverage": 1
+          }
+        },
+        "solo_habilidades": {
+          "@5": {
+            "precision": 1,
+            "recall": 0.5,
+            "hitRate": 1,
+            "ndcg": 0.8869465982421278,
+            "coverage": 1
+          },
+          "@10": {
+            "precision": 0.7,
+            "recall": 0.7,
+            "hitRate": 1,
+            "ndcg": 0.7962738989107079,
+            "coverage": 1
+          }
+        },
+        "aleatorio": {
+          "@5": {
+            "precision": 0.4,
+            "recall": 0.2,
+            "hitRate": 1,
+            "ndcg": 0.20259505072164247,
+            "coverage": 1
+          },
+          "@10": {
+            "precision": 0.3,
+            "recall": 0.3,
+            "hitRate": 1,
+            "ndcg": 0.22976217080511346,
+            "coverage": 1
+          }
+        }
+      }
+    },
+    {
+      "needId": "N19",
+      "needKind": "TECNOLOGICA",
+      "profile": "Ingeniero de IA",
+      "archetype": "data",
+      "relevantCount": 20,
+      "rankings": {
+        "hibrido": [
+          "S139",
+          "S019",
+          "S109",
+          "S079",
+          "S124",
+          "S034",
+          "S091",
+          "S020",
+          "S094",
+          "S006"
+        ],
+        "hibrido_sin_semantica": [
+          "S139",
+          "S019",
+          "S109",
+          "S079",
+          "S124",
+          "S034",
+          "S091",
+          "S020",
+          "S094",
+          "S006"
+        ],
+        "solo_habilidades": [
+          "S139",
+          "S109",
+          "S079",
+          "S019",
+          "S020",
+          "S034",
+          "S006",
+          "S124",
+          "S091",
+          "S094"
+        ],
+        "aleatorio": [
+          "S058",
+          "S145",
+          "S077",
+          "S087",
+          "S079",
+          "S138",
+          "S123",
+          "S089",
+          "S041",
+          "S066"
+        ]
+      },
+      "metrics": {
+        "hibrido": {
+          "@5": {
+            "precision": 1,
+            "recall": 0.25,
+            "hitRate": 1,
+            "ndcg": 1,
+            "coverage": 1
+          },
+          "@10": {
+            "precision": 0.9,
+            "recall": 0.45,
+            "hitRate": 1,
+            "ndcg": 0.9209186639154925,
+            "coverage": 1
+          }
+        },
+        "hibrido_sin_semantica": {
+          "@5": {
+            "precision": 1,
+            "recall": 0.25,
+            "hitRate": 1,
+            "ndcg": 1,
+            "coverage": 1
+          },
+          "@10": {
+            "precision": 0.9,
+            "recall": 0.45,
+            "hitRate": 1,
+            "ndcg": 0.9209186639154925,
+            "coverage": 1
+          }
+        },
+        "solo_habilidades": {
+          "@5": {
+            "precision": 1,
+            "recall": 0.25,
+            "hitRate": 1,
+            "ndcg": 0.9125299483251055,
+            "coverage": 1
+          },
+          "@10": {
+            "precision": 0.9,
+            "recall": 0.45,
+            "hitRate": 1,
+            "ndcg": 0.9039735690460811,
+            "coverage": 1
+          }
+        },
+        "aleatorio": {
+          "@5": {
+            "precision": 0.2,
+            "recall": 0.05,
+            "hitRate": 1,
+            "ndcg": 0.13120507751234178,
+            "coverage": 0.6666666666666666
+          },
+          "@10": {
+            "precision": 0.1,
+            "recall": 0.05,
+            "hitRate": 1,
+            "ndcg": 0.09321388745456412,
+            "coverage": 0.6666666666666666
+          }
+        }
+      }
+    },
+    {
+      "needId": "N19",
+      "needKind": "TECNOLOGICA",
+      "profile": "Desarrollador backend",
+      "archetype": "backend",
+      "relevantCount": 13,
+      "rankings": {
+        "hibrido": [
+          "S031",
+          "S049",
+          "S066",
+          "S061",
+          "S125",
+          "S091",
+          "S048",
+          "S121",
+          "S136",
+          "S065"
+        ],
+        "hibrido_sin_semantica": [
+          "S031",
+          "S049",
+          "S066",
+          "S061",
+          "S125",
+          "S091",
+          "S048",
+          "S121",
+          "S136",
+          "S065"
+        ],
+        "solo_habilidades": [
+          "S031",
+          "S049",
+          "S066",
+          "S061",
+          "S136",
+          "S091",
+          "S048",
+          "S121",
+          "S035",
+          "S125"
+        ],
+        "aleatorio": [
+          "S050",
+          "S005",
+          "S146",
+          "S105",
+          "S016",
+          "S001",
+          "S075",
+          "S052",
+          "S032",
+          "S013"
+        ]
+      },
+      "metrics": {
+        "hibrido": {
+          "@5": {
+            "precision": 0.8,
+            "recall": 0.3076923076923077,
+            "hitRate": 1,
+            "ndcg": 0.6130840109067678,
+            "coverage": 1
+          },
+          "@10": {
+            "precision": 0.7,
+            "recall": 0.5384615384615384,
+            "hitRate": 1,
+            "ndcg": 0.6699388295772515,
+            "coverage": 1
+          }
+        },
+        "hibrido_sin_semantica": {
+          "@5": {
+            "precision": 0.8,
+            "recall": 0.3076923076923077,
+            "hitRate": 1,
+            "ndcg": 0.6130840109067678,
+            "coverage": 1
+          },
+          "@10": {
+            "precision": 0.7,
+            "recall": 0.5384615384615384,
+            "hitRate": 1,
+            "ndcg": 0.6699388295772515,
+            "coverage": 1
+          }
+        },
+        "solo_habilidades": {
+          "@5": {
+            "precision": 1,
+            "recall": 0.38461538461538464,
+            "hitRate": 1,
+            "ndcg": 0.7442890884191096,
+            "coverage": 1
+          },
+          "@10": {
+            "precision": 0.7,
+            "recall": 0.5384615384615384,
+            "hitRate": 1,
+            "ndcg": 0.6906182139559263,
+            "coverage": 1
+          }
+        },
+        "aleatorio": {
+          "@5": {
+            "precision": 0.2,
+            "recall": 0.07692307692307693,
+            "hitRate": 1,
+            "ndcg": 0.13120507751234178,
+            "coverage": 0.3333333333333333
+          },
+          "@10": {
+            "precision": 0.2,
+            "recall": 0.15384615384615385,
+            "hitRate": 1,
+            "ndcg": 0.17904357778808525,
+            "coverage": 0.3333333333333333
+          }
+        }
+      }
+    },
+    {
+      "needId": "N19",
+      "needKind": "TECNOLOGICA",
+      "profile": "Comunicador institucional",
+      "archetype": "communication",
+      "relevantCount": 9,
+      "rankings": {
+        "hibrido": [
+          "S125",
+          "S013",
+          "S133",
+          "S028",
+          "S118",
+          "S058",
+          "S043"
+        ],
+        "hibrido_sin_semantica": [
+          "S125",
+          "S013",
+          "S133",
+          "S028",
+          "S118",
+          "S058",
+          "S043"
+        ],
+        "solo_habilidades": [
+          "S125",
+          "S133",
+          "S013",
+          "S028",
+          "S118",
+          "S058",
+          "S043"
+        ],
+        "aleatorio": [
+          "S090",
+          "S077",
+          "S006",
+          "S144",
+          "S051",
+          "S059",
+          "S145",
+          "S061",
+          "S075",
+          "S014"
+        ]
+      },
+      "metrics": {
+        "hibrido": {
+          "@5": {
+            "precision": 1,
+            "recall": 0.5555555555555556,
+            "hitRate": 1,
+            "ndcg": 0.7738931964842558,
+            "coverage": 1
+          },
+          "@10": {
+            "precision": 0.7,
+            "recall": 0.7777777777777778,
+            "hitRate": 1,
+            "ndcg": 0.7329733139976233,
+            "coverage": 1
+          }
+        },
+        "hibrido_sin_semantica": {
+          "@5": {
+            "precision": 1,
+            "recall": 0.5555555555555556,
+            "hitRate": 1,
+            "ndcg": 0.7738931964842558,
+            "coverage": 1
+          },
+          "@10": {
+            "precision": 0.7,
+            "recall": 0.7777777777777778,
+            "hitRate": 1,
+            "ndcg": 0.7329733139976233,
+            "coverage": 1
+          }
+        },
+        "solo_habilidades": {
+          "@5": {
+            "precision": 1,
+            "recall": 0.5555555555555556,
+            "hitRate": 1,
+            "ndcg": 0.7738931964842558,
+            "coverage": 1
+          },
+          "@10": {
+            "precision": 0.7,
+            "recall": 0.7777777777777778,
+            "hitRate": 1,
+            "ndcg": 0.7329733139976233,
+            "coverage": 1
+          }
+        },
+        "aleatorio": {
+          "@5": {
+            "precision": 0,
+            "recall": 0,
+            "hitRate": 0,
+            "ndcg": 0,
+            "coverage": 0
+          },
+          "@10": {
+            "precision": 0,
+            "recall": 0,
+            "hitRate": 0,
+            "ndcg": 0,
+            "coverage": 0
+          }
+        }
+      }
+    },
+    {
+      "needId": "N20",
+      "needKind": "BIENESTAR",
+      "profile": "Especialista en SST",
+      "archetype": "health",
+      "relevantCount": 21,
+      "rankings": {
+        "hibrido": [
+          "S105",
+          "S120",
+          "S045",
+          "S015",
+          "S135",
+          "S060",
+          "S090",
+          "S143",
+          "S012",
+          "S147"
+        ],
+        "hibrido_sin_semantica": [
+          "S105",
+          "S120",
+          "S045",
+          "S015",
+          "S135",
+          "S060",
+          "S090",
+          "S143",
+          "S012",
+          "S147"
+        ],
+        "solo_habilidades": [
+          "S105",
+          "S045",
+          "S120",
+          "S143",
+          "S015",
+          "S135",
+          "S060",
+          "S090",
+          "S075",
+          "S150"
+        ],
+        "aleatorio": [
+          "S147",
+          "S059",
+          "S112",
+          "S046",
+          "S120",
+          "S114",
+          "S032",
+          "S024",
+          "S077",
+          "S001"
+        ]
+      },
+      "metrics": {
+        "hibrido": {
+          "@5": {
+            "precision": 1,
+            "recall": 0.23809523809523808,
+            "hitRate": 1,
+            "ndcg": 1,
+            "coverage": 1
+          },
+          "@10": {
+            "precision": 0.8,
+            "recall": 0.38095238095238093,
+            "hitRate": 1,
+            "ndcg": 0.860327308018974,
+            "coverage": 1
+          }
+        },
+        "hibrido_sin_semantica": {
+          "@5": {
+            "precision": 1,
+            "recall": 0.23809523809523808,
+            "hitRate": 1,
+            "ndcg": 1,
+            "coverage": 1
+          },
+          "@10": {
+            "precision": 0.8,
+            "recall": 0.38095238095238093,
+            "hitRate": 1,
+            "ndcg": 0.860327308018974,
+            "coverage": 1
+          }
+        },
+        "solo_habilidades": {
+          "@5": {
+            "precision": 1,
+            "recall": 0.23809523809523808,
+            "hitRate": 1,
+            "ndcg": 0.9026211001048622,
+            "coverage": 1
+          },
+          "@10": {
+            "precision": 1,
+            "recall": 0.47619047619047616,
+            "hitRate": 1,
+            "ndcg": 0.9783012898581852,
+            "coverage": 1
+          }
+        },
+        "aleatorio": {
+          "@5": {
+            "precision": 0.2,
+            "recall": 0.047619047619047616,
+            "hitRate": 1,
+            "ndcg": 0.13120507751234178,
+            "coverage": 1
+          },
+          "@10": {
+            "precision": 0.1,
+            "recall": 0.047619047619047616,
+            "hitRate": 1,
+            "ndcg": 0.08891431692491045,
+            "coverage": 1
+          }
+        }
+      }
+    },
+    {
+      "needId": "N20",
+      "needKind": "BIENESTAR",
+      "profile": "Capacitador",
+      "archetype": "research",
+      "relevantCount": 22,
+      "rankings": {
+        "hibrido": [
+          "S028",
+          "S013",
+          "S103",
+          "S043",
+          "S058",
+          "S133",
+          "S069"
+        ],
+        "hibrido_sin_semantica": [
+          "S028",
+          "S013",
+          "S103",
+          "S043",
+          "S058",
+          "S133",
+          "S069"
+        ],
+        "solo_habilidades": [
+          "S133",
+          "S028",
+          "S013",
+          "S103",
+          "S043",
+          "S058",
+          "S069"
+        ],
+        "aleatorio": [
+          "S101",
+          "S103",
+          "S036",
+          "S092",
+          "S045",
+          "S129",
+          "S035",
+          "S020",
+          "S119",
+          "S086"
+        ]
+      },
+      "metrics": {
+        "hibrido": {
+          "@5": {
+            "precision": 0,
+            "recall": 0,
+            "hitRate": 0,
+            "ndcg": 0,
+            "coverage": 0.5
+          },
+          "@10": {
+            "precision": 0.1,
+            "recall": 0.045454545454545456,
+            "hitRate": 1,
+            "ndcg": 0.07336392209936005,
+            "coverage": 1
+          }
+        },
+        "hibrido_sin_semantica": {
+          "@5": {
+            "precision": 0,
+            "recall": 0,
+            "hitRate": 0,
+            "ndcg": 0,
+            "coverage": 0.5
+          },
+          "@10": {
+            "precision": 0.1,
+            "recall": 0.045454545454545456,
+            "hitRate": 1,
+            "ndcg": 0.07336392209936005,
+            "coverage": 1
+          }
+        },
+        "solo_habilidades": {
+          "@5": {
+            "precision": 0,
+            "recall": 0,
+            "hitRate": 0,
+            "ndcg": 0,
+            "coverage": 0.5
+          },
+          "@10": {
+            "precision": 0.1,
+            "recall": 0.045454545454545456,
+            "hitRate": 1,
+            "ndcg": 0.07336392209936005,
+            "coverage": 1
+          }
+        },
+        "aleatorio": {
+          "@5": {
+            "precision": 0.2,
+            "recall": 0.045454545454545456,
+            "hitRate": 1,
+            "ndcg": 0.04373502583744726,
+            "coverage": 0.5
+          },
+          "@10": {
+            "precision": 0.2,
+            "recall": 0.09090909090909091,
+            "hitRate": 1,
+            "ndcg": 0.106779308192549,
+            "coverage": 0.5
+          }
+        }
+      }
+    }
+  ]
+}

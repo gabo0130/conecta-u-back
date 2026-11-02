@@ -47,10 +47,10 @@ async function main() {
       const { rows } = await client.query<{ id: string }>(
         `INSERT INTO collaborators (email, "firstName", "lastName", "personType", "programId", semester, summary,
            "availabilityStatus", "weeklyHours", "dataConsent", "dataConsentAt", "truthfulnessDeclared", "truthfulnessDeclaredAt",
-           source, "documentType", "documentNumber", phone, nationality)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,true,now(),true,now(),'IMPORTACION','CC',$10,'3000000000','Colombiana') RETURNING id`,
+           source, "documentType", "documentNumber", phone, nationality, interests)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,true,now(),true,now(),'IMPORTACION','CC',$10,'3000000000','Colombiana',$11) RETURNING id`,
         [person.email, person.firstName, person.lastName, person.personType, programId, person.semester, person.summary,
-          person.availabilityStatus, person.weeklyHours, String(documentNumber++)],
+          person.availabilityStatus, person.weeklyHours, String(documentNumber++), person.interests],
       );
       const collaboratorId = rows[0].id;
       for (const skill of person.skills) {
