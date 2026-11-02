@@ -1,3 +1,4 @@
+import { issuedBeforePasswordChange } from '../../domain/entities/password-reset';
 import {
   CanActivate,
   ExecutionContext,
@@ -37,9 +38,13 @@ export class JwtAuthGuard implements CanActivate {
     const payload = this.tokenService.verify(token);
     const user = await this.userRepository.findById(payload.userId);
 
-    // Se consulta la BD en cada petición para que desactivar la cuenta o cambiar el rol
-    // tenga efecto de inmediato, sin esperar a que venza el token.
-    if (!user || !user.active) {
+    // Se consulta la BD en cada petición para que desactivar la cuenta, cambiar el rol o
+    // cambiar la contraseña tengan efecto de inmediato, sin esperar a que venza el token.
+    if (
+      !user ||
+      !user.active ||
+      issuedBeforePasswordChange(user.passwordChangedAt, payload.issuedAt)
+    ) {
       throw new UnauthorizedException({ message: 'No autorizado' });
     }
 

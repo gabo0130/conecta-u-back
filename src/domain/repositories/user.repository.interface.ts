@@ -25,4 +25,10 @@ export interface UserRepository {
   create(data: CreateUserRepositoryDto): Promise<UserEntity>;
   update(id: string, data: UpdateUserRepositoryDto): Promise<UserEntity | null>;
   delete(id: string): Promise<boolean>;
+  /** Cambia la contraseña y registra cuándo, para revocar las sesiones anteriores. */
+  updatePassword(
+    id: string,
+    passwordHash: string,
+    changedAt: Date,
+  ): Promise<void>;
 }

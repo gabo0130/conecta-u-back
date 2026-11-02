@@ -5,6 +5,7 @@ import { CollaboratorSkillOrmEntity } from './typeorm/collaborator-skill.orm-ent
 import { DeliverableOrmEntity } from './typeorm/deliverable.orm-entity';
 import { ExperienceCertificateOrmEntity } from './typeorm/experience-certificate.orm-entity';
 import { InvitationOrmEntity } from './typeorm/invitation.orm-entity';
+import { PasswordResetTokenOrmEntity } from './typeorm/password-reset-token.orm-entity';
 import { ExperienceOrmEntity } from './typeorm/experience.orm-entity';
 import { ImportRunOrmEntity } from './typeorm/import-run.orm-entity';
 import { ProgramOrmEntity } from './typeorm/program.orm-entity';
@@ -41,6 +42,7 @@ export const AppDataSource = new DataSource({
     RequiredProfileSkillOrmEntity,
     RecommendationOrmEntity,
     InvitationOrmEntity,
+    PasswordResetTokenOrmEntity,
   ],
   migrations: ['src/migrations/*.ts'],
   synchronize: false,

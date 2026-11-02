@@ -39,6 +39,22 @@ describe('JwtAuthGuard', () => {
     ).rejects.toBeInstanceOf(UnauthorizedException);
   });
 
+  it('rejects a token issued before the last password change', async () => {
+    tokenService.verify.mockReturnValue({
+      userId: 'user-1',
+      issuedAt: 1_700_000_000,
+    });
+    userRepository.findById.mockResolvedValue(
+      buildUser({ passwordChangedAt: new Date(1_700_000_100_000) }),
+    );
+
+    await expect(
+      guard.canActivate(
+        makeContext({ headers: { authorization: 'Bearer token' } }),
+      ),
+    ).rejects.toBeInstanceOf(UnauthorizedException);
+  });
+
   it('rejects a deactivated user even with a valid token', async () => {
     userRepository.findById.mockResolvedValue(buildUser({ active: false }));
 

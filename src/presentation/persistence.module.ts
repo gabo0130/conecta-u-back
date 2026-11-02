@@ -7,6 +7,8 @@ import { ExperienceCertificateOrmEntity } from '../infrastructure/database/typeo
 import { TypeOrmExperienceCertificateRepository } from '../infrastructure/database/typeorm/typeorm-experience-certificate.repository';
 import { InvitationOrmEntity } from '../infrastructure/database/typeorm/invitation.orm-entity';
 import { TypeOrmInvitationRepository } from '../infrastructure/database/typeorm/typeorm-invitation.repository';
+import { PasswordResetTokenOrmEntity } from '../infrastructure/database/typeorm/password-reset-token.orm-entity';
+import { TypeOrmPasswordResetTokenRepository } from '../infrastructure/database/typeorm/typeorm-password-reset-token.repository';
 import { ExperienceOrmEntity } from '../infrastructure/database/typeorm/experience.orm-entity';
 import { ImportRunOrmEntity } from '../infrastructure/database/typeorm/import-run.orm-entity';
 import { ProjectAnalysisOrmEntity } from '../infrastructure/database/typeorm/project-analysis.orm-entity';
@@ -42,6 +44,7 @@ import {
   EXPERIENCE_REPOSITORY,
   IMPORT_RUN_REPOSITORY,
   INVITATION_REPOSITORY,
+  PASSWORD_RESET_TOKEN_REPOSITORY,
   PROGRAM_REPOSITORY,
   PROJECT_ANALYSIS_REPOSITORY,
   PROJECT_CATEGORY_REPOSITORY,
@@ -92,6 +95,10 @@ const REPOSITORY_BINDINGS = [
     useClass: TypeOrmRecommendationRepository,
   },
   { provide: INVITATION_REPOSITORY, useClass: TypeOrmInvitationRepository },
+  {
+    provide: PASSWORD_RESET_TOKEN_REPOSITORY,
+    useClass: TypeOrmPasswordResetTokenRepository,
+  },
   { provide: UNIT_OF_WORK, useClass: TypeOrmUnitOfWork },
 ];
 
@@ -115,6 +122,7 @@ const REPOSITORY_BINDINGS = [
       RequiredProfileOrmEntity,
       RequiredProfileSkillOrmEntity,
       RecommendationOrmEntity,
+      PasswordResetTokenOrmEntity,
       InvitationOrmEntity,
     ]),
   ],

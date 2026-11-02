@@ -1,12 +1,16 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import type { UserRole } from '../../domain/entities/user-role.type';
-import { TokenService } from '../../domain/repositories/token-service.interface';
+import type {
+  TokenService,
+  VerifiedToken,
+} from '../../domain/repositories/token-service.interface';
 
 interface JwtPayload {
   userId: string;
   role?: UserRole;
   kind: 'access' | 'refresh';
+  iat?: number;
 }
 
 @Injectable()
@@ -39,18 +43,15 @@ export class JwtTokenService implements TokenService {
     return exp - iat;
   }
 
-  verify(token: string): { userId: string; role?: UserRole } {
+  verify(token: string): VerifiedToken {
     return this.verifyToken(token, 'access');
   }
 
-  verifyRefresh(token: string): { userId: string; role?: UserRole } {
+  verifyRefresh(token: string): VerifiedToken {
     return this.verifyToken(token, 'refresh');
   }
 
-  private verifyToken(
-    token: string,
-    kind: JwtPayload['kind'],
-  ): { userId: string; role?: UserRole } {
+  private verifyToken(token: string, kind: JwtPayload['kind']): VerifiedToken {
     try {
       const payload = this.jwtService.verify<JwtPayload>(token);
 
@@ -60,7 +61,11 @@ export class JwtTokenService implements TokenService {
         });
       }
 
-      return payload;
+      return {
+        userId: payload.userId,
+        role: payload.role,
+        issuedAt: payload.iat,
+      };
     } catch {
       throw new UnauthorizedException({
         message: 'Token no válido o expirado',

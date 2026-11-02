@@ -9,6 +9,10 @@ import { MailModule } from './mail.module';
 import { PersistenceModule } from './persistence.module';
 import { SecurityModule } from './security.module';
 
+import { RequestPasswordResetUseCase } from '../application/use-cases/request-password-reset.use-case';
+import { ResetPasswordUseCase } from '../application/use-cases/reset-password.use-case';
+import { RateLimitGuard } from './guards/rate-limit.guard';
+
 @Module({
   imports: [PersistenceModule, SecurityModule, MailModule],
   controllers: [AuthController],
@@ -18,6 +22,9 @@ import { SecurityModule } from './security.module';
     PersonAccountService,
     RefreshTokenUseCase,
     RegisterUseCase,
+    RequestPasswordResetUseCase,
+    ResetPasswordUseCase,
+    RateLimitGuard,
   ],
 })
 export class AuthModule {}

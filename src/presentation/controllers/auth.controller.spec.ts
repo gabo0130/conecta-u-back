@@ -6,6 +6,8 @@ import type { GetMeUseCase } from '../../application/use-cases/get-me.use-case';
 import type { LoginUseCase } from '../../application/use-cases/login.use-case';
 import type { RefreshTokenUseCase } from '../../application/use-cases/refresh-token.use-case';
 import type { RegisterUseCase } from '../../application/use-cases/register.use-case';
+import type { RequestPasswordResetUseCase } from '../../application/use-cases/request-password-reset.use-case';
+import type { ResetPasswordUseCase } from '../../application/use-cases/reset-password.use-case';
 import type { AuthenticatedRequest } from '../guards/jwt-auth.guard';
 import { IDENTITY, createMock } from '../../testing/test-doubles.testing';
 
@@ -14,16 +16,31 @@ describe('AuthController', () => {
   const getMeUseCase = createMock<GetMeUseCase>();
   const registerUseCase = createMock<RegisterUseCase>();
   const refreshTokenUseCase = createMock<RefreshTokenUseCase>();
+  const requestReset = createMock<RequestPasswordResetUseCase>();
+  const resetPassword = createMock<ResetPasswordUseCase>();
 
   const controller = new AuthController(
     loginUseCase,
     getMeUseCase,
     registerUseCase,
     refreshTokenUseCase,
+    requestReset,
+    resetPassword,
   );
 
   beforeEach(() => {
     jest.clearAllMocks();
+  });
+
+  it('delegates the password recovery routes', () => {
+    const token = 'a'.repeat(43);
+    void controller.forgotPassword({ email: 'ana@ufps.edu.co' });
+    void controller.checkResetToken({ token });
+    void controller.resetPassword({ token, password: 'Nueva2026' });
+
+    expect(requestReset.execute).toHaveBeenCalledWith('ana@ufps.edu.co');
+    expect(resetPassword.check).toHaveBeenCalledWith(token);
+    expect(resetPassword.execute).toHaveBeenCalledWith(token, 'Nueva2026');
   });
 
   it('delegates register to its use case', () => {

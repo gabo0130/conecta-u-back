@@ -23,11 +23,16 @@ describe('JwtTokenService', () => {
   });
 
   it('verifies token and returns payload', () => {
-    jwtService.verify.mockReturnValue({ userId: 9, kind: 'access' });
+    jwtService.verify.mockReturnValue({
+      userId: 9,
+      kind: 'access',
+      iat: 1_700_000_000,
+    });
 
     expect(service.verify('token-value')).toEqual({
       userId: 9,
-      kind: 'access',
+      role: undefined,
+      issuedAt: 1_700_000_000,
     });
   });
 
@@ -56,16 +61,25 @@ describe('JwtTokenService', () => {
   });
 
   it('verifies refresh token and returns payload', () => {
-    jwtService.verify.mockReturnValue({ userId: 9, kind: 'refresh' });
+    jwtService.verify.mockReturnValue({
+      userId: 9,
+      kind: 'refresh',
+      iat: 1_700_000_000,
+    });
 
     expect(service.verifyRefresh('refresh-token-value')).toEqual({
       userId: 9,
-      kind: 'refresh',
+      role: undefined,
+      issuedAt: 1_700_000_000,
     });
   });
 
   it('throws UnauthorizedException when refresh token kind does not match', () => {
-    jwtService.verify.mockReturnValue({ userId: 9, kind: 'access' });
+    jwtService.verify.mockReturnValue({
+      userId: 9,
+      kind: 'access',
+      iat: 1_700_000_000,
+    });
 
     expect(() => service.verifyRefresh('access-token-value')).toThrow(
       UnauthorizedException,

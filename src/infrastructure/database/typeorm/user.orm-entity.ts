@@ -39,6 +39,9 @@ export class UserOrmEntity {
   @Column({ default: true })
   active: boolean;
 
+  @Column({ type: 'timestamptz', nullable: true })
+  passwordChangedAt: Date | null;
+
   @OneToOne(() => CollaboratorOrmEntity, (collaborator) => collaborator.user, {
     cascade: true,
     nullable: true,

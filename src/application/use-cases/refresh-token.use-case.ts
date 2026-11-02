@@ -1,3 +1,4 @@
+import { issuedBeforePasswordChange } from '../../domain/entities/password-reset';
 import { Inject, Injectable, UnauthorizedException } from '@nestjs/common';
 import type { TokenService } from '../../domain/repositories/token-service.interface';
 import type { UserRepository } from '../../domain/repositories/user.repository.interface';
@@ -11,10 +12,14 @@ export class RefreshTokenUseCase {
   ) {}
 
   async execute(refreshToken: string) {
-    const { userId } = this.tokenService.verifyRefresh(refreshToken);
+    const { userId, issuedAt } = this.tokenService.verifyRefresh(refreshToken);
     const user = await this.userRepository.findById(userId);
 
-    if (!user || !user.active) {
+    if (
+      !user ||
+      !user.active ||
+      issuedBeforePasswordChange(user.passwordChangedAt, issuedAt)
+    ) {
       throw new UnauthorizedException({ message: 'No autorizado' });
     }
 

@@ -19,6 +19,16 @@ import { RefreshTokenUseCase } from '../../application/use-cases/refresh-token.u
 import { RegisterUseCase } from '../../application/use-cases/register.use-case';
 import type { AuthenticatedRequest } from '../guards/jwt-auth.guard';
 import { JwtAuthGuard } from '../guards/jwt-auth.guard';
+import {
+  ForgotPasswordDto,
+  ResetPasswordDto,
+  ResetTokenDto,
+} from '../../application/dto/password-reset.dto';
+import { RequestPasswordResetUseCase } from '../../application/use-cases/request-password-reset.use-case';
+import { ResetPasswordUseCase } from '../../application/use-cases/reset-password.use-case';
+import { RateLimit, RateLimitGuard } from '../guards/rate-limit.guard';
+
+const MINUTE_MS = 60_000;
 
 @Controller('auth')
 export class AuthController {
@@ -27,6 +37,8 @@ export class AuthController {
     private readonly getMeUseCase: GetMeUseCase,
     private readonly registerUseCase: RegisterUseCase,
     private readonly refreshTokenUseCase: RefreshTokenUseCase,
+    private readonly requestPasswordResetUseCase: RequestPasswordResetUseCase,
+    private readonly resetPasswordUseCase: ResetPasswordUseCase,
   ) {}
 
   @HttpCode(201)
@@ -39,6 +51,31 @@ export class AuthController {
   @Post('login')
   login(@Body() loginDto: LoginDto): Promise<LoginResponseDto> {
     return this.loginUseCase.execute(loginDto);
+  }
+
+  /** Siempre la misma respuesta (200), exista o no la cuenta. */
+  @HttpCode(200)
+  @Post('password/forgot')
+  @UseGuards(RateLimitGuard)
+  @RateLimit({ limit: 5, windowMs: 15 * MINUTE_MS })
+  forgotPassword(@Body() dto: ForgotPasswordDto) {
+    return this.requestPasswordResetUseCase.execute(dto.email);
+  }
+
+  @HttpCode(200)
+  @Post('password/reset/check')
+  @UseGuards(RateLimitGuard)
+  @RateLimit({ limit: 20, windowMs: 15 * MINUTE_MS })
+  checkResetToken(@Body() dto: ResetTokenDto) {
+    return this.resetPasswordUseCase.check(dto.token);
+  }
+
+  @HttpCode(200)
+  @Post('password/reset')
+  @UseGuards(RateLimitGuard)
+  @RateLimit({ limit: 10, windowMs: 15 * MINUTE_MS })
+  resetPassword(@Body() dto: ResetPasswordDto) {
+    return this.resetPasswordUseCase.execute(dto.token, dto.password);
   }
 
   @HttpCode(200)

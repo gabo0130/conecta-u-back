@@ -26,6 +26,20 @@ describe('RefreshTokenUseCase', () => {
     expect(tokenService.generate).toHaveBeenCalledWith('user-1', 'LIDER');
   });
 
+  it('rejects a refresh token issued before a password reset', async () => {
+    tokenService.verifyRefresh.mockReturnValue({
+      userId: 'user-1',
+      issuedAt: 1_700_000_000,
+    });
+    userRepository.findById.mockResolvedValue(
+      buildUser({ passwordChangedAt: new Date(1_700_000_100_000) }),
+    );
+
+    await expect(useCase.execute('refresh')).rejects.toBeInstanceOf(
+      UnauthorizedException,
+    );
+  });
+
   it('rejects an inactive user', async () => {
     userRepository.findById.mockResolvedValue(buildUser({ active: false }));
 

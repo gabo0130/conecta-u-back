@@ -84,6 +84,7 @@ export const buildUser = (
     email: string;
     role: UserRole;
     active: boolean;
+    passwordChangedAt: Date | null;
   }> = {},
 ) => {
   const user = {
@@ -101,6 +102,7 @@ export const buildUser = (
     'hashed',
     user.role,
     user.active,
+    overrides.passwordChangedAt ?? null,
   );
 };
 

@@ -98,6 +98,17 @@ export class TypeOrmUserRepository implements UserRepository {
     return (result.affected ?? 0) > 0;
   }
 
+  async updatePassword(
+    id: string,
+    passwordHash: string,
+    changedAt: Date,
+  ): Promise<void> {
+    await this.repository.update(id, {
+      passwordHash,
+      passwordChangedAt: changedAt,
+    });
+  }
+
   private toDomain(user: UserOrmEntity): UserEntity {
     const role = USER_ROLES.includes(user.role as UserRole)
       ? (user.role as UserRole)
@@ -110,6 +121,7 @@ export class TypeOrmUserRepository implements UserRepository {
       user.passwordHash ?? '',
       role,
       user.active,
+      user.passwordChangedAt ?? null,
     );
   }
 }
