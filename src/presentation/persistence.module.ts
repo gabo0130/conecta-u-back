@@ -5,6 +5,8 @@ import { CollaboratorOrmEntity } from '../infrastructure/database/typeorm/collab
 import { DeliverableOrmEntity } from '../infrastructure/database/typeorm/deliverable.orm-entity';
 import { ExperienceCertificateOrmEntity } from '../infrastructure/database/typeorm/experience-certificate.orm-entity';
 import { TypeOrmExperienceCertificateRepository } from '../infrastructure/database/typeorm/typeorm-experience-certificate.repository';
+import { NeedOrmEntity } from '../infrastructure/database/typeorm/need.orm-entity';
+import { TypeOrmNeedRepository } from '../infrastructure/database/typeorm/typeorm-need.repository';
 import { InvitationOrmEntity } from '../infrastructure/database/typeorm/invitation.orm-entity';
 import { TypeOrmInvitationRepository } from '../infrastructure/database/typeorm/typeorm-invitation.repository';
 import { ExperienceOrmEntity } from '../infrastructure/database/typeorm/experience.orm-entity';
@@ -42,6 +44,7 @@ import {
   EXPERIENCE_REPOSITORY,
   IMPORT_RUN_REPOSITORY,
   INVITATION_REPOSITORY,
+  NEED_REPOSITORY,
   PROGRAM_REPOSITORY,
   PROJECT_ANALYSIS_REPOSITORY,
   PROJECT_CATEGORY_REPOSITORY,
@@ -92,6 +95,7 @@ const REPOSITORY_BINDINGS = [
     useClass: TypeOrmRecommendationRepository,
   },
   { provide: INVITATION_REPOSITORY, useClass: TypeOrmInvitationRepository },
+  { provide: NEED_REPOSITORY, useClass: TypeOrmNeedRepository },
   { provide: UNIT_OF_WORK, useClass: TypeOrmUnitOfWork },
 ];
 
@@ -116,6 +120,7 @@ const REPOSITORY_BINDINGS = [
       RequiredProfileSkillOrmEntity,
       RecommendationOrmEntity,
       InvitationOrmEntity,
+      NeedOrmEntity,
     ]),
   ],
   providers: REPOSITORY_BINDINGS,

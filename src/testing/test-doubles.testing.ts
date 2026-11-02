@@ -8,6 +8,7 @@ import {
   ExperienceEntity,
   type ExperienceProps,
 } from '../domain/entities/experience.entity';
+import type { NeedEntity } from '../domain/entities/need';
 import { ProgramEntity } from '../domain/entities/program.entity';
 import { ProjectCategoryEntity } from '../domain/entities/project-category.entity';
 import { ProjectTypeEntity } from '../domain/entities/project-type.entity';
@@ -252,3 +253,26 @@ export const IDENTITY = {
   phone: '3000000001',
   nationality: 'Colombiana',
 };
+
+export const buildNeed = (overrides: Partial<NeedEntity> = {}): NeedEntity => ({
+  id: 'need-1',
+  title: 'Plataforma de citas de Bienestar',
+  description:
+    'Bienestar necesita que los estudiantes reserven citas de psicología en línea.',
+  kind: 'ADMINISTRATIVA',
+  status: 'REGISTRADA',
+  urgency: 4,
+  impact: 5,
+  deadline: null,
+  dependency: null,
+  characterization: null,
+  characterizedAt: null,
+  completeness: 0,
+  priorityScore: 0,
+  projectId: null,
+  discardReason: null,
+  createdById: 'leader-1',
+  createdAt: new Date('2026-11-01T00:00:00Z'),
+  updatedAt: new Date('2026-11-01T00:00:00Z'),
+  ...overrides,
+});

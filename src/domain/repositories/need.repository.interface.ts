@@ -1,0 +1,38 @@
+import type { Page, PageParams } from '../../shared/pagination/pagination.util';
+import type { NeedEntity, NeedKind, NeedStatus } from '../entities/need';
+
+export type NewNeed = Pick<
+  NeedEntity,
+  | 'title'
+  | 'description'
+  | 'kind'
+  | 'urgency'
+  | 'impact'
+  | 'deadline'
+  | 'dependency'
+  | 'completeness'
+  | 'priorityScore'
+  | 'createdById'
+>;
+
+export type NeedChanges = Partial<
+  Omit<NeedEntity, 'id' | 'createdById' | 'createdAt' | 'updatedAt'>
+>;
+
+export const NEED_SORTS = ['recent'] as const;
+export type NeedSort = (typeof NEED_SORTS)[number];
+
+export interface NeedFilters {
+  /** Solo las del formulador; sin él, todas (vista del ADMIN). */
+  createdById?: string;
+  status?: NeedStatus;
+  kind?: NeedKind;
+  sort: NeedSort;
+}
+
+export interface NeedRepository {
+  create(data: NewNeed): Promise<NeedEntity>;
+  findById(id: string): Promise<NeedEntity | null>;
+  findPage(filters: NeedFilters, params: PageParams): Promise<Page<NeedEntity>>;
+  update(id: string, changes: NeedChanges): Promise<NeedEntity | null>;
+}

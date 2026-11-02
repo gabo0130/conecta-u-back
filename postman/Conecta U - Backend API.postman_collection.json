@@ -2229,6 +2229,151 @@
           }
         }
       ]
+    },
+    {
+      "name": "Tesis (PGCS01)",
+      "item": [
+        {
+          "name": "Create Need (T1)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/needs",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "needs"
+              ]
+            },
+            "description": "Tesis (D1). Solo LIDER (formulador). kind: ACADEMICA | ADMINISTRATIVA | INVESTIGATIVA | TECNOLOGICA | BIENESTAR | INFRAESTRUCTURA | INNOVACION; urgency e impact 1–5; deadline y dependency opcionales. Guarda el id en needId.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Plataforma de citas de Bienestar\",\n  \"description\": \"La oficina de Bienestar necesita una plataforma web para que los estudiantes reserven citas de psicología y medicina, con recordatorios por correo.\",\n  \"kind\": \"ADMINISTRATIVA\",\n  \"urgency\": 4,\n  \"impact\": 5,\n  \"deadline\": \"2027-03-01\",\n  \"dependency\": \"Bienestar Universitario\"\n}"
+            }
+          }
+        },
+        {
+          "name": "List Needs (T1)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/needs?page=1&pageSize=20&sort=recent",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "needs"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "pageSize",
+                  "value": "20"
+                },
+                {
+                  "key": "sort",
+                  "value": "recent"
+                }
+              ]
+            },
+            "description": "LIDER: las suyas; ADMIN: todas. Filtros opcionales status y kind."
+          }
+        },
+        {
+          "name": "Get Need (T1)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/needs/{{needId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "needs",
+                "{{needId}}"
+              ]
+            },
+            "description": "Formulador dueño o ADMIN (403 otro líder)."
+          }
+        },
+        {
+          "name": "Update Need (T1)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/needs/{{needId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "needs",
+                "{{needId}}"
+              ]
+            },
+            "description": "Solo el formulador y mientras esté REGISTRADA o CARACTERIZADA (409 si no).",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"urgency\": 5\n}"
+            }
+          }
+        },
+        {
+          "name": "Discard Need (T1)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/needs/{{needId}}/discard",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "needs",
+                "{{needId}}",
+                "discard"
+              ]
+            },
+            "description": "Pasa a DESCARTADA con el motivo (opcional).",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reason\": \"Se atenderá con otro proyecto\"\n}"
+            }
+          }
+        }
+      ]
     }
   ]
 }

@@ -10,6 +10,7 @@ import { CollaboratorsModule } from './presentation/collaborators.module';
 import { HealthController } from './presentation/controllers/health.controller';
 import { InvitationsModule } from './presentation/invitations.module';
 import { ImportModule } from './presentation/import.module';
+import { NeedsModule } from './presentation/needs.module';
 import { MatchmakingModule } from './presentation/matchmaking.module';
 import { ReportsModule } from './presentation/reports.module';
 import { ProjectsModule } from './presentation/projects.module';
@@ -53,6 +54,7 @@ import { TraceIdMiddleware } from './shared/logging/trace-id.middleware';
     MatchmakingModule,
     InvitationsModule,
     ReportsModule,
+    NeedsModule,
   ],
 })
 export class AppModule implements NestModule {

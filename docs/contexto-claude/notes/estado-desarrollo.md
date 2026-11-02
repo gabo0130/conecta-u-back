@@ -269,3 +269,13 @@ Ramas `feature/ajustes-v2.2` desde `develop` en los dos repos. **Sin commits** (
 - Panel de embeddings del ADMIN (`POST /admin/embeddings/rebuild`): sin pantalla (fuera de alcance).
 - Hashing: se mantiene `bcryptjs` (el documento sugería `argon2`; no es un requisito funcional).
 - `git add --renormalize .` no se ejecutó en ninguno de los dos repos tras agregar `.gitattributes` — queda pendiente para quien haga el commit, para que el diff de línea-de-salto se resuelva de una vez.
+
+## Tesis PGCS01 — rama `feature/tesis-dsr` (sesión en la nube, desde 02/11/2026)
+
+Extensión compatible (plan §2): no cambia las HU del seminario. Decisiones de Jhony (plan §4): funciones de tesis **solo en la rama de tesis** (no se muestran a la cliente), K = 5 y 10, expertos con campos en blanco, Walter a cargo de los instrumentos de la Fase 1 y la aplicación de entrevistas. Pruebas e2e contra Postgres 16 + pgvector local (puerto 5433, sin Docker).
+
+### T1 · Necesidades en lenguaje natural (D1)
+- Migración `1791400000000-CreateNeeds`: tabla `needs` (título, descripción, `kind` enum de 7 tipos, `status` REGISTRADA→CARACTERIZADA→CONVERTIDA/DESCARTADA, urgencia e impacto `smallint` CHECK 1–5, `deadline` date y `dependency` opcionales, `characterization` jsonb, `characterizedAt`, `completeness` smallint 0–100, `priorityScore` numeric(5,2) 0–100, `projectId` único con SET NULL, `discardReason`, `createdById` → users CASCADE). Índice (`createdById`, `createdAt`). Escrita a mano; `migration:generate --dr` solo difiere en nombres de restricciones (igual que el resto del esquema).
+- Rutas: `POST /needs` (LIDER), `GET /needs` (LIDER: las suyas; ADMIN: todas; filtros `status`, `kind`, paginación), `GET /needs/:id` (dueño o ADMIN, 403 otro líder), `PATCH /needs/:id` y `POST /needs/:id/discard` (solo el dueño y con la necesidad abierta; 409 si ya se convirtió o descartó). Validación 422 con mensajes en español.
+- Capas: `domain/entities/need.ts`, `NeedRepository` + `TypeOrmNeedRepository`, casos de uso `create/list/get/update/discard-need`, `application/support/need-access.ts`, `need-response.mapper.ts`, `NeedsController` en `NeedsModule`.
+- Pruebas: 10 unitarias (`needs.use-cases.spec.ts`) y 4 e2e (`test/tesis.e2e.spec.ts`). Postman: carpeta «Tesis (PGCS01)» y variable `needId`.
