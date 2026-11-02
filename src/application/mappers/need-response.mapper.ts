@@ -1,5 +1,6 @@
 import type { NeedEntity } from '../../domain/entities/need';
 import { computeNeedCompleteness } from '../../domain/services/need-completeness';
+import { priorityLevel } from '../../domain/services/need-priority';
 
 /** Resumen para la lista de necesidades (sin el texto completo ni la caracterización). */
 export function toNeedSummaryResponse(need: NeedEntity) {
@@ -14,6 +15,7 @@ export function toNeedSummaryResponse(need: NeedEntity) {
     dependency: need.dependency,
     completeness: need.completeness,
     priorityScore: need.priorityScore,
+    priorityLevel: priorityLevel(need.priorityScore),
     projectId: need.projectId,
     createdById: need.createdById,
     createdAt: need.createdAt,

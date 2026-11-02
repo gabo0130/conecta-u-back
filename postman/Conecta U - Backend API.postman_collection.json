@@ -2260,42 +2260,6 @@
           }
         },
         {
-          "name": "List Needs (T1)",
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/needs?page=1&pageSize=20&sort=recent",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "needs"
-              ],
-              "query": [
-                {
-                  "key": "page",
-                  "value": "1"
-                },
-                {
-                  "key": "pageSize",
-                  "value": "20"
-                },
-                {
-                  "key": "sort",
-                  "value": "recent"
-                }
-              ]
-            },
-            "description": "LIDER: las suyas; ADMIN: todas. Filtros opcionales status y kind."
-          }
-        },
-        {
           "name": "Get Need (T1)",
           "request": {
             "method": "GET",
@@ -2395,6 +2359,42 @@
               ]
             },
             "description": "Solo el formulador dueño; la necesidad debe estar REGISTRADA o CARACTERIZADA (409 si no). La IA (Gemini o fake según AI_PROVIDER) extrae problema, objetivo, beneficiarios, resultados esperados, competencias del catálogo, tipo de proyecto sugerido e información faltante. 503 si la IA no responde o devuelve algo inválido dos veces."
+          }
+        },
+        {
+          "name": "List Needs (T1)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/needs?page=1&pageSize=20&sort=priority",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "needs"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "pageSize",
+                  "value": "20"
+                },
+                {
+                  "key": "sort",
+                  "value": "priority"
+                }
+              ]
+            },
+            "description": "LIDER: las suyas; ADMIN: todas. sort=priority (mayor prioridad primero, T4) o recent (por defecto). Filtros opcionales status y kind. Cada fila trae completeness (0–100), priorityScore (0–100) y priorityLevel (ALTA ≥ 70, MEDIA ≥ 40, BAJA)."
           }
         }
       ]

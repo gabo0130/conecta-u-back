@@ -25,7 +25,6 @@ export class CreateNeedUseCase {
       kind: data.kind,
       ...declared,
       ...scoreNeed({ ...declared, characterization: null }),
-      priorityScore: 0,
       createdById: userId,
     });
     return toNeedResponse(need);

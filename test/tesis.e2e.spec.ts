@@ -270,4 +270,62 @@ describe('Tesis (integración)', () => {
       expect(completed.body.missingElements).toEqual([]);
     });
   });
+
+  describe('T4 · priorización básica', () => {
+    it('ordena la lista por prioridad y calcula el nivel', async () => {
+      const leader = await login(app, EMAILS.otherLeader);
+      const create = (title: string, urgency: number, impact: number) =>
+        http()
+          .post('/api/needs')
+          .auth(leader, { type: 'bearer' })
+          .send({ ...NEED, title, urgency, impact })
+          .expect(201)
+          .then((response) => response.body);
+      const low = await create('Necesidad poco urgente', 1, 2);
+      const high = await create('Necesidad muy urgente', 5, 5);
+      const medium = await create('Necesidad intermedia', 3, 3);
+      // 100 · (0,4·5/5 + 0,4·5/5 + 0) = 80
+      expect(high).toMatchObject({ priorityScore: 80, priorityLevel: 'ALTA' });
+      expect(medium).toMatchObject({
+        priorityScore: 48,
+        priorityLevel: 'MEDIA',
+      });
+      expect(low).toMatchObject({ priorityScore: 24, priorityLevel: 'BAJA' });
+
+      const byPriority = await http()
+        .get('/api/needs?sort=priority')
+        .auth(leader, { type: 'bearer' })
+        .expect(200);
+      expect(byPriority.body.needs.map((n: { id: string }) => n.id)).toEqual([
+        high.id,
+        medium.id,
+        low.id,
+      ]);
+      const recent = await http()
+        .get('/api/needs')
+        .auth(leader, { type: 'bearer' })
+        .expect(200);
+      expect(recent.body.needs[0].id).toBe(medium.id);
+      await http()
+        .get('/api/needs?sort=otro')
+        .auth(leader, { type: 'bearer' })
+        .expect(422);
+    });
+
+    it('caracterizar sube la prioridad por la completitud', async () => {
+      const created = await http()
+        .post('/api/needs')
+        .auth(owner, { type: 'bearer' })
+        .send({ ...NEED, title: 'Necesidad para priorizar' })
+        .expect(201);
+      // 100 · (0,4·5/5 + 0,4·4/5 + 0) = 72
+      expect(created.body.priorityScore).toBe(72);
+      const characterized = await http()
+        .post(`/api/needs/${created.body.id}/characterization`)
+        .auth(owner, { type: 'bearer' })
+        .expect(200);
+      // + 0,2 · 85 = 17 → 89
+      expect(characterized.body.priorityScore).toBe(89);
+    });
+  });
 });

@@ -25,6 +25,7 @@ import { NeedOrmEntity } from './need.orm-entity';
 
 const ORDER: Record<NeedSort, FindOptionsOrder<NeedOrmEntity>> = {
   recent: { createdAt: 'DESC' },
+  priority: { priorityScore: 'DESC', createdAt: 'DESC' },
 };
 
 export function toNeedEntity(row: NeedOrmEntity): NeedEntity {

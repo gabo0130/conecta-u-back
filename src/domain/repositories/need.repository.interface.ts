@@ -19,7 +19,8 @@ export type NeedChanges = Partial<
   Omit<NeedEntity, 'id' | 'createdById' | 'createdAt' | 'updatedAt'>
 >;
 
-export const NEED_SORTS = ['recent'] as const;
+/** `priority`: mayor puntaje de prioridad primero (T4); `recent`: más recientes primero. */
+export const NEED_SORTS = ['recent', 'priority'] as const;
 export type NeedSort = (typeof NEED_SORTS)[number];
 
 export interface NeedFilters {

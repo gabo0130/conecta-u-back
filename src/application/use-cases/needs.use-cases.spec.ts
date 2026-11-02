@@ -57,7 +57,7 @@ describe('needs (tesis D1)', () => {
         dependency: 'Bienestar',
       });
       expect(needRepository.create).toHaveBeenCalledWith(
-        expect.objectContaining({ completeness: 15 }),
+        expect.objectContaining({ completeness: 15, priorityScore: 75 }),
       );
     });
   });
@@ -79,6 +79,7 @@ describe('needs (tesis D1)', () => {
         { page: 1, pageSize: 20 },
       );
       expect(result.needs[0]).not.toHaveProperty('description');
+      expect(result.needs[0].priorityLevel).toBe('BAJA');
       expect(result.meta).toEqual({
         page: 1,
         pageSize: 20,
@@ -142,6 +143,8 @@ describe('needs (tesis D1)', () => {
         urgency: 2,
         dependency: null,
         completeness: 0,
+        // 100 · (0,4·5/5 + 0,4·2/5 + 0,2·0) = 56
+        priorityScore: 56,
       });
       expect(result.urgency).toBe(2);
     });
@@ -155,6 +158,8 @@ describe('needs (tesis D1)', () => {
       expect(needRepository.update).toHaveBeenCalledWith('need-1', {
         deadline: '2027-01-01',
         completeness: 15,
+        // 100 · (0,4·5/5 + 0,4·4/5 + 0,2·15/100) = 75
+        priorityScore: 75,
       });
     });
 

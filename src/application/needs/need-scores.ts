@@ -1,9 +1,10 @@
 import type { NeedEntity } from '../../domain/entities/need';
 import { computeNeedCompleteness } from '../../domain/services/need-completeness';
+import { computeNeedPriority } from '../../domain/services/need-priority';
 
 export type ScoredFields = Pick<
   NeedEntity,
-  'deadline' | 'dependency' | 'characterization'
+  'urgency' | 'impact' | 'deadline' | 'dependency' | 'characterization'
 >;
 
 /**
@@ -12,6 +13,8 @@ export type ScoredFields = Pick<
  */
 export function scoreNeed(
   need: ScoredFields,
-): Pick<NeedEntity, 'completeness'> {
-  return { completeness: computeNeedCompleteness(need).score };
+): Pick<NeedEntity, 'completeness' | 'priorityScore'> {
+  const completeness = computeNeedCompleteness(need).score;
+  const { score } = computeNeedPriority({ ...need, completeness });
+  return { completeness, priorityScore: score };
 }
