@@ -15,7 +15,7 @@ import {
 } from './support/fixtures';
 import { createTestApp, login } from './support/test-app';
 
-// RF12–RF14 por HTTP, con la app completa, la base de pruebas y AI_PROVIDER=fake.
+// RF8–RF10 por HTTP, con la app completa, la base de pruebas y AI_PROVIDER=fake.
 
 const UNKNOWN_ID = '00000000-0000-4000-8000-000000000000';
 
@@ -176,7 +176,7 @@ describe('Análisis con IA (integración)', () => {
     });
   });
 
-  describe('perfiles requeridos manuales (RF13)', () => {
+  describe('perfiles requeridos manuales (RF9)', () => {
     const profilesUrl = () =>
       `/api/projects/${scenario.projectId}/required-profiles`;
     const validProfile = () => ({

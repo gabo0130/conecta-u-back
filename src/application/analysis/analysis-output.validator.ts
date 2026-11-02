@@ -47,7 +47,7 @@ function textOf(value: unknown, max: number): string {
 }
 
 /**
- * Valida y normaliza la salida del modelo (`promptVersion v1`, ver §4 del contrato).
+ * Valida y normaliza la salida del modelo (esquema de §4 del contrato; el mismo desde `promptVersion` v1).
  * Es tolerante con lo cosmético (mayúsculas, tildes, textos largos, cantidades fuera de
  * rango) y estricta con lo que rompería el matchmaking (tipos, niveles, prioridades).
  * @throws InvalidAnalysisOutputError con todos los problemas encontrados.

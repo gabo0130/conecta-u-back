@@ -59,6 +59,7 @@ export function toAdminCollaboratorSummary(
     source: collaborator.source,
     active: collaborator.active,
     dataConsent: collaborator.dataConsent,
+    truthfulnessDeclared: collaborator.truthfulnessDeclared,
     ...toIdentificationResponse(collaborator),
     skillsCount: collaborator.skills.length,
     // A7 (v2.1): cuáles habilidades, no solo cuántas.

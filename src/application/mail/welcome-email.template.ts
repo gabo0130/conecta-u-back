@@ -27,7 +27,7 @@ const ROLE_CONTENT: Record<UserRole, RoleContent> = {
     intro:
       'Registra tus proyectos e investigaciones y deja que la plataforma identifique los perfiles que necesitas y te recomiende a las personas indicadas para hacerlos realidad.',
     highlights: [
-      'Registra tu proyecto con su resumen, objetivos, habilidades y entregables.',
+      'Registra tu proyecto con su resumen, objetivos, competencias requeridas y entregables.',
       'Recibe el análisis de perfiles requeridos y colaboradores recomendados.',
       'Convoca a las personas que mejor encajan con tu proyecto.',
     ],
@@ -39,7 +39,7 @@ const ROLE_CONTENT: Record<UserRole, RoleContent> = {
     intro:
       'Cuéntanos qué sabes hacer. Mientras más completo esté tu perfil técnico, más fácil será que los líderes de proyecto te encuentren y te inviten a participar.',
     highlights: [
-      'Agrega tus conocimientos, competencias y habilidades blandas.',
+      'Agrega tus conocimientos técnicos, competencias técnicas y competencias blandas.',
       'Registra tu experiencia y los proyectos en los que has participado.',
       'Mantén al día tu disponibilidad para aparecer en las recomendaciones.',
     ],

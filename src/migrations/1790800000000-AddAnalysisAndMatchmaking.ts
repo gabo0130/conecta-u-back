@@ -1,6 +1,6 @@
 import { MigrationInterface, QueryRunner } from "typeorm";
 
-// Iteración 2 (RF12–RF17): análisis de proyectos con IA, perfiles requeridos y recomendaciones.
+// Iteración 2 (RF8–RF13): análisis de proyectos con IA, perfiles requeridos y recomendaciones.
 // Usa pgvector para el matchmaking semántico (dimensión 768). Solo agrega: no toca filas existentes.
 export class AddAnalysisAndMatchmaking1790800000000 implements MigrationInterface {
     name = 'AddAnalysisAndMatchmaking1790800000000'

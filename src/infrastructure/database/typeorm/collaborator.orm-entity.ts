@@ -86,6 +86,12 @@ export class CollaboratorOrmEntity {
   @Column({ type: 'timestamptz', nullable: true })
   dataConsentAt: Date | null;
 
+  @Column({ default: false })
+  truthfulnessDeclared: boolean;
+
+  @Column({ type: 'timestamptz', nullable: true })
+  truthfulnessDeclaredAt: Date | null;
+
   @Column({
     type: 'enum',
     enum: [...COLLABORATOR_SOURCES],
@@ -115,7 +121,7 @@ export class CollaboratorOrmEntity {
   @Column({ type: 'varchar', length: 20, nullable: true })
   institutionalCode: string | null;
 
-  // Embedding del perfil para el matchmaking semántico (RF15). `select: false`: solo lo lee el matchmaking.
+  // Embedding del perfil para el matchmaking semántico (RF11). `select: false`: solo lo lee el matchmaking.
   @Column({
     type: 'vector',
     length: EMBEDDING_COLUMN_DIMENSIONS,

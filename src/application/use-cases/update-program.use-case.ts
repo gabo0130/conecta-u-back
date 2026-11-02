@@ -3,7 +3,7 @@ import type { ProgramRepository } from '../../domain/repositories/program.reposi
 import { PROGRAM_REPOSITORY } from '../../shared/interfaces/tokens';
 import { UpdateProgramDto } from '../dto/update-program.dto';
 
-/** ADMIN: edita o activa/desactiva un programa académico (RF22). */
+/** ADMIN: edita o activa/desactiva un programa académico (RF18). */
 @Injectable()
 export class UpdateProgramUseCase {
   constructor(

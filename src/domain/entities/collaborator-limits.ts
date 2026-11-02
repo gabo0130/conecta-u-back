@@ -1,4 +1,4 @@
-// Rangos del perfil técnico (RF4–RF6). Única fuente para los DTO de la API y la importación Excel.
+// Rangos del perfil técnico (RF3–RF5). Única fuente para los DTO de la API y la importación Excel.
 
 export interface NumericRange {
   readonly min: number;

@@ -37,13 +37,16 @@ describe('Ajustes v2.1 (integración)', () => {
   });
 
   const register = (email: string, collaborator: Record<string, unknown>) =>
-    http().post('/api/auth/register').send({
-      fullName: 'Camila Rojas',
-      email,
-      password: TEST_PASSWORD,
-      role: 'COLABORADOR',
-      collaborator,
-    });
+    http()
+      .post('/api/auth/register')
+      .send({
+        fullName: 'Camila Rojas',
+        email,
+        password: TEST_PASSWORD,
+        role: 'COLABORADOR',
+        // v2.2 (E2): el registro exige la declaración de veracidad.
+        collaborator: { truthfulnessDeclared: true, ...collaborator },
+      });
 
   beforeAll(async () => {
     app = await createTestApp();
@@ -176,6 +179,8 @@ describe('Ajustes v2.1 (integración)', () => {
       title: 'Proyecto registrado por el admin',
       summary: 'Resumen',
       objectives: 'Objetivos',
+      executingEntity: 'UFPS',
+      durationMonths: 6,
       typeId: scenario.typeId,
       categoryId: scenario.categoryId,
       deliverables: [{ name: 'Informe', scope: 'Final' }],
@@ -258,6 +263,8 @@ describe('Ajustes v2.1 (integración)', () => {
           title: 'Proyecto con palabras clave',
           summary: 'Resumen',
           objectives: 'Objetivos',
+          executingEntity: 'UFPS',
+          durationMonths: 6,
           typeId,
           categoryId: scenario.categoryId,
           deliverables: [{ name: 'Informe', scope: 'Final' }],

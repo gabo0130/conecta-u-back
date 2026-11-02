@@ -17,7 +17,7 @@ import type { AuthenticatedRequest } from '../guards/jwt-auth.guard';
 import { JwtAuthGuard } from '../guards/jwt-auth.guard';
 import { UuidParamPipe } from '../pipes/uuid-param.pipe';
 
-/** RF12–RF14: análisis de un proyecto con IA. Pedirlo es del líder dueño; verlo, también del ADMIN. */
+/** RF8–RF10: análisis de un proyecto con IA. Pedirlo es del líder dueño; verlo, también del ADMIN. */
 @UseGuards(JwtAuthGuard, AuthorizationGuard)
 @Controller('projects/:id')
 export class AnalysisController {

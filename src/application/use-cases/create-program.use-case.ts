@@ -3,7 +3,7 @@ import type { ProgramRepository } from '../../domain/repositories/program.reposi
 import { PROGRAM_REPOSITORY } from '../../shared/interfaces/tokens';
 import { CreateProgramDto } from '../dto/create-program.dto';
 
-/** ADMIN: crea un programa académico (RF22). */
+/** ADMIN: crea un programa académico (RF18). */
 @Injectable()
 export class CreateProgramUseCase {
   constructor(

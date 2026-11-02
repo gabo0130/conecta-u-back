@@ -62,8 +62,8 @@ interface AnalyzedResult {
 }
 
 /**
- * RF12: el líder dueño pide el análisis de su proyecto con IA. Guarda el análisis y sus
- * perfiles (RF13–RF14); si la IA falla, el análisis queda en ERROR y el proyecto vuelve a
+ * RF8: el líder dueño pide el análisis de su proyecto con IA. Guarda el análisis y sus
+ * perfiles (RF9–RF10); si la IA falla, el análisis queda en ERROR y el proyecto vuelve a
  * su estado anterior.
  */
 @Injectable()
@@ -257,7 +257,7 @@ export class RequestProjectAnalysisUseCase {
   }
 }
 
-/** RF12: el proyecto debe tener lo mínimo para que la IA tenga de qué partir. */
+/** RF8: el proyecto debe tener lo mínimo para que la IA tenga de qué partir. */
 function assertAnalyzable(project: ProjectEntity): void {
   if (
     !project.title.trim() ||

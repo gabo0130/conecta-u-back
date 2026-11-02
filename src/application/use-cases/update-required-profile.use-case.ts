@@ -20,7 +20,7 @@ import { loadOwnedProject } from '../support/project-access';
 import { resolveProfileSkills } from '../support/required-profile-skills';
 
 /**
- * RF13: el líder dueño edita un perfil (de la IA o manual) o lo descarta con `active: false`.
+ * RF9: el líder dueño edita un perfil (de la IA o manual) o lo descarta con `active: false`.
  * Si cambia lo que describe al perfil, se recalcula su embedding.
  */
 @Injectable()

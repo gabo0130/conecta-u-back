@@ -5,7 +5,7 @@ import { LEVELS } from '../entities/level.type';
 import { PRIORITY_WEIGHT } from '../entities/priority.type';
 import type { Priority } from '../entities/priority.type';
 
-// Puntaje de correspondencia entre un perfil requerido y una persona (RF15–RF17).
+// Puntaje de correspondencia entre un perfil requerido y una persona (RF11–RF13).
 // Función pura: no lee base de datos ni configuración, así se prueba con casos puntuales.
 // Los componentes valen de 0 a 1; el puntaje final, de 0 a 100 (ver §5 del contrato).
 

@@ -13,7 +13,7 @@ import { toRequiredProfileResponse } from '../mappers/analysis-response.mapper';
 import { loadOwnedProject } from '../support/project-access';
 import { resolveProfileSkills } from '../support/required-profile-skills';
 
-/** RF13: el líder dueño agrega a mano un perfil requerido (queda marcado como MANUAL). */
+/** RF9: el líder dueño agrega a mano un perfil requerido (queda marcado como MANUAL). */
 @Injectable()
 export class CreateRequiredProfileUseCase {
   constructor(

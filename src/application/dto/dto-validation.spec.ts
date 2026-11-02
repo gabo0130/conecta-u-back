@@ -5,7 +5,12 @@ import { CollaboratorSkillDto } from './collaborator-skill.dto';
 import { CreateProjectDto } from './create-project.dto';
 import { ExperienceDto } from './experience.dto';
 import { UpdateIdentificationDto } from './person-identification.dto';
-import { RegisterCollaboratorDto, RegisterDto } from './register.dto';
+import { CreateUserDto } from './create-user.dto';
+import {
+  AccountPersonDto,
+  RegisterCollaboratorDto,
+  RegisterDto,
+} from './register.dto';
 import { SearchSkillsQueryDto } from './search-skills-query.dto';
 import { UpdateCollaboratorDto } from './update-collaborator.dto';
 import { UpdateProjectDto } from './update-project.dto';
@@ -16,6 +21,9 @@ const errorsOf = (type: new () => object, plain: Record<string, unknown>) =>
     error.property,
     ...Object.values(error.constraints ?? {}),
   ]);
+
+// «Mi perfil» siempre manda la declaración de veracidad (v2.2, E2).
+const DECLARED = { truthfulnessDeclared: true };
 
 describe('DTO validation', () => {
   const register = {
@@ -33,6 +41,114 @@ describe('DTO validation', () => {
     },
   );
 
+  describe('declaración de veracidad (v2.2, E2)', () => {
+    const person = {
+      firstName: 'Ana',
+      lastName: 'Pérez',
+      personType: 'ESTUDIANTE',
+      programId: '3f1c2a8e-1b2c-4d5e-8f90-123456789abc',
+      documentType: 'CC',
+      documentNumber: '1090123456',
+      phone: '3001234567',
+      nationality: 'Colombiana',
+    };
+    const message = 'Debes declarar que la información es verídica.';
+
+    it.each([undefined, false, 'true'])(
+      'rejects the register and «Mi perfil» without a true declaration (%p)',
+      (truthfulnessDeclared) => {
+        for (const [type, plain] of [
+          [RegisterCollaboratorDto, person],
+          [UpdateCollaboratorDto, { summary: 'x' }],
+        ] as const) {
+          expect(errorsOf(type, { ...plain, truthfulnessDeclared })).toContain(
+            message,
+          );
+        }
+      },
+    );
+
+    it('accepts it when declared', () => {
+      expect(
+        errorsOf(RegisterCollaboratorDto, {
+          ...person,
+          truthfulnessDeclared: true,
+        }),
+      ).toEqual([]);
+    });
+
+    it('does not ask for it when the ADMIN creates the account', () => {
+      expect(errorsOf(AccountPersonDto, person)).toEqual([]);
+      expect(
+        errorsOf(CreateUserDto, {
+          fullName: 'Ana Pérez',
+          email: 'ana@example.com',
+          password: 'Secret123*',
+          role: 'COLABORADOR',
+          collaborator: person,
+        }),
+      ).toEqual([]);
+    });
+  });
+
+  describe('entidades y duración del proyecto (v2.2, E5)', () => {
+    const project = {
+      title: 'Conecta U',
+      summary: 'Resumen',
+      objectives: 'Objetivos',
+      typeId: '3f1c2a8e-1b2c-4d5e-8f90-123456789abc',
+      categoryId: '3f1c2a8e-1b2c-4d5e-8f90-123456789abd',
+      deliverables: [{ name: 'PMV', scope: 'Iteración 2' }],
+      executingEntity: ' UFPS ',
+      durationMonths: 6,
+    };
+    const duration =
+      'La duración debe ser un número entero de meses entre 1 y 60';
+
+    it('requires the executing entity and the duration; the sponsor is optional', () => {
+      expect(errorsOf(CreateProjectDto, project)).toEqual([]);
+      const { executingEntity, durationMonths, ...rest } = project;
+      void executingEntity;
+      void durationMonths;
+      const errors = errorsOf(CreateProjectDto, rest);
+      expect(errors).toContain('executingEntity es obligatorio');
+      expect(errors).toContain(duration);
+    });
+
+    it.each([0, 61, 2.5, '6'])('rejects a duration of %p months', (value) => {
+      expect(
+        errorsOf(CreateProjectDto, { ...project, durationMonths: value }),
+      ).toContain(duration);
+    });
+
+    it('limits the entities to 150 characters and trims them', () => {
+      expect(
+        errorsOf(CreateProjectDto, {
+          ...project,
+          sponsorEntity: 'x'.repeat(151),
+        }),
+      ).toContain('sponsorEntity');
+      const dto = plainToInstance(CreateProjectDto, {
+        ...project,
+        sponsorEntity: '   ',
+      });
+      expect(validateSync(dto)).toEqual([]);
+      expect(dto.executingEntity).toBe('UFPS');
+      expect(dto.sponsorEntity).toBeNull();
+    });
+
+    it('lets an update leave them untouched but not clear the required ones', () => {
+      expect(errorsOf(UpdateProjectDto, {})).toEqual([]);
+      expect(errorsOf(UpdateProjectDto, { sponsorEntity: null })).toEqual([]);
+      expect(errorsOf(UpdateProjectDto, { executingEntity: null })).toContain(
+        'executingEntity',
+      );
+      expect(errorsOf(UpdateProjectDto, { durationMonths: null })).toContain(
+        'durationMonths',
+      );
+    });
+  });
+
   describe('identificación (v2.1, A1–A4)', () => {
     const person = {
       firstName: 'Ana',
@@ -46,7 +162,7 @@ describe('DTO validation', () => {
     };
 
     it('normalizes the document and the phone before validating', () => {
-      const dto = plainToInstance(RegisterCollaboratorDto, person);
+      const dto = plainToInstance(AccountPersonDto, person);
       expect(validateSync(dto)).toEqual([]);
       expect(dto.documentNumber).toBe('1090123456');
       expect(dto.phone).toBe('+573001234567');
@@ -68,14 +184,14 @@ describe('DTO validation', () => {
       [{ nationality: '  ' }, 'nationality es obligatorio'],
       [{ alternateEmail: 'no-correo' }, 'Formato de correo alterno inválido'],
     ])('rejects %p', (override, message) => {
-      expect(
-        errorsOf(RegisterCollaboratorDto, { ...person, ...override }),
-      ).toContain(message);
+      expect(errorsOf(AccountPersonDto, { ...person, ...override })).toContain(
+        message,
+      );
     });
 
     it('accepts alphanumeric passports and empty optional contact fields', () => {
       expect(
-        errorsOf(RegisterCollaboratorDto, {
+        errorsOf(AccountPersonDto, {
           ...person,
           documentType: 'PA',
           documentNumber: 'ab-123456',
@@ -156,6 +272,7 @@ describe('DTO validation', () => {
   it('accepts null where it means clearing a nullable field', () => {
     expect(
       errorsOf(UpdateCollaboratorDto, {
+        ...DECLARED,
         semester: null,
         researchGroup: null,
         summary: null,
@@ -177,7 +294,10 @@ describe('DTO validation', () => {
       }),
     ).toContain(message);
     expect(
-      errorsOf(UpdateCollaboratorDto, { profileUrl: 'https://github.com/ana' }),
+      errorsOf(UpdateCollaboratorDto, {
+        ...DECLARED,
+        profileUrl: 'https://github.com/ana',
+      }),
     ).toEqual([]);
   });
 
@@ -201,6 +321,7 @@ describe('DTO validation', () => {
 
   it('trims required text so the use case receives the clean value', () => {
     const dto = plainToInstance(UpdateCollaboratorDto, {
+      ...DECLARED,
       firstName: '  Ana  ',
       summary: '   ',
       researchGroup: ' GIDIS ',
@@ -232,7 +353,7 @@ describe('DTO validation', () => {
   });
 
   it('accepts the field when it is simply not sent', () => {
-    expect(errorsOf(UpdateCollaboratorDto, {})).toEqual([]);
+    expect(errorsOf(UpdateCollaboratorDto, DECLARED)).toEqual([]);
     expect(errorsOf(UpdateUserDto, {})).toEqual([]);
   });
 

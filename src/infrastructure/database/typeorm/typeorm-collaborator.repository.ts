@@ -104,6 +104,8 @@ export class TypeOrmCollaboratorRepository implements CollaboratorRepository {
       weeklyHours: data.weeklyHours ?? 0,
       dataConsent: data.dataConsent ?? false,
       dataConsentAt: data.dataConsentAt ?? null,
+      truthfulnessDeclared: data.truthfulnessDeclared ?? false,
+      truthfulnessDeclaredAt: data.truthfulnessDeclaredAt ?? null,
       source: data.source ?? 'REGISTRO',
       documentType: data.documentType ?? null,
       documentNumber: data.documentNumber ?? null,

@@ -31,6 +31,8 @@ describe('ProjectsController', () => {
       title: 'SISGELAB',
       summary: 'r',
       objectives: 'o',
+      executingEntity: 'UFPS',
+      durationMonths: 6,
       typeId: 'type-1',
       categoryId: 'category-1',
       deliverables: [{ name: 'PMV', scope: 'Iteración 1' }],

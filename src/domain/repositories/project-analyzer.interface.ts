@@ -72,7 +72,7 @@ export interface ProjectAnalyzer {
   ): Promise<AnalyzerResponse>;
 }
 
-/** El proveedor de IA no está disponible (caída, timeout, cuota): se responde 503 (RF12). */
+/** El proveedor de IA no está disponible (caída, timeout, cuota): se responde 503 (RF8). */
 export class AnalyzerUnavailableError extends Error {}
 
 /** La salida del modelo no cumple el esquema esperado. */

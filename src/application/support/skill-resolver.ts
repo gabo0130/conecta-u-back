@@ -18,7 +18,7 @@ export interface ResolvedSkill {
 
 /**
  * Busca la habilidad por nombre canónico o sinónimo; si no existe la crea como
- * PENDIENTE para que el administrador la revise (RF4).
+ * PENDIENTE para que el administrador la revise (RF3).
  */
 export async function resolveOrProposeSkill(
   skillRepository: SkillRepository,

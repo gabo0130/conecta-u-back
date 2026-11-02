@@ -9,7 +9,7 @@ import { PROJECT_TYPE_REPOSITORY } from '../../shared/interfaces/tokens';
 import { UpdateProjectTypeDto } from '../dto/update-project-type.dto';
 import { validateTemplateFields } from '../support/template-fields';
 
-/** ADMIN: edita un tipo de proyecto, su plantilla o su estado activo/inactivo (RF7/RF22). */
+/** ADMIN: edita un tipo de proyecto, su plantilla o su estado activo/inactivo (RF6/RF18). */
 @Injectable()
 export class UpdateProjectTypeUseCase {
   constructor(

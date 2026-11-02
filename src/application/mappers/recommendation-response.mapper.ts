@@ -1,7 +1,7 @@
 import type { RequiredProfileEntity } from '../../domain/entities/required-profile.entity';
 import type { RecommendationView } from '../../domain/repositories/recommendation.repository.interface';
 
-// Respuestas de las recomendaciones (RF15–RF17). Nunca incluyen correo, teléfono ni enlaces.
+// Respuestas de las recomendaciones (RF11–RF13). Nunca incluyen correo, teléfono ni enlaces.
 
 const toComponents = (view: RecommendationView) => ({
   skills: view.skillScore,

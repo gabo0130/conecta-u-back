@@ -43,6 +43,9 @@ describe('CreateProjectUseCase', () => {
     title: 'Conecta U',
     summary: 'Resumen',
     objectives: 'Objetivos',
+    executingEntity: 'Universidad Francisco de Paula Santander',
+    sponsorEntity: 'Gobernación de Norte de Santander',
+    durationMonths: 6,
     typeId: 'type-1',
     categoryId: 'category-1',
     programId: 'program-1',
@@ -71,6 +74,18 @@ describe('CreateProjectUseCase', () => {
       createdById: 'leader-1',
     });
     expect(result.status).toBe('BORRADOR');
+  });
+
+  it('stores no sponsor when it is not sent (v2.2, E5)', async () => {
+    await useCase.execute(leader, { ...dto, sponsorEntity: undefined });
+
+    expect(projectRepository.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        executingEntity: 'Universidad Francisco de Paula Santander',
+        sponsorEntity: null,
+        durationMonths: 6,
+      }),
+    );
   });
 
   it('defaults typeData and programId when they are omitted', async () => {

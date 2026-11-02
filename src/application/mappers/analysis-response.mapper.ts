@@ -5,7 +5,7 @@ import type {
   RequiredProfileSkillEntity,
 } from '../../domain/entities/required-profile.entity';
 
-// Respuestas del análisis con IA (RF12–RF14). No salen `input` ni `rawOutput`: son de
+// Respuestas del análisis con IA (RF8–RF10). No salen `input` ni `rawOutput`: son de
 // trazabilidad interna y el `input` repite el proyecto completo.
 
 export function toAnalysisSummary(analysis: ProjectAnalysisEntity) {

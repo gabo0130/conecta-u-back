@@ -37,8 +37,9 @@ export class LoginUseCase {
       throw new UnauthorizedException({ message: 'Credenciales inválidas' });
     }
 
+    // v2.2, E7: el ADMIN inhabilita el acceso de quien deja la UFPS; sus datos se conservan.
     if (!user.active) {
-      throw new UnauthorizedException({ message: 'Usuario inactivo' });
+      throw new UnauthorizedException({ message: ACCESS_DISABLED });
     }
 
     const accessToken = this.tokenService.generate(user.id, user.role);
@@ -52,3 +53,6 @@ export class LoginUseCase {
     };
   }
 }
+
+export const ACCESS_DISABLED =
+  'Tu acceso a la plataforma está inhabilitado. Si es un error, escríbele al administrador.';

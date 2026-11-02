@@ -4,7 +4,7 @@ import { SKILL_REPOSITORY } from '../../shared/interfaces/tokens';
 import { normalizeSkillName } from '../../shared/utils/normalize-skill-name';
 import { UpdateSkillDto } from '../dto/update-skill.dto';
 
-/** ADMIN: edita una habilidad del catálogo o la aprueba (PENDIENTE → ACTIVA) (RF22). */
+/** ADMIN: edita una habilidad del catálogo o la aprueba (PENDIENTE → ACTIVA) (RF18). */
 @Injectable()
 export class AdminUpdateSkillUseCase {
   constructor(

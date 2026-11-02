@@ -1,3 +1,4 @@
+import type { TemplateField } from '../../domain/entities/template-field.type';
 import type { ProgramRepository } from '../../domain/repositories/program.repository.interface';
 import type { ProjectCategoryRepository } from '../../domain/repositories/project-category.repository.interface';
 import type { ProjectTypeRepository } from '../../domain/repositories/project-type.repository.interface';
@@ -12,16 +13,16 @@ import {
   AnalysisInputBuilder,
   projectFingerprint,
 } from './analysis-input.builder';
-import { OMITTED_CONTACT } from './contact-data';
+import { OMITTED_PERSONAL_DATA } from './contact-data';
 
-function setup() {
+function setup(templateFields?: TemplateField[]) {
   const types = createMock<ProjectTypeRepository>();
   const categories = createMock<ProjectCategoryRepository>();
   const programs = createMock<ProgramRepository>();
   const skills = createMock<SkillRepository>();
   types.findById.mockResolvedValue(
     buildProjectType({
-      templateFields: [
+      templateFields: templateFields ?? [
         { key: 'grupo', label: 'Grupo', kind: 'text', required: false },
       ],
     }),
@@ -50,7 +51,7 @@ describe('AnalysisInputBuilder.build (Ley 1581)', () => {
 
     expect(sent).not.toMatch(/@|https?:|www\.|3001234567/);
     expect(input.project.summary).toBe(
-      `Sensores IoT. Dudas a ${OMITTED_CONTACT}`,
+      `Sensores IoT. Dudas a ${OMITTED_PERSONAL_DATA}`,
     );
     // Lo que no es contacto se conserva tal cual.
     expect(input.project.objectives).toContain('entre 2026-2027');
@@ -65,5 +66,66 @@ describe('AnalysisInputBuilder.build (Ley 1581)', () => {
     expect(fingerprint).toBe(
       projectFingerprint(await builder.buildProject(project)),
     );
+  });
+});
+
+describe('AnalysisInputBuilder template fields (v2.1)', () => {
+  const field = (key: string, kind: TemplateField['kind']): TemplateField => ({
+    key,
+    label: key,
+    kind,
+    required: false,
+  });
+  const valueOf = async (
+    templateFields: TemplateField[],
+    typeData: Record<string, unknown>,
+    key: string,
+  ) => {
+    const { input } = await setup(templateFields).build(
+      buildProject({ programId: null, typeData }),
+    );
+    return input.project.type.fields.find((f) => f.label === key)?.value;
+  };
+
+  it.each([
+    [2_500_000, '$ 2.500.000 COP'],
+    [3_000_000_000, '$ 3.000.000.000 COP'],
+    [0, '$ 0 COP'],
+  ])(
+    'sends a currency value of %d as %s, not as an omitted phone number',
+    async (amount, expected) => {
+      await expect(
+        valueOf([field('costo', 'currency')], { costo: amount }, 'costo'),
+      ).resolves.toBe(expected);
+    },
+  );
+
+  it('groups large plain numbers so they are not mistaken for a phone', async () => {
+    await expect(
+      valueOf([field('meta', 'number')], { meta: 1500000 }, 'meta'),
+    ).resolves.toBe('1.500.000');
+    await expect(
+      valueOf([field('meses', 'number')], { meses: 12 }, 'meses'),
+    ).resolves.toBe('12');
+  });
+
+  it('sends keywords as a comma separated list', async () => {
+    await expect(
+      valueOf(
+        [field('palabras', 'tags')],
+        { palabras: [' IoT ', 'agua', ''] },
+        'palabras',
+      ),
+    ).resolves.toBe('IoT, agua');
+  });
+
+  it('omits a document number written in a template field', async () => {
+    await expect(
+      valueOf(
+        [field('contacto', 'text')],
+        { contacto: 'Responsable CC 1.094.123.456' },
+        'contacto',
+      ),
+    ).resolves.toBe(`Responsable ${OMITTED_PERSONAL_DATA}`);
   });
 });

@@ -19,7 +19,7 @@ import { AuthorizationGuard } from '../guards/authorization.guard';
 import type { AuthenticatedRequest } from '../guards/jwt-auth.guard';
 import { JwtAuthGuard } from '../guards/jwt-auth.guard';
 
-/** Perfil técnico del usuario autenticado: datos básicos y disponibilidad (RF3, RF6). */
+/** Perfil técnico del usuario autenticado: datos básicos y disponibilidad (RF3, RF5). */
 @UseGuards(JwtAuthGuard, AuthorizationGuard)
 @Authorize({ anyOfRoles: ['COLABORADOR', 'LIDER'] })
 @Controller('collaborators/me')

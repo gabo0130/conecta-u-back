@@ -5,7 +5,10 @@ import {
   NotFoundException,
   UnprocessableEntityException,
 } from '@nestjs/common';
-import { consentFields } from '../../domain/entities/data-consent';
+import {
+  consentFields,
+  truthfulnessFields,
+} from '../../domain/entities/data-consent';
 import {
   ALTERNATE_EMAIL_SAME_ERROR,
   isSameEmail,
@@ -59,10 +62,11 @@ export class UpdateMyCollaboratorProfileUseCase {
       await findProgramOrFail(this.programRepository, data.programId);
     }
 
-    const { dataConsent, ...fields } = data;
+    const { dataConsent, truthfulnessDeclared, ...fields } = data;
     const updated = await this.collaboratorRepository.update(collaborator.id, {
       ...pickDefined(fields),
       ...(dataConsent !== undefined ? consentFields(dataConsent) : {}),
+      ...truthfulnessFields(truthfulnessDeclared),
     });
 
     if (!updated) {

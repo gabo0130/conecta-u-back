@@ -13,7 +13,7 @@ import type { ListRecommendationsQueryDto } from '../dto/recommendations.dto';
 import { toRecommendationsResponse } from '../mappers/recommendation-response.mapper';
 import { type Actor, loadProjectForViewer } from '../support/project-access';
 
-/** RF16: lista ordenada de personas recomendadas por perfil (LIDER dueño o ADMIN). */
+/** RF12: lista ordenada de personas recomendadas por perfil (LIDER dueño o ADMIN). */
 @Injectable()
 export class ListRecommendationsUseCase {
   constructor(

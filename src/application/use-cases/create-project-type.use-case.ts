@@ -4,7 +4,7 @@ import { PROJECT_TYPE_REPOSITORY } from '../../shared/interfaces/tokens';
 import { CreateProjectTypeDto } from '../dto/create-project-type.dto';
 import { validateTemplateFields } from '../support/template-fields';
 
-/** ADMIN: crea un tipo de proyecto con su plantilla de campos (RF7/RF22). */
+/** ADMIN: crea un tipo de proyecto con su plantilla de campos (RF6/RF18). */
 @Injectable()
 export class CreateProjectTypeUseCase {
   constructor(

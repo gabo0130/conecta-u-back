@@ -259,7 +259,9 @@ const SKILLS_SHEET: SheetDefinition = {
     {
       header: 'tipo',
       required: true,
-      description: 'Tipo de habilidad.',
+      // v2.2 (E6, P11): qué es cada tipo, con ejemplos.
+      description:
+        'Conocimiento técnico: herramientas y tecnologías (Python, AutoCAD, SPSS). Competencia técnica: el rol o la disciplina que ejerces (investigador, desarrollador, analista). Competencia blanda: cómo trabajas con otros (liderazgo, comunicación).',
       valid: enumValues(SKILL_TYPE_DISPLAY).join(', '),
     },
     {

@@ -3,7 +3,7 @@ import type { ProjectCategoryRepository } from '../../domain/repositories/projec
 import { PROJECT_CATEGORY_REPOSITORY } from '../../shared/interfaces/tokens';
 import { UpdateProjectCategoryDto } from '../dto/update-project-category.dto';
 
-/** ADMIN: edita o activa/desactiva una categoría de proyecto (RF22). */
+/** ADMIN: edita o activa/desactiva una categoría de proyecto (RF18). */
 @Injectable()
 export class UpdateProjectCategoryUseCase {
   constructor(

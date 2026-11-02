@@ -2,12 +2,12 @@
 export type CellValue = string | number | boolean | Date | null;
 
 export interface WorkbookRow {
-  /** Número de fila en la hoja, para reportar rechazos (RF24). */
+  /** Número de fila en la hoja, para reportar rechazos (RF20). */
   row: number;
   values: Record<string, CellValue>;
 }
 
-/** Contenido de la plantilla de carga de colaboradores, hoja por hoja (RF23). */
+/** Contenido de la plantilla de carga de colaboradores, hoja por hoja (RF19). */
 export interface CollaboratorWorkbook {
   collaborators: WorkbookRow[];
   skills: WorkbookRow[];

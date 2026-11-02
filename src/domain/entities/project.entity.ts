@@ -16,6 +16,10 @@ export interface ProjectProps {
   leaderId: string;
   /** Quién lo registró: el líder o el ADMIN a su nombre (null en proyectos anteriores a v2.1). */
   createdById?: string | null;
+  /** v2.2, E5: null en proyectos anteriores a v2.2. */
+  executingEntity?: string | null;
+  sponsorEntity?: string | null;
+  durationMonths?: number | null;
   status: ProjectStatus;
   createdAt?: Date;
   updatedAt?: Date;
@@ -34,6 +38,9 @@ export class ProjectEntity {
   readonly deliverables: DeliverableEntity[];
   readonly leaderId: string;
   readonly createdById: string | null;
+  readonly executingEntity: string | null;
+  readonly sponsorEntity: string | null;
+  readonly durationMonths: number | null;
   readonly status: ProjectStatus;
   readonly createdAt?: Date;
   readonly updatedAt?: Date;
@@ -51,6 +58,9 @@ export class ProjectEntity {
     this.deliverables = props.deliverables;
     this.leaderId = props.leaderId;
     this.createdById = props.createdById ?? null;
+    this.executingEntity = props.executingEntity ?? null;
+    this.sponsorEntity = props.sponsorEntity ?? null;
+    this.durationMonths = props.durationMonths ?? null;
     this.status = props.status;
     this.createdAt = props.createdAt;
     this.updatedAt = props.updatedAt;

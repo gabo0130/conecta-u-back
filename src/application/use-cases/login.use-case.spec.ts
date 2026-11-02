@@ -101,7 +101,7 @@ describe('LoginUseCase', () => {
     ).rejects.toBeInstanceOf(UnauthorizedException);
   });
 
-  it('throws UnauthorizedException when the user is inactive', async () => {
+  it('rejects a user whose access was disabled, saying so (v2.2, E7)', async () => {
     const inactiveUser = new UserEntity(
       '1',
       'Juan',
@@ -115,6 +115,11 @@ describe('LoginUseCase', () => {
 
     await expect(
       useCase.execute({ email: 'juan@example.com', password: 'Secret123*' }),
-    ).rejects.toBeInstanceOf(UnauthorizedException);
+    ).rejects.toMatchObject({
+      response: {
+        message:
+          'Tu acceso a la plataforma está inhabilitado. Si es un error, escríbele al administrador.',
+      },
+    });
   });
 });

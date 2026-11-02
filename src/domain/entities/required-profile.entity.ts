@@ -26,7 +26,7 @@ export interface RequiredProfileProps {
   source: RequiredProfileSource;
   name: string;
   description: string;
-  /** RF14: por qué el proyecto necesita este perfil. */
+  /** RF10: por qué el proyecto necesita este perfil. */
   justification: string;
   quantity: number;
   priority: Priority;
@@ -38,7 +38,7 @@ export interface RequiredProfileProps {
   updatedAt: Date;
 }
 
-/** Perfil que el proyecto necesita (RF13), con sus habilidades. */
+/** Perfil que el proyecto necesita (RF9), con sus habilidades. */
 export class RequiredProfileEntity implements RequiredProfileProps {
   readonly id: string;
   readonly projectId: string;

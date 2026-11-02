@@ -82,6 +82,9 @@ export class TypeOrmProjectRepository implements ProjectRepository {
       deliverables: this.toDeliverableOrm(data.deliverables),
       leaderId: data.leaderId,
       createdById: data.createdById,
+      executingEntity: data.executingEntity ?? null,
+      sponsorEntity: data.sponsorEntity ?? null,
+      durationMonths: data.durationMonths ?? null,
       status: 'BORRADOR',
     });
 
@@ -158,6 +161,9 @@ export class TypeOrmProjectRepository implements ProjectRepository {
       ),
       leaderId: project.leaderId,
       createdById: project.createdById,
+      executingEntity: project.executingEntity,
+      sponsorEntity: project.sponsorEntity,
+      durationMonths: project.durationMonths,
       status: project.status as ProjectEntity['status'],
       createdAt: project.createdAt,
       updatedAt: project.updatedAt,
