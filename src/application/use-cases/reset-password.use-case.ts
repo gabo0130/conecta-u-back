@@ -22,8 +22,8 @@ import { hashResetToken } from '../support/password-reset-token';
 
 export const RESET_LINK_INVALID =
   'El enlace para restablecer la contraseña venció o ya se usó. Solicita uno nuevo.';
-export const SAME_PASSWORD =
-  'La contraseña nueva debe ser distinta de la actual';
+export const SAME_PASSWORD_USED =
+  'La contraseña nueva debe ser distinta de la actual. Por seguridad este enlace ya no sirve: solicita uno nuevo.';
 
 /**
  * Crea la contraseña nueva con un enlace de recuperación válido. El enlace se consume una sola
@@ -55,7 +55,7 @@ export class ResetPasswordUseCase {
   ): Promise<{ message: string }> {
     if (Buffer.byteLength(password, 'utf8') > PASSWORD_LIMITS.maxBytes) {
       throw new UnprocessableEntityException({
-        message: `La contraseña es demasiado larga (máximo ${PASSWORD_LIMITS.maxBytes} bytes)`,
+        message: `La contraseña es demasiado larga (máximo ${PASSWORD_LIMITS.maxBytes} bytes; las tildes y la ñ ocupan dos)`,
       });
     }
     const resetToken = await this.usableToken(token, now);
@@ -65,6 +65,10 @@ export class ResetPasswordUseCase {
     if (!resetToken || !user || !user.active) {
       throw new UnprocessableEntityException({ message: RESET_LINK_INVALID });
     }
+    // Primero se gasta el enlace: así no sirve para probar contraseñas contra la actual.
+    if (!(await this.tokenRepository.consume(resetToken.id, now))) {
+      throw new UnprocessableEntityException({ message: RESET_LINK_INVALID });
+    }
     const current = await this.userRepository.findByEmailWithPassword(
       user.email,
     );
@@ -72,10 +76,7 @@ export class ResetPasswordUseCase {
       current &&
       (await this.passwordHasher.compare(password, current.passwordHash))
     ) {
-      throw new UnprocessableEntityException({ message: SAME_PASSWORD });
-    }
-    if (!(await this.tokenRepository.consume(resetToken.id, now))) {
-      throw new UnprocessableEntityException({ message: RESET_LINK_INVALID });
+      throw new UnprocessableEntityException({ message: SAME_PASSWORD_USED });
     }
 
     await this.userRepository.updatePassword(

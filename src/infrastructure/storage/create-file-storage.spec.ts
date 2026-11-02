@@ -1,7 +1,7 @@
 import { ConfigService } from '@nestjs/config';
-import { LocalFileStorage } from '../infrastructure/storage/local-file-storage';
-import { S3FileStorage } from '../infrastructure/storage/s3-file-storage';
-import { createFileStorage } from './storage.module';
+import { LocalFileStorage } from './local-file-storage';
+import { S3FileStorage } from './s3-file-storage';
+import { createFileStorage } from './create-file-storage';
 
 const config = (values: Record<string, string>) => new ConfigService(values);
 

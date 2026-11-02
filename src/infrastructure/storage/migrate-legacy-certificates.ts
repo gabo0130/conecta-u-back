@@ -5,7 +5,7 @@ import {
   EXTENSION_BY_MIME,
   type CertificateMimeType,
 } from '../../domain/entities/experience-certificate';
-import { createFileStorage } from '../../presentation/storage.module';
+import { createFileStorage } from './create-file-storage';
 import { AppDataSource } from '../database/data-source';
 import { ExperienceCertificateOrmEntity } from '../database/typeorm/experience-certificate.orm-entity';
 

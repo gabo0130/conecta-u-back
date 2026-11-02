@@ -49,14 +49,11 @@ describe('RF15–RF16 stats and reports', () => {
     );
   });
 
-  it('rejects a start date after the end date or a date that does not exist', () => {
+  it('rejects a start date after the end date', () => {
     const useCase = new GetPlatformStatsUseCase(repository);
     expect(() =>
       useCase.execute({ from: '2026-11-30', to: '2026-11-01' }),
     ).toThrow(UnprocessableEntityException);
-    expect(() => useCase.execute({ from: '2026-13-45' })).toThrow(
-      UnprocessableEntityException,
-    );
     expect(repository.getStats).not.toHaveBeenCalled();
   });
 

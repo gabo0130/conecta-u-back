@@ -30,7 +30,7 @@ export class ResetPasswordDto extends ResetTokenDto {
   })
   // El límite real es de bytes (bcrypt); se revisa también en el caso de uso.
   @MaxLength(PASSWORD_LIMITS.maxBytes, {
-    message: `La contraseña puede tener hasta ${PASSWORD_LIMITS.maxBytes} caracteres`,
+    message: `La contraseña es demasiado larga (máximo ${PASSWORD_LIMITS.maxBytes} bytes; las tildes y la ñ ocupan dos)`,
   })
   @Matches(/(?=.*\p{L})(?=.*\d)/u, {
     message: 'La contraseña debe combinar letras y números',

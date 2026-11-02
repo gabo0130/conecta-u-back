@@ -1,5 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { PASSWORD_RESET_RULES } from '../../domain/entities/password-reset';
+import type { UserEntity } from '../../domain/entities/user.entity';
 import type { CollaboratorRepository } from '../../domain/repositories/collaborator.repository.interface';
 import type { PasswordResetTokenRepository } from '../../domain/repositories/password-reset-token.repository.interface';
 import type { UserRepository } from '../../domain/repositories/user.repository.interface';
@@ -51,6 +52,18 @@ export class RequestPasswordResetUseCase {
     );
     if (!user || !user.active) return answer;
 
+    // El resto (límite, token y correo) corre sin hacer esperar la respuesta: así tarda casi lo
+    // mismo exista o no la cuenta y no sirve para averiguar qué correos están registrados.
+    void this.issue(user, now).catch((error: unknown) =>
+      this.logger.error('No se pudo emitir el enlace de recuperación', error, {
+        method: 'execute',
+        userId: user.id,
+      }),
+    );
+    return answer;
+  }
+
+  private async issue(user: UserEntity, now: Date): Promise<void> {
     const recent = await this.tokenRepository.countCreatedSince(
       user.id,
       new Date(now.getTime() - HOUR_MS),
@@ -60,7 +73,7 @@ export class RequestPasswordResetUseCase {
         method: 'execute',
         userId: user.id,
       });
-      return answer;
+      return;
     }
 
     const { token, tokenHash } = newResetToken();
@@ -78,8 +91,7 @@ export class RequestPasswordResetUseCase {
     // El token va en el fragmento (#): el navegador no lo envía a ningún servidor ni en el Referer.
     const resetUrl = `${joinUrl(this.appUrl, RESET_PATH)}#token=${token}`;
 
-    // Sin esperar el envío: la respuesta tarda lo mismo exista o no la cuenta.
-    void this.accountMailer.send(
+    await this.accountMailer.send(
       { email: user.email, alternateEmail: collaborator?.alternateEmail },
       (toAlternate) =>
         renderPasswordResetEmail({
@@ -90,6 +102,5 @@ export class RequestPasswordResetUseCase {
         }),
       { purpose: 'recuperacion-contrasena' },
     );
-    return answer;
   }
 }

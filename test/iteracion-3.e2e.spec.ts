@@ -484,6 +484,11 @@ describe('Iteración 3 (integración)', () => {
         .expect(422);
       await http()
         .get('/api/admin/stats')
+        .query({ from: '2026-02-31' })
+        .auth(admin, { type: 'bearer' })
+        .expect(422);
+      await http()
+        .get('/api/admin/stats')
         .query({ projectTypeId: 'no-es-uuid' })
         .auth(admin, { type: 'bearer' })
         .expect(422);

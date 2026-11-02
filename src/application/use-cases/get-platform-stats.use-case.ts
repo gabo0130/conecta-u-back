@@ -14,10 +14,9 @@ import type { StatsQueryDto } from '../dto/stats-query.dto';
 const BOGOTA_OFFSET = '-05:00';
 const DAY_MS = 86_400_000;
 
-const startOfDay = (day: string): Date | null => {
-  const date = new Date(`${day}T00:00:00${BOGOTA_OFFSET}`);
-  return Number.isNaN(date.getTime()) ? null : date;
-};
+// El DTO ya garantiza que el día existe en el calendario (@IsCalendarDate).
+const startOfDay = (day: string): Date =>
+  new Date(`${day}T00:00:00${BOGOTA_OFFSET}`);
 
 /** RF15 (HU-14): indicadores del dashboard del ADMIN, calculados en la base y filtrables. */
 @Injectable()
@@ -35,11 +34,6 @@ export class GetPlatformStatsUseCase {
 function toFilters(query: StatsQueryDto): StatsFilters {
   const from = query.from ? startOfDay(query.from) : null;
   const toStart = query.to ? startOfDay(query.to) : null;
-  if ((query.from && !from) || (query.to && !toStart)) {
-    throw new UnprocessableEntityException({
-      message: 'La fecha del filtro no existe',
-    });
-  }
   if (from && toStart && from > toStart) {
     throw new UnprocessableEntityException({
       message: 'La fecha inicial no puede ser posterior a la final',

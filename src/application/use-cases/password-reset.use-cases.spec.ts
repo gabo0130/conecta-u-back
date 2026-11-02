@@ -22,7 +22,7 @@ import {
 import {
   RESET_LINK_INVALID,
   ResetPasswordUseCase,
-  SAME_PASSWORD,
+  SAME_PASSWORD_USED,
 } from './reset-password.use-case';
 
 const APP = 'https://conectau.test';
@@ -116,6 +116,7 @@ describe('password recovery', () => {
       await expect(request.execute('ana@example.com', now)).resolves.toEqual({
         message: FORGOT_PASSWORD_MESSAGE,
       });
+      await flush();
       expect(tokens.create).not.toHaveBeenCalled();
       expect(logger.warn).toHaveBeenCalled();
     });
@@ -179,7 +180,7 @@ describe('password recovery', () => {
       );
       hasher.compare.mockResolvedValueOnce(true);
       await expect(reset.execute(token, 'Actual2026', now)).rejects.toThrow(
-        SAME_PASSWORD,
+        SAME_PASSWORD_USED,
       );
       await expect(
         reset.execute(token, `ñ1${'ñ'.repeat(40)}`, now),
