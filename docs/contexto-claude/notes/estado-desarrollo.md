@@ -317,3 +317,7 @@ Extensión compatible (plan §2): no cambia las HU del seminario. Decisiones de 
 - `GET /admin/evaluation` (`GetEvaluationSummaryUseCase`, `AdminEvaluationController`): tasa de aceptación global y por proyecto (`acceptanceRate` = aceptadas / decididas, 4 decimales; `null` sin decisiones).
 - Ley 1581: retirar el consentimiento o desactivar a la persona borra también sus filas de `recommendation_feedback` (junto con el vector y las recomendaciones).
 - Pruebas: 7 unitarias (caso de uso, resumen, tasa, controlador, mapeo en la lista, borrado por consentimiento) y 4 e2e (aceptar/descartar visible en la tarjeta; se conserva al regenerar; 422/403/404; resumen del ADMIN 0,5 y 403 al líder).
+
+### T8 · Métricas @K
+- `domain/services/ranking-metrics.ts` (funciones puras): `precisionAtK`, `recallAtK`, `hitRateAtK`, `dcgAtK`/`ndcgAtK` con relevancia graduada (ganancia 2^rel − 1, descuento log2(i + 1)), `competencyCoverageAtK` (competencias requeridas que tiene al menos una persona del top K) y `meanOf` (promedio que ignora casos sin valor). Recall, NDCG y cobertura devuelven `null` cuando el caso no tiene pertinentes o competencias (no se promedian como 0). K inválido → `RangeError`.
+- Pruebas: 8 specs con valores calculados a mano (p. ej. NDCG@5 = 3,5 / 4,1309). Sin e2e: no hay ruta HTTP; las usa el script de evaluación de T9.
