@@ -2,6 +2,7 @@ import { SendWelcomeEmailUseCase } from './send-welcome-email.use-case';
 import type { MailSender } from '../../domain/repositories/mail-sender.interface';
 import type { AppLoggerService } from '../../shared/logging/logger.service';
 import { createMock } from '../../testing/test-doubles.testing';
+import { AccountMailer } from '../support/account-mailer';
 
 describe('SendWelcomeEmailUseCase', () => {
   const mailSender = createMock<MailSender>();
@@ -10,9 +11,8 @@ describe('SendWelcomeEmailUseCase', () => {
     forContext: () => contextLogger,
   } as unknown as AppLoggerService;
   const useCase = new SendWelcomeEmailUseCase(
-    mailSender,
+    new AccountMailer(mailSender, appLogger),
     'https://conectau.test',
-    appLogger,
   );
 
   const recipient = {
@@ -31,7 +31,7 @@ describe('SendWelcomeEmailUseCase', () => {
     expect(mailSender.send).toHaveBeenCalledWith(
       expect.objectContaining({
         to: 'ana@example.com',
-        subject: expect.stringContaining('Conecta U'),
+        subject: 'Ana, tu talento ya tiene dónde mostrarse',
         html: expect.stringContaining('Completar mi perfil'),
         text: expect.stringContaining('https://conectau.test/login'),
       }),
@@ -50,10 +50,16 @@ describe('SendWelcomeEmailUseCase', () => {
       await useCase.execute(withAlternate);
 
       expect(mailSender.send).toHaveBeenCalledTimes(2);
-      expect(mailSender.send.mock.calls.map(([mail]) => mail.to)).toEqual([
+      const [main, alternate] = mailSender.send.mock.calls.map(
+        ([mail]) => mail,
+      );
+      expect([main.to, alternate.to]).toEqual([
         'ana@example.com',
         'ana.personal@gmail.com',
       ]);
+      // La copia del alterno lo dice, para que no parezca un error.
+      expect(alternate.text).toContain('correo alterno');
+      expect(main.text).not.toContain('correo alterno');
     });
 
     it('still sends to one recipient when the other fails', async () => {
@@ -68,8 +74,8 @@ describe('SendWelcomeEmailUseCase', () => {
       expect(mailSender.send).toHaveBeenCalledTimes(2);
       expect(contextLogger.error).toHaveBeenCalledTimes(1);
       expect(contextLogger.info).toHaveBeenCalledWith(
-        'Correo de bienvenida enviado',
-        expect.objectContaining({ kind: 'alterno' }),
+        'Correo de la cuenta enviado',
+        expect.objectContaining({ kind: 'alterno', purpose: 'bienvenida' }),
       );
     });
 

@@ -1,4 +1,4 @@
-import { escapeHtml, type RenderedEmail } from './welcome-email.template';
+import { escapeHtml, type RenderedEmail } from './email-layout';
 
 export interface InvitationEmailInput {
   recipientFirstName: string;

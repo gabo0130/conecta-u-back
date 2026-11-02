@@ -12,16 +12,16 @@ describe('renderWelcomeEmail', () => {
       role: 'LIDER',
     });
 
-    expect(subject).toContain('Conecta U');
-    expect(html).toContain('¡Hola, Ana! Te damos la bienvenida');
+    expect(subject).toBe('Ana, tu próximo equipo empieza aquí');
+    expect(html).toContain('Hola, Ana: ya formas parte de Conecta U');
     expect(html).toContain('Líder de proyecto');
-    expect(text).toContain('Entras como Líder de proyecto');
+    expect(text).toContain('ya formas parte de Conecta U (Líder de proyecto)');
   });
 
   it.each([
     ['LIDER', 'Registrar mi primer proyecto'],
     ['COLABORADOR', 'Completar mi perfil'],
-    ['ADMIN', 'Ir al panel'],
+    ['ADMIN', 'Ir al dashboard'],
   ] as const)('uses role specific content for %s', (role, cta) => {
     const { html, text } = renderWelcomeEmail({ ...base, role });
 
@@ -34,7 +34,7 @@ describe('renderWelcomeEmail', () => {
 
     for (const body of [html, text]) {
       expect(body).toContain(
-        'Agrega tus conocimientos técnicos, competencias técnicas y competencias blandas.',
+        'conocimientos técnicos, competencias técnicas y competencias blandas',
       );
     }
   });
