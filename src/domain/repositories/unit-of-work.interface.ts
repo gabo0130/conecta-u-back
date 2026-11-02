@@ -1,6 +1,8 @@
 import type { CollaboratorSkillRepository } from './collaborator-skill.repository.interface';
 import type { CollaboratorRepository } from './collaborator.repository.interface';
 import type { ExperienceRepository } from './experience.repository.interface';
+import type { NeedRepository } from './need.repository.interface';
+import type { ProjectRepository } from './project.repository.interface';
 import type { SkillRepository } from './skill.repository.interface';
 import type { UserRepository } from './user.repository.interface';
 
@@ -11,6 +13,8 @@ export interface TransactionalRepositories {
   collaboratorSkills: CollaboratorSkillRepository;
   experiences: ExperienceRepository;
   skills: SkillRepository;
+  projects: ProjectRepository;
+  needs: NeedRepository;
 }
 
 /**

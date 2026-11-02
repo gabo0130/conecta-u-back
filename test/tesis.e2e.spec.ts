@@ -328,4 +328,95 @@ describe('Tesis (integración)', () => {
       expect(characterized.body.priorityScore).toBe(89);
     });
   });
+
+  describe('T5 · necesidad → oportunidad', () => {
+    let needId: string;
+    const projectBody = () => ({
+      title: 'Plataforma de citas de Bienestar',
+      summary: 'Los estudiantes no tienen dónde reservar citas de psicología.',
+      objectives: 'Construir una plataforma web en Python con bases de datos.',
+      executingEntity: 'Bienestar Universitario',
+      durationMonths: 6,
+      typeId: scenario.typeId,
+      categoryId: scenario.categoryId,
+      knownSkillIds: [scenario.skillIds.python],
+      deliverables: [{ name: 'Prototipo', scope: 'Reservas en línea' }],
+    });
+
+    beforeAll(async () => {
+      const created = await http()
+        .post('/api/needs')
+        .auth(owner, { type: 'bearer' })
+        .send({ ...NEED, title: 'Necesidad para convertir' })
+        .expect(201);
+      needId = created.body.id;
+      await http()
+        .post(`/api/needs/${needId}/characterization`)
+        .auth(owner, { type: 'bearer' })
+        .expect(200);
+    });
+
+    it('con datos inválidos no crea nada y la necesidad sigue abierta', async () => {
+      await http()
+        .post(`/api/needs/${needId}/opportunity`)
+        .auth(owner, { type: 'bearer' })
+        .send({ ...projectBody(), deliverables: [] })
+        .expect(422);
+      await http()
+        .post(`/api/needs/${needId}/opportunity`)
+        .auth(otherLeader, { type: 'bearer' })
+        .send(projectBody())
+        .expect(403);
+      const detail = await http()
+        .get(`/api/needs/${needId}`)
+        .auth(owner, { type: 'bearer' })
+        .expect(200);
+      expect(detail.body).toMatchObject({
+        status: 'CARACTERIZADA',
+        projectId: null,
+      });
+    });
+
+    it('crea el proyecto, enlaza la necesidad y el proyecto se analiza y recomienda', async () => {
+      const converted = await http()
+        .post(`/api/needs/${needId}/opportunity`)
+        .auth(owner, { type: 'bearer' })
+        .send(projectBody())
+        .expect(201);
+      const projectId = converted.body.project.id;
+      expect(converted.body.need).toMatchObject({
+        status: 'CONVERTIDA',
+        projectId,
+      });
+      expect(converted.body.project).toMatchObject({
+        title: 'Plataforma de citas de Bienestar',
+        leaderId: scenario.ownerId,
+      });
+
+      await http()
+        .get(`/api/projects/${projectId}`)
+        .auth(owner, { type: 'bearer' })
+        .expect(200);
+      await http()
+        .post(`/api/projects/${projectId}/analysis`)
+        .auth(owner, { type: 'bearer' })
+        .expect(201);
+      const recommendations = await http()
+        .post(`/api/projects/${projectId}/recommendations`)
+        .auth(owner, { type: 'bearer' })
+        .expect(200);
+      expect(recommendations.body.profiles.length).toBeGreaterThan(0);
+
+      // Ya convertida: no se convierte otra vez ni se edita.
+      await http()
+        .post(`/api/needs/${needId}/opportunity`)
+        .auth(owner, { type: 'bearer' })
+        .send(projectBody())
+        .expect(409);
+      await http()
+        .post(`/api/needs/${needId}/characterization`)
+        .auth(owner, { type: 'bearer' })
+        .expect(409);
+    });
+  });
 });

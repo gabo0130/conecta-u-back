@@ -7,10 +7,14 @@ import type {
 import { CollaboratorSkillOrmEntity } from './collaborator-skill.orm-entity';
 import { CollaboratorOrmEntity } from './collaborator.orm-entity';
 import { ExperienceOrmEntity } from './experience.orm-entity';
+import { NeedOrmEntity } from './need.orm-entity';
+import { ProjectOrmEntity } from './project.orm-entity';
 import { SkillOrmEntity } from './skill.orm-entity';
 import { TypeOrmCollaboratorSkillRepository } from './typeorm-collaborator-skill.repository';
 import { TypeOrmCollaboratorRepository } from './typeorm-collaborator.repository';
 import { TypeOrmExperienceRepository } from './typeorm-experience.repository';
+import { TypeOrmNeedRepository } from './typeorm-need.repository';
+import { TypeOrmProjectRepository } from './typeorm-project.repository';
 import { TypeOrmSkillRepository } from './typeorm-skill.repository';
 import { TypeOrmUserRepository } from './typeorm-user.repository';
 import { UserOrmEntity } from './user.orm-entity';
@@ -42,6 +46,11 @@ export class TypeOrmUnitOfWork implements UnitOfWork {
         skills,
       ),
       skills: new TypeOrmSkillRepository(skills),
+      projects: new TypeOrmProjectRepository(
+        manager.getRepository(ProjectOrmEntity),
+        skills,
+      ),
+      needs: new TypeOrmNeedRepository(manager.getRepository(NeedOrmEntity)),
     };
   }
 }

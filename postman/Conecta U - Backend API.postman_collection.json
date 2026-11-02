@@ -2396,6 +2396,34 @@
             },
             "description": "LIDER: las suyas; ADMIN: todas. sort=priority (mayor prioridad primero, T4) o recent (por defecto). Filtros opcionales status y kind. Cada fila trae completeness (0–100), priorityScore (0–100) y priorityLevel (ALTA ≥ 70, MEDIA ≥ 40, BAJA)."
           }
+        },
+        {
+          "name": "Convert Need to Opportunity (T5)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/needs/{{needId}}/opportunity",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "needs",
+                "{{needId}}",
+                "opportunity"
+              ]
+            },
+            "description": "Solo el formulador dueño y con la necesidad abierta. Mismo cuerpo y validaciones que POST /projects (el front lo precarga desde la caracterización). Crea el proyecto y pasa la necesidad a CONVERTIDA con projectId, en una sola transacción. Respuesta { need, project }; 409 si ya se convirtió o descartó. El proyecto sigue el flujo normal: POST /projects/:id/analysis y /recommendations.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Plataforma de citas de Bienestar\",\n  \"summary\": \"Los estudiantes no tienen un canal en línea para reservar citas de psicología y medicina.\",\n  \"objectives\": \"Construir una plataforma web de reservas con recordatorios por correo.\",\n  \"executingEntity\": \"Bienestar Universitario\",\n  \"durationMonths\": 6,\n  \"typeId\": \"{{projectTypeId}}\",\n  \"categoryId\": \"{{projectCategoryId}}\",\n  \"knownSkillIds\": [],\n  \"deliverables\": [\n    {\n      \"name\": \"Prototipo\",\n      \"scope\": \"Reservas en línea y recordatorios\"\n    }\n  ]\n}"
+            }
+          }
         }
       ]
     }

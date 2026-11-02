@@ -67,6 +67,8 @@ export function createFakeUnitOfWork(): FakeUnitOfWork {
     collaboratorSkills: createMock(),
     experiences: createMock(),
     skills: createMock(),
+    projects: createMock(),
+    needs: createMock(),
   };
   const unitOfWork = createMock<UnitOfWork>();
   unitOfWork.run.mockImplementation((work) => work(repositories));

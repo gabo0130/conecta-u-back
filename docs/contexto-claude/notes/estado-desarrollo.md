@@ -296,3 +296,9 @@ Extensión compatible (plan §2): no cambia las HU del seminario. Decisiones de 
 - Función pura `computeNeedPriority` en `domain/services/need-priority.ts`: `prioridad = 100·(0,4·impacto/5 + 0,4·urgencia/5 + 0,2·completitud/100)`, 2 decimales; nivel ALTA ≥ 70, MEDIA ≥ 40, BAJA el resto. La priorización avanzada (criterios institucionales, recursos, dependencias entre necesidades, multicriterio) queda fuera del alcance del anteproyecto: se justifica en el informe.
 - `scoreNeed` guarda `priorityScore` junto con la completitud (registro, edición, caracterización). `GET /needs?sort=priority` ordena por puntaje (desempate: más reciente); `sort=recent` sigue siendo el valor por defecto. Las respuestas traen `priorityLevel`. Sin índice sobre `priorityScore` (la consulta ya filtra por formulador; agregarlo si el ADMIN maneja miles de necesidades).
 - Pruebas: 9 specs del dominio (tabla de casos, redondeo, umbrales), casos de uso ajustados y 2 e2e (orden por prioridad, la caracterización sube 72 → 89).
+
+### T5 · Necesidad → oportunidad
+- `POST /needs/:id/opportunity` (`ConvertNeedToOpportunityUseCase`) recibe el mismo `CreateProjectDto` que `POST /projects`. `CreateProjectUseCase` se partió en `prepare` (valida tipo, plantilla, categoría, programa, habilidades y líder; arma el registro) + `execute`; la conversión reutiliza `prepare` y guarda dentro de `UnitOfWork.run`: crea el proyecto y llama a `needs.markConverted` (UPDATE condicional: abierta y sin proyecto). Si otra petición se adelantó → 409 y no queda nada escrito.
+- `UnitOfWork` gana `projects` y `needs` (y `createFakeUnitOfWork` en los dobles de prueba).
+- Respuesta `{ need, project }`. La necesidad queda CONVERTIDA con `projectId`; ya no se edita, caracteriza ni convierte (409).
+- Pruebas: 4 unitarias y 2 e2e (422 sin entregables y 403 a otro líder sin crear nada; conversión → el proyecto se analiza y genera recomendaciones con el flujo normal; segunda conversión 409).

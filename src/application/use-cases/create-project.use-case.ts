@@ -7,7 +7,10 @@ import type { UserRole } from '../../domain/entities/user-role.type';
 import type { ProgramRepository } from '../../domain/repositories/program.repository.interface';
 import type { ProjectCategoryRepository } from '../../domain/repositories/project-category.repository.interface';
 import type { ProjectTypeRepository } from '../../domain/repositories/project-type.repository.interface';
-import type { ProjectRepository } from '../../domain/repositories/project.repository.interface';
+import type {
+  CreateProjectRepositoryDto,
+  ProjectRepository,
+} from '../../domain/repositories/project.repository.interface';
 import type { SkillRepository } from '../../domain/repositories/skill.repository.interface';
 import type { UserRepository } from '../../domain/repositories/user.repository.interface';
 import {
@@ -45,6 +48,20 @@ export class CreateProjectUseCase {
   ) {}
 
   async execute(actor: ProjectAuthor, data: CreateProjectDto) {
+    const project = await this.projectRepository.create(
+      await this.prepare(actor, data),
+    );
+    return toProjectResponse(project);
+  }
+
+  /**
+   * Valida catálogos, plantilla y líder, y arma lo que se guarda. Lo reutiliza la conversión
+   * de una necesidad en oportunidad (tesis, T5), que guarda dentro de su propia transacción.
+   */
+  async prepare(
+    actor: ProjectAuthor,
+    data: CreateProjectDto,
+  ): Promise<CreateProjectRepositoryDto> {
     const leaderId = await this.resolveLeader(actor, data.leaderId);
     const typeData = data.typeData ?? {};
     const type = await findProjectTypeOrFail(
@@ -61,7 +78,7 @@ export class CreateProjectUseCase {
     }
     await assertSkillsExist(this.skillRepository, data.knownSkillIds);
 
-    const project = await this.projectRepository.create({
+    return {
       title: data.title,
       summary: data.summary,
       objectives: data.objectives,
@@ -76,8 +93,7 @@ export class CreateProjectUseCase {
       deliverables: data.deliverables,
       leaderId,
       createdById: actor.userId,
-    });
-    return toProjectResponse(project);
+    };
   }
 
   /** El LIDER siempre es dueño de lo que registra; el ADMIN elige un líder activo. */

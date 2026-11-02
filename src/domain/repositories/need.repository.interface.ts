@@ -36,4 +36,10 @@ export interface NeedRepository {
   findById(id: string): Promise<NeedEntity | null>;
   findPage(filters: NeedFilters, params: PageParams): Promise<Page<NeedEntity>>;
   update(id: string, changes: NeedChanges): Promise<NeedEntity | null>;
+  /**
+   * Enlaza la oportunidad y pasa la necesidad a CONVERTIDA solo si sigue abierta y sin
+   * proyecto (escritura condicional). Devuelve la necesidad actualizada, o null si otra
+   * petición se adelantó (ya convertida o descartada).
+   */
+  markConverted(id: string, projectId: string): Promise<NeedEntity | null>;
 }

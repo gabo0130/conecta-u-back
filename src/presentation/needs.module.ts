@@ -9,7 +9,9 @@ import {
   NEED_CHARACTERIZER,
 } from '../shared/interfaces/tokens';
 import { AnalysisModule } from './analysis.module';
+import { ConvertNeedToOpportunityUseCase } from '../application/use-cases/convert-need-to-opportunity.use-case';
 import { CreateNeedUseCase } from '../application/use-cases/create-need.use-case';
+import { CreateProjectUseCase } from '../application/use-cases/create-project.use-case';
 import { DiscardNeedUseCase } from '../application/use-cases/discard-need.use-case';
 import { GetNeedUseCase } from '../application/use-cases/get-need.use-case';
 import { ListNeedsUseCase } from '../application/use-cases/list-needs.use-case';
@@ -37,6 +39,8 @@ import {
     },
     CreateNeedUseCase,
     CharacterizeNeedUseCase,
+    CreateProjectUseCase,
+    ConvertNeedToOpportunityUseCase,
     ListNeedsUseCase,
     GetNeedUseCase,
     UpdateNeedUseCase,

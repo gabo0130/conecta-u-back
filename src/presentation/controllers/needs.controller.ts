@@ -16,6 +16,8 @@ import {
   ListNeedsQueryDto,
   UpdateNeedDto,
 } from '../../application/dto/needs.dto';
+import { CreateProjectDto } from '../../application/dto/create-project.dto';
+import { ConvertNeedToOpportunityUseCase } from '../../application/use-cases/convert-need-to-opportunity.use-case';
 import { CharacterizeNeedUseCase } from '../../application/use-cases/characterize-need.use-case';
 import { CreateNeedUseCase } from '../../application/use-cases/create-need.use-case';
 import { DiscardNeedUseCase } from '../../application/use-cases/discard-need.use-case';
@@ -40,6 +42,7 @@ export class NeedsController {
     private readonly updateUseCase: UpdateNeedUseCase,
     private readonly discardUseCase: DiscardNeedUseCase,
     private readonly characterizeUseCase: CharacterizeNeedUseCase,
+    private readonly convertUseCase: ConvertNeedToOpportunityUseCase,
   ) {}
 
   @Post()
@@ -84,6 +87,16 @@ export class NeedsController {
     @Param('id', UuidParamPipe) id: string,
   ) {
     return this.characterizeUseCase.execute(request.user!.userId, id);
+  }
+
+  /** T5: crea el proyecto (mismo cuerpo que `POST /projects`) y enlaza la necesidad. */
+  @Post(':id/opportunity')
+  convert(
+    @Req() request: AuthenticatedRequest,
+    @Param('id', UuidParamPipe) id: string,
+    @Body() dto: CreateProjectDto,
+  ) {
+    return this.convertUseCase.execute(request.user!.userId, id, dto);
   }
 
   @Post(':id/discard')

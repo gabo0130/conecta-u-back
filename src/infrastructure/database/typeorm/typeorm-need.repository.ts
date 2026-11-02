@@ -1,10 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import type { FindOptionsOrder, FindOptionsWhere } from 'typeorm';
-import { Repository } from 'typeorm';
+import { In, IsNull, Repository } from 'typeorm';
 import type { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
-import type {
-  NeedCharacterization,
+import {
+  OPEN_NEED_STATUSES,
+  type NeedCharacterization,
   NeedEntity,
   NeedKind,
   NeedStatus,
@@ -93,5 +94,16 @@ export class TypeOrmNeedRepository implements NeedRepository {
       changes as QueryDeepPartialEntity<NeedOrmEntity>,
     );
     return this.findById(id);
+  }
+
+  async markConverted(
+    id: string,
+    projectId: string,
+  ): Promise<NeedEntity | null> {
+    const result = await this.repository.update(
+      { id, status: In([...OPEN_NEED_STATUSES]), projectId: IsNull() },
+      { status: 'CONVERTIDA', projectId },
+    );
+    return result.affected === 1 ? this.findById(id) : null;
   }
 }
