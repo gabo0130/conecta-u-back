@@ -217,7 +217,7 @@ function describeFailure(error: unknown): string {
     return `Gemini respondió con error ${error.status}: ${error.message}`;
   }
   if (error instanceof Error && error.name === 'TimeoutError') {
-    return 'Gemini no respondió dentro del tiempo límite';
+    return `Gemini no respondió dentro del tiempo límite (${error.message})`;
   }
   if (error instanceof Error && error.name === 'AbortError') {
     return 'La solicitud a Gemini fue cancelada';
