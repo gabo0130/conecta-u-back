@@ -57,11 +57,16 @@ export async function callWithTransientRetry<T>(
 ): Promise<T> {
   const deadline = Date.now() + timeoutMs;
   for (let attempt = 0; ; attempt++) {
-    const signal = AbortSignal.timeout(Math.max(deadline - Date.now(), 1));
+    // `setTimeout` y no `AbortSignal.timeout`: así el reloj simulado de las pruebas lo controla.
+    const controller = new AbortController();
+    const timer = setTimeout(
+      () => controller.abort(),
+      Math.max(deadline - Date.now(), 1),
+    );
     try {
-      return await call(signal);
+      return await call(controller.signal);
     } catch (error) {
-      if (signal.aborted) throw timeoutError(timeoutMs, error);
+      if (controller.signal.aborted) throw timeoutError(timeoutMs, error);
       const wait = BACKOFF_MS[attempt];
       const canRetry =
         isRetryableApiError(error) &&
@@ -69,6 +74,8 @@ export async function callWithTransientRetry<T>(
         deadline - Date.now() > wait + MIN_ATTEMPT_MS;
       if (!canRetry) throw error;
       await sleep(wait);
+    } finally {
+      clearTimeout(timer);
     }
   }
 }
