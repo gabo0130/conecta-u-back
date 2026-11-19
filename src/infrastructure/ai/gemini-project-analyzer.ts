@@ -37,6 +37,12 @@ export interface GeminiAnalyzerOptions {
 const MAX_OUTPUT_TOKENS = 16384;
 /** Con menos tiempo que esto no vale la pena intentar con el modelo de respaldo. */
 const MIN_FALLBACK_MS = 8000;
+/**
+ * Tiempo que se le guarda al modelo de respaldo. Con alta demanda el principal a veces no
+ * responde nunca (sin 503): sin esta reserva se comía todo el presupuesto y el respaldo, que
+ * suele responder en segundos, no alcanzaba a correr.
+ */
+const FALLBACK_RESERVE_MS = 20_000;
 
 const logger = new Logger('GeminiProjectAnalyzer');
 
@@ -123,11 +129,12 @@ export class GeminiProjectAnalyzer implements ProjectAnalyzer {
   ): Promise<[string, GenerateContentResponse]> {
     for (let index = 0; ; index++) {
       const model = models[index];
+      const hasNext = models[index + 1] !== undefined;
       try {
         const response = await this.generate(
           model,
           input,
-          Math.max(deadline - Date.now(), 1),
+          attemptBudget(deadline - Date.now(), hasNext),
         );
         return [model, response];
       } catch (error) {
@@ -140,7 +147,7 @@ export class GeminiProjectAnalyzer implements ProjectAnalyzer {
         const next = models[index + 1];
         if (
           next === undefined ||
-          !isTransientApiError(error) ||
+          !(isTransientApiError(error) || isTimeout(error)) ||
           deadline - Date.now() < MIN_FALLBACK_MS
         ) {
           throw new AnalyzerUnavailableError(describeFailure(error), {
@@ -186,6 +193,21 @@ export class GeminiProjectAnalyzer implements ProjectAnalyzer {
   }
 }
 
+/**
+ * Si después viene el respaldo y alcanza el tiempo, el modelo actual deja `FALLBACK_RESERVE_MS`
+ * libres; si no, usa todo lo que queda.
+ */
+function attemptBudget(remainingMs: number, hasNext: boolean): number {
+  const remaining = Math.max(remainingMs, 1);
+  if (!hasNext || remaining < FALLBACK_RESERVE_MS + MIN_FALLBACK_MS) {
+    return remaining;
+  }
+  return remaining - FALLBACK_RESERVE_MS;
+}
+
+const isTimeout = (error: unknown): boolean =>
+  error instanceof Error && error.name === 'TimeoutError';
+
 /** Los tokens de "pensamiento" también se facturan: cuentan como salida. */
 function toOutputTokens(
   usage:
@@ -217,7 +239,7 @@ function describeFailure(error: unknown): string {
     return `Gemini respondió con error ${error.status}: ${error.message}`;
   }
   if (error instanceof Error && error.name === 'TimeoutError') {
-    return 'Gemini no respondió dentro del tiempo límite';
+    return `Gemini no respondió dentro del tiempo límite (${error.message})`;
   }
   if (error instanceof Error && error.name === 'AbortError') {
     return 'La solicitud a Gemini fue cancelada';

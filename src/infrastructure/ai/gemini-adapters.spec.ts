@@ -259,6 +259,41 @@ describe('GeminiProjectAnalyzer fallback model', () => {
     ]);
   });
 
+  it('keeps time for the fallback when the main model never answers', async () => {
+    // Con alta demanda gemini-3.8-flash a veces no responde nunca; el SDK rechaza al abortar.
+    generateContent.mockImplementation(
+      ({
+        model,
+        config,
+      }: {
+        model: string;
+        config: { abortSignal: AbortSignal };
+      }) =>
+        model === 'gemini-3.8-flash'
+          ? new Promise((_, reject) =>
+              config.abortSignal.addEventListener('abort', () => {
+                const aborted = new Error('This operation was aborted');
+                aborted.name = 'AbortError';
+                reject(aborted);
+              }),
+            )
+          : Promise.resolve({ text: '{"resumen":"x"}' }),
+    );
+
+    const started = Date.now();
+    const outcome = await settle(withFallback.analyze(input, fullBudget));
+
+    expect(outcome).toMatchObject({
+      value: { model: 'gemini-3.5-flash-lite' },
+    });
+    expect(modelsCalled()).toEqual([
+      'gemini-3.8-flash',
+      'gemini-3.5-flash-lite',
+    ]);
+    // El principal tuvo 55 − 20 s; el respaldo, los 20 s reservados.
+    expect(Date.now() - started).toBe(35_000);
+  });
+
   it('reports the fallback failure when both models are overloaded', async () => {
     generateContent.mockRejectedValue(overloaded());
 
@@ -366,13 +401,13 @@ describe('GeminiEmbeddingProvider', () => {
   });
 
   it('gives every call the provider timeout, or a shorter one when asked', async () => {
-    const timeout = jest.spyOn(AbortSignal, 'timeout');
+    const timeout = jest.spyOn(global, 'setTimeout');
     embedContent.mockResolvedValue({ embeddings: [{ values: [1, 0, 0] }] });
 
     await provider.embed(['texto']);
     await provider.embed(['texto'], { timeoutMs: 2_000 });
 
-    const [first, second] = timeout.mock.calls.map(([ms]) => ms);
+    const [first, second] = timeout.mock.calls.map(([, ms]) => ms);
     expect(first).toBeGreaterThan(50_000);
     expect(first).toBeLessThanOrEqual(55_000);
     expect(second).toBeLessThanOrEqual(2_000);
