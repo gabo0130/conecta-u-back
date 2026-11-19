@@ -86,3 +86,33 @@ describe('isDailyQuotaError', () => {
     expect(isDailyQuotaError(new Error(dailyQuota))).toBe(false);
   });
 });
+
+describe('callWithTransientRetry: tiempo agotado', () => {
+  // Como el SDK de Gemini: aborta su propio controlador sin motivo y rechaza con `AbortError`.
+  const sdkLikeCall = (signal: AbortSignal) =>
+    new Promise<never>((_, reject) => {
+      signal.addEventListener('abort', () => {
+        const error = new Error('This operation was aborted');
+        error.name = 'AbortError';
+        reject(error);
+      });
+    });
+
+  it('reports our own deadline as a TimeoutError, not as a cancellation', async () => {
+    const error = (await callWithTransientRetry(sdkLikeCall, 20).catch(
+      (caught: unknown) => caught,
+    )) as Error;
+
+    expect(error.name).toBe('TimeoutError');
+    expect(error.message).toBe('sin respuesta en 0 s');
+    expect((error.cause as Error).name).toBe('AbortError');
+  });
+
+  it('keeps any other failure as it is', async () => {
+    const failure = new Error('red caída');
+
+    await expect(
+      callWithTransientRetry(() => Promise.reject(failure), 5_000),
+    ).rejects.toBe(failure);
+  });
+});

@@ -30,10 +30,26 @@ export const isDailyQuotaError = (error: unknown): boolean =>
   error.status === 429 &&
   DAILY_QUOTA_PATTERN.test(error.message);
 
+/** Error de tiempo agotado: `name = 'TimeoutError'`, como el de `AbortSignal.timeout`. */
+function timeoutError(timeoutMs: number, cause: unknown): Error {
+  const error = new Error(
+    `sin respuesta en ${Math.round(timeoutMs / 1000)} s`,
+    {
+      cause,
+    },
+  );
+  error.name = 'TimeoutError';
+  return error;
+}
+
 /**
  * Llama al servicio de IA y reintenta (hasta 2 veces, con espera creciente) si responde con
  * un 5xx. Un 429 (cuota) no se reintenta. `timeoutMs` es el presupuesto total: los reintentos
  * nunca lo superan, y un tiempo agotado no se reintenta.
+ *
+ * El SDK de Gemini (`@google/genai` 2.x) enlaza nuestra señal a un `AbortController` propio y lo
+ * aborta sin motivo: un tiempo agotado le llega a quien llama como `AbortError` ("cancelada").
+ * Si fue nuestra señal la que se venció, se devuelve como `TimeoutError`.
  */
 export async function callWithTransientRetry<T>(
   call: (signal: AbortSignal) => Promise<T>,
@@ -41,11 +57,16 @@ export async function callWithTransientRetry<T>(
 ): Promise<T> {
   const deadline = Date.now() + timeoutMs;
   for (let attempt = 0; ; attempt++) {
+    // `setTimeout` y no `AbortSignal.timeout`: así el reloj simulado de las pruebas lo controla.
+    const controller = new AbortController();
+    const timer = setTimeout(
+      () => controller.abort(),
+      Math.max(deadline - Date.now(), 1),
+    );
     try {
-      return await call(
-        AbortSignal.timeout(Math.max(deadline - Date.now(), 1)),
-      );
+      return await call(controller.signal);
     } catch (error) {
+      if (controller.signal.aborted) throw timeoutError(timeoutMs, error);
       const wait = BACKOFF_MS[attempt];
       const canRetry =
         isRetryableApiError(error) &&
@@ -53,6 +74,8 @@ export async function callWithTransientRetry<T>(
         deadline - Date.now() > wait + MIN_ATTEMPT_MS;
       if (!canRetry) throw error;
       await sleep(wait);
+    } finally {
+      clearTimeout(timer);
     }
   }
 }
