@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import { Inject, Injectable } from '@nestjs/common';
 import type { CollaboratorEmbeddingRepository } from '../../domain/repositories/collaborator-embedding.repository.interface';
 import type { EmbeddingProvider } from '../../domain/repositories/embedding-provider.interface';
@@ -16,6 +17,8 @@ export interface RebuildSummary {
   processed: number;
   /** Personas sin contenido que representar: quedan al día, sin embedding. */
   skipped: number;
+  /** Personas cuyo texto no cambió: se reutilizó su vector sin llamar a la API. */
+  reused: number;
   /** Personas que no se pudieron procesar; siguen pendientes. */
   failed: number;
   /** Pendientes que quedan después de esta corrida (si superó el límite o hubo fallos). */
@@ -74,6 +77,7 @@ export class CollaboratorEmbeddingService {
       return {
         processed: 0,
         skipped: 0,
+        reused: 0,
         failed: 0,
         remaining: await this.repository.countStale(
           this.embeddingProvider.model,
@@ -94,6 +98,7 @@ export class CollaboratorEmbeddingService {
     const summary: RebuildSummary = {
       processed: 0,
       skipped: 0,
+      reused: 0,
       failed: 0,
       remaining: 0,
     };
@@ -101,35 +106,45 @@ export class CollaboratorEmbeddingService {
     for (let start = 0; start < pending.length; start += EMBEDDING_BATCH_SIZE) {
       if (Date.now() >= deadline) break;
       const batch = pending.slice(start, start + EMBEDDING_BATCH_SIZE);
-      const texts = batch.map(collaboratorEmbeddingText);
-      const withText = batch.filter((_collaborator, index) => texts[index]);
+      const toEmbed: { id: string; text: string; hash: string }[] = [];
 
-      // Sin contenido no hay nada que representar: se registra como al día.
-      for (const [index, collaborator] of batch.entries()) {
-        if (!texts[index]) {
-          await this.repository.save(collaborator.id, null, model);
+      for (const collaborator of batch) {
+        const text = collaboratorEmbeddingText(collaborator);
+        // Sin contenido no hay nada que representar: se registra como al día.
+        if (!text) {
+          await this.repository.save(collaborator.id, null, model, null);
           summary.skipped++;
+          continue;
         }
+        const hash = textHash(text);
+        // El cambio no tocó el texto embebido (p. ej. horas o fechas): el vector sigue sirviendo.
+        if (
+          await this.repository.reuseIfUnchanged(collaborator.id, model, hash)
+        ) {
+          summary.reused++;
+          continue;
+        }
+        toEmbed.push({ id: collaborator.id, text, hash });
       }
-      if (withText.length === 0) continue;
+      if (toEmbed.length === 0) continue;
 
       try {
         // Con tope de tiempo, cada lote recibe solo lo que queda (nunca más que el del proveedor).
         const vectors = await this.embeddingProvider.embed(
-          texts.filter(Boolean),
+          toEmbed.map((item) => item.text),
           Number.isFinite(deadline)
             ? { timeoutMs: Math.max(deadline - Date.now(), 1) }
             : {},
         );
-        for (const [index, collaborator] of withText.entries()) {
-          await this.repository.save(collaborator.id, vectors[index], model);
+        for (const [index, item] of toEmbed.entries()) {
+          await this.repository.save(item.id, vectors[index], model, item.hash);
           summary.processed++;
         }
       } catch (error) {
-        summary.failed += withText.length;
+        summary.failed += toEmbed.length;
         this.logger.error('Falló un lote de embeddings de personas', error, {
           method: 'rebuildStale',
-          batchSize: withText.length,
+          batchSize: toEmbed.length,
         });
         break;
       }
@@ -146,4 +161,9 @@ export class CollaboratorEmbeddingService {
   markAllStale(): Promise<void> {
     return this.repository.markAllStale();
   }
+}
+
+/** Huella del texto embebido: si no cambia, el vector anterior sigue sirviendo. */
+function textHash(text: string): string {
+  return createHash('sha256').update(text).digest('hex');
 }

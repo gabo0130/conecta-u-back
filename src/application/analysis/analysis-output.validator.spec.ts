@@ -95,10 +95,20 @@ describe('parseAnalysisOutput', () => {
     );
   });
 
-  it('rejects more profiles than allowed', () => {
+  it('keeps the first 5 profiles instead of paying for another call (IA-04)', () => {
     const many = Array.from({ length: 6 }, () => profile());
 
-    expect(() => parseAnalysisOutput(output(many))).toThrow(/entre 1 y 5/);
+    expect(parseAnalysisOutput(output(many)).profiles).toHaveLength(5);
+  });
+
+  it('keeps the first 8 skills of a profile instead of rejecting it', () => {
+    const skills = Array.from({ length: 9 }, () => skill());
+
+    const [parsed] = parseAnalysisOutput(
+      output([profile({ habilidades: skills })]),
+    ).profiles;
+
+    expect(parsed.skills).toHaveLength(8);
   });
 
   it('rejects a profile with too few skills', () => {

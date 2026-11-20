@@ -29,6 +29,7 @@ const input: AnalysisInput = {
     type: { name: 'Curso', fields: [] },
     category: 'Desarrollo',
     program: null,
+    durationMonths: null,
     deliverables: [],
     knownSkills: [],
   },
@@ -44,6 +45,49 @@ describe('GeminiProjectAnalyzer', () => {
   const budget = { timeoutMs: 55_000 };
 
   beforeEach(() => jest.resetAllMocks());
+
+  it('reports a truncated answer as invalid output instead of unreadable JSON (IA-03)', async () => {
+    const attempts: unknown[] = [];
+    generateContent.mockResolvedValue({
+      text: '{"resumen":"x","perf',
+      candidates: [{ finishReason: 'MAX_TOKENS' }],
+      usageMetadata: { promptTokenCount: 100, candidatesTokenCount: 16384 },
+    });
+
+    const error = await analyzer
+      .analyze(input, { ...budget, onAttempt: (a) => attempts.push(a) })
+      .catch((e: unknown) => e);
+
+    expect(error).toBeInstanceOf(InvalidAnalysisOutputError);
+    expect((error as Error).message).toBe(
+      'Gemini cortó la respuesta por longitud',
+    );
+    expect(attempts).toEqual([
+      expect.objectContaining({
+        provider: 'gemini',
+        model: 'gemini-3.8-flash',
+        outcome: 'answered',
+        inputTokens: 100,
+        outputTokens: 16384,
+        truncated: true,
+      }),
+    ]);
+  });
+
+  it('reports a failed call with its outcome and HTTP status', async () => {
+    const attempts: unknown[] = [];
+    generateContent.mockRejectedValue(
+      new ApiError({ message: 'PerMinute quota', status: 429 }),
+    );
+
+    await analyzer
+      .analyze(input, { ...budget, onAttempt: (a) => attempts.push(a) })
+      .catch(() => undefined);
+
+    expect(attempts).toEqual([
+      expect.objectContaining({ outcome: 'rate_limited', httpStatus: 429 }),
+    ]);
+  });
 
   it('parses the JSON and reports tokens, counting thinking tokens as output', async () => {
     generateContent.mockResolvedValue({
@@ -160,6 +204,24 @@ describe('GeminiProjectAnalyzer fallback model', () => {
       ([request]: [{ model: string }]) => request.model,
     );
 
+  // Con alta demanda gemini-3.8-flash a veces no responde nunca; el SDK rechaza al abortar.
+  const hangingMainModel = ({
+    model,
+    config,
+  }: {
+    model: string;
+    config: { abortSignal: AbortSignal };
+  }) =>
+    model === 'gemini-3.8-flash'
+      ? new Promise((_, reject) =>
+          config.abortSignal.addEventListener('abort', () => {
+            const aborted = new Error('This operation was aborted');
+            aborted.name = 'AbortError';
+            reject(aborted);
+          }),
+        )
+      : Promise.resolve({ text: '{"resumen":"x"}' });
+
   // Los reintentos esperan 1,5 s y 4 s: se adelanta el reloj en vez de esperarlos.
   const settle = async <T>(promise: Promise<T>) => {
     const outcome = promise.then(
@@ -260,25 +322,7 @@ describe('GeminiProjectAnalyzer fallback model', () => {
   });
 
   it('keeps time for the fallback when the main model never answers', async () => {
-    // Con alta demanda gemini-3.8-flash a veces no responde nunca; el SDK rechaza al abortar.
-    generateContent.mockImplementation(
-      ({
-        model,
-        config,
-      }: {
-        model: string;
-        config: { abortSignal: AbortSignal };
-      }) =>
-        model === 'gemini-3.8-flash'
-          ? new Promise((_, reject) =>
-              config.abortSignal.addEventListener('abort', () => {
-                const aborted = new Error('This operation was aborted');
-                aborted.name = 'AbortError';
-                reject(aborted);
-              }),
-            )
-          : Promise.resolve({ text: '{"resumen":"x"}' }),
-    );
+    generateContent.mockImplementation(hangingMainModel);
 
     const started = Date.now();
     const outcome = await settle(withFallback.analyze(input, fullBudget));
@@ -290,8 +334,36 @@ describe('GeminiProjectAnalyzer fallback model', () => {
       'gemini-3.8-flash',
       'gemini-3.5-flash-lite',
     ]);
-    // El principal tuvo 55 − 20 s; el respaldo, los 20 s reservados.
-    expect(Date.now() - started).toBe(35_000);
+    // El principal espera como mucho 25 s (GEMINI_PRIMARY_TIMEOUT_MS por defecto).
+    expect(Date.now() - started).toBe(25_000);
+  });
+
+  it('caps the wait for the main model even with a long budget (producción: 300 s)', async () => {
+    generateContent.mockImplementation(hangingMainModel);
+
+    const started = Date.now();
+    const outcome = await settle(
+      withFallback.analyze(input, { timeoutMs: 300_000 }),
+    );
+
+    expect(outcome).toMatchObject({
+      value: { model: 'gemini-3.5-flash-lite' },
+    });
+    expect(Date.now() - started).toBe(25_000);
+  });
+
+  it('gives the main model all the time when there is no fallback', async () => {
+    generateContent.mockImplementation(hangingMainModel);
+
+    const started = Date.now();
+    const outcome = await settle(
+      withoutFallback.analyze(input, { timeoutMs: 60_000 }),
+    );
+
+    expect(outcome).toMatchObject({
+      error: expect.any(AnalyzerUnavailableError),
+    });
+    expect(Date.now() - started).toBe(60_000);
   });
 
   it('reports the fallback failure when both models are overloaded', async () => {
@@ -397,7 +469,7 @@ describe('GeminiEmbeddingProvider', () => {
   beforeEach(() => jest.resetAllMocks());
 
   it('identifies its vector space by provider, model and dimensions', () => {
-    expect(provider.model).toBe('gemini/gemini-embedding-001@3');
+    expect(provider.model).toBe('gemini/gemini-embedding-001@3#t2');
   });
 
   it('gives every call the provider timeout, or a shorter one when asked', async () => {

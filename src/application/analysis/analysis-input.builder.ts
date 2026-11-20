@@ -18,6 +18,18 @@ import { OMITTED_PERSONAL_DATA, stripContactData } from './contact-data';
 
 export type ProjectInput = AnalysisInput['project'];
 
+/**
+ * Huella del catálogo que vio el análisis: si se aprueban o cambian habilidades, un nuevo
+ * análisis puede elegir otras aunque el proyecto sea el mismo.
+ */
+export function catalogFingerprint(catalog: AnalysisInput['catalog']): string {
+  const entries = catalog.map(({ name, type }) => `${type}:${name}`).sort();
+  return createHash('sha256')
+    .update(JSON.stringify(entries))
+    .digest('hex')
+    .slice(0, 16);
+}
+
 /** Huella de lo que el análisis "vio" del proyecto: si cambia, el análisis quedó desactualizado. */
 export function projectFingerprint(project: ProjectInput): string {
   return createHash('sha256')
@@ -65,6 +77,7 @@ export class AnalysisInputBuilder {
       type: { name: type?.name ?? 'Sin tipo', fields },
       category: category?.name ?? 'Sin categoría',
       program: program?.name ?? null,
+      durationMonths: project.durationMonths,
       deliverables: project.deliverables.map((deliverable) => ({
         name: deliverable.name,
         scope: deliverable.scope,
@@ -83,20 +96,23 @@ export class AnalysisInputBuilder {
     input: AnalysisInput;
     catalog: SkillEntity[];
     fingerprint: string;
+    catalogFingerprint: string;
   }> {
     const [projectInput, catalog] = await Promise.all([
       this.buildProject(project),
       this.skillRepository.findAllActive(),
     ]);
+    const catalogInput = catalog.map((skill) => ({
+      name: skill.name,
+      type: skill.type,
+      category: skill.category,
+    }));
     return {
       fingerprint: projectFingerprint(projectInput),
+      catalogFingerprint: catalogFingerprint(catalogInput),
       input: {
         project: withoutContactData(projectInput),
-        catalog: catalog.map((skill) => ({
-          name: skill.name,
-          type: skill.type,
-          category: skill.category,
-        })),
+        catalog: catalogInput,
       },
       catalog,
     };

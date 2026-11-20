@@ -1,5 +1,6 @@
 import type { INestApplication } from '@nestjs/common';
 import request from 'supertest';
+import { RequestProjectAnalysisUseCase } from '../src/application/use-cases/request-project-analysis.use-case';
 import { DataSource } from 'typeorm';
 import {
   EMAILS,
@@ -73,7 +74,9 @@ describe('Recomendaciones (integración)', () => {
       await http()
         .post(`/api/projects/${scenario.projectId}/analysis`)
         .auth(owner, { type: 'bearer' })
-        .expect(201);
+        .expect(202);
+      // Corre en segundo plano: las recomendaciones necesitan sus perfiles ya guardados.
+      await app.get(RequestProjectAnalysisUseCase).whenIdle();
     });
 
     it('GET antes de generar: todos los perfiles, listas vacías y generatedAt null', async () => {
@@ -83,9 +86,20 @@ describe('Recomendaciones (integración)', () => {
       expect(collaboratorIds(body)).toEqual([]);
     });
 
-    it('403 al ADMIN al generar y a otro líder al consultar', async () => {
-      await http().post(url()).auth(admin, { type: 'bearer' }).expect(403);
+    it('403 a otro líder al generar y al consultar', async () => {
+      await http()
+        .post(url())
+        .auth(otherLeader, { type: 'bearer' })
+        .expect(403);
       await http().get(url()).auth(otherLeader, { type: 'bearer' }).expect(403);
+    });
+
+    it('el ADMIN puede generar las recomendaciones del proyecto de un líder', async () => {
+      await http()
+        .post(url())
+        .auth(admin, { type: 'bearer' })
+        .send({})
+        .expect(200);
     });
 
     it('200 genera solo con personas con consentimiento, disponibles y que no sean el líder', async () => {
@@ -272,6 +286,23 @@ describe('Recomendaciones (integración)', () => {
         failed: 0,
         remaining: 0,
       });
+    });
+
+    it('reutiliza el vector sin llamar a la API cuando el texto embebido no cambió (IA-06)', async () => {
+      // Lo que hace una edición que no toca el texto (p. ej. el año de último uso): queda vencido.
+      await app
+        .get(DataSource)
+        .query('UPDATE collaborators SET "embeddingUpdatedAt" = NULL');
+
+      const response = await http()
+        .post(rebuildUrl)
+        .auth(admin, { type: 'bearer' })
+        .send({})
+        .expect(200);
+
+      expect(response.body.processed).toBe(0);
+      expect(response.body.reused).toBeGreaterThan(0);
+      expect(response.body.remaining).toBe(0);
     });
   });
 });

@@ -116,6 +116,7 @@ describe('TypeOrmProjectAnalysisRepository.complete', () => {
     summary: 'x',
     inputTokens: 1,
     outputTokens: 1,
+    attempts: [],
     durationMs: 10,
     profiles: [],
   };
@@ -154,6 +155,46 @@ describe('TypeOrmProjectAnalysisRepository.complete', () => {
     });
     expect(result?.analysis.status).toBe('COMPLETADO');
     expect(manager.update).toHaveBeenCalled();
+  });
+
+  it('records the provider and model that actually answered, and every attempt', async () => {
+    const manager = managerWith('PENDIENTE');
+    const attempts = [
+      {
+        provider: 'claude',
+        model: 'claude-haiku-5-5',
+        outcome: 'rate_limited' as const,
+        durationMs: 300,
+        inputTokens: null,
+        outputTokens: null,
+        httpStatus: 429,
+      },
+    ];
+
+    await analysesWith(manager).complete('a1', {
+      ...completeDto,
+      provider: 'gemini',
+      model: 'gemini-3.8-flash',
+      attempts,
+    });
+
+    expect(manager.save).toHaveBeenCalledWith(
+      expect.objectContaining({
+        provider: 'gemini',
+        model: 'gemini-3.8-flash',
+        attempts,
+      }),
+    );
+  });
+
+  it('keeps the provider and model reserved with the turn when the analyzer reports none', async () => {
+    const manager = managerWith('PENDIENTE');
+
+    await analysesWith(manager).complete('a1', completeDto);
+
+    const saved = manager.save.mock.calls[0][0];
+    expect(saved).not.toHaveProperty('provider');
+    expect(saved).not.toHaveProperty('model');
   });
 
   it.each(['ERROR', 'COMPLETADO', null])(
@@ -207,13 +248,28 @@ describe('TypeOrmProjectAnalysisRepository.fail', () => {
     return { analyses, queries };
   };
 
+  const failure = {
+    errorMessage: 'caída',
+    durationMs: 100,
+    inputTokens: 1800,
+    outputTokens: 600,
+    attempts: [],
+  };
+
   it('marks ERROR only a PENDIENTE analysis and restores its project in the same transaction', async () => {
     const { analyses, queries } = setup([{ projectId: 'p1' }]);
 
-    await expect(analyses.fail('a1', 'caída', 100)).resolves.toBe(true);
+    await expect(analyses.fail('a1', failure)).resolves.toBe(true);
 
     expect(queries[0]).toMatchObject({
-      set: expect.objectContaining({ status: 'ERROR', errorMessage: 'caída' }),
+      set: expect.objectContaining({
+        status: 'ERROR',
+        errorMessage: 'caída',
+        // Lo que se alcanzó a consumir antes de fallar también se guarda (RT12).
+        inputTokens: 1800,
+        outputTokens: 600,
+        attempts: [],
+      }),
       params: { id: 'a1', pending: 'PENDIENTE' },
     });
     // Mismas dos sentencias que la recuperación: ANALIZADO y BORRADOR.
@@ -226,7 +282,45 @@ describe('TypeOrmProjectAnalysisRepository.fail', () => {
   it('writes nothing else when the analysis had already finished', async () => {
     const { analyses, queries } = setup([]);
 
-    await expect(analyses.fail('a1', 'caída', 100)).resolves.toBe(false);
+    await expect(analyses.fail('a1', failure)).resolves.toBe(false);
     expect(queries).toHaveLength(1);
+  });
+});
+
+describe('TypeOrmProjectAnalysisRepository.recordUsage', () => {
+  it('stores the usage of a closed analysis only if it had none, without touching its status', async () => {
+    const recorded: { set?: unknown; where?: string; params?: unknown } = {};
+    const query = {
+      update: jest.fn(() => query),
+      set: jest.fn((values: unknown) => {
+        recorded.set = values;
+        return query;
+      }),
+      where: jest.fn((where: string, params: unknown) => {
+        recorded.where = where;
+        recorded.params = params;
+        return query;
+      }),
+      execute: jest.fn(() => Promise.resolve({ affected: 1 })),
+    };
+    const analyses = new TypeOrmProjectAnalysisRepository(
+      {} as Repository<ProjectAnalysisOrmEntity>,
+      { createQueryBuilder: () => query } as unknown as DataSource,
+    );
+
+    await analyses.recordUsage('a1', {
+      inputTokens: 10,
+      outputTokens: 5,
+      attempts: [],
+    });
+
+    expect(recorded.set).toEqual({
+      inputTokens: 10,
+      outputTokens: 5,
+      attempts: [],
+    });
+    expect(recorded.set).not.toHaveProperty('status');
+    expect(recorded.where).toContain('attempts IS NULL');
+    expect(recorded.params).toEqual({ id: 'a1' });
   });
 });

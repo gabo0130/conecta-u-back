@@ -3,6 +3,7 @@ import type { AnalyzedProfile } from '../../domain/repositories/project-analyzer
 import {
   mapProfilesToCatalog,
   profileEmbeddingText,
+  profilesWithoutSoftSkill,
 } from './catalog-profile-mapper';
 import { SkillCatalogIndex } from './skill-catalog-index';
 
@@ -131,6 +132,37 @@ describe('mapProfilesToCatalog', () => {
     );
 
     expect(mapped.map((p) => p.position)).toEqual([0, 1, 2]);
+  });
+});
+
+describe('profilesWithoutSoftSkill', () => {
+  it('names the profiles left without a soft skill once mapped to the catalog', () => {
+    const mapped = mapProfilesToCatalog(
+      [
+        profile([
+          {
+            name: 'React',
+            type: 'CONOCIMIENTO',
+            minLevel: 'INTERMEDIO',
+            importance: 'ALTA',
+          },
+        ]),
+        {
+          ...profile([
+            {
+              name: 'Trabajo en equipo',
+              type: 'HABILIDAD_BLANDA',
+              minLevel: 'BASICO',
+              importance: 'MEDIA',
+            },
+          ]),
+          name: 'Coordinación',
+        },
+      ],
+      catalog,
+    );
+
+    expect(profilesWithoutSoftSkill(mapped)).toEqual(['Frontend']);
   });
 });
 

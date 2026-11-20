@@ -1,3 +1,4 @@
+import type { AnalysisAttempt } from '../entities/analysis-attempt.type';
 import type { Level } from '../entities/level.type';
 import type { Priority } from '../entities/priority.type';
 import type { SkillCategory } from '../entities/skill-category.type';
@@ -12,6 +13,8 @@ export interface AnalysisInput {
     type: { name: string; fields: { label: string; value: string }[] };
     category: string;
     program: string | null;
+    /** Duración estimada (v2.2, E5); orienta las horas y la cantidad de personas. */
+    durationMonths: number | null;
     deliverables: { name: string; scope: string }[];
     knownSkills: { name: string; type: SkillType }[];
   };
@@ -25,6 +28,8 @@ export interface AnalyzerResponse {
   usage: { inputTokens: number | null; outputTokens: number | null };
   /** Modelo que realmente respondió, si difiere del configurado (respaldo ante alta demanda). */
   model?: string;
+  /** Proveedor que realmente respondió, si difiere del configurado (respaldo entre proveedores). */
+  provider?: string;
 }
 
 /** Perfil ya validado, listo para mapearse al catálogo. */
@@ -51,6 +56,11 @@ export interface AnalysisOutput {
 export interface AnalyzeOptions {
   /** Tiempo que le queda al análisis completo: incluye los reintentos internos del proveedor. */
   timeoutMs: number;
+  /**
+   * Se llama una vez por cada llamada real al modelo, con su resultado y sus tokens. Así el
+   * análisis registra lo que de verdad se facturó, también si al final falla.
+   */
+  onAttempt?: (attempt: AnalysisAttempt) => void;
 }
 
 export interface ProjectAnalyzer {
@@ -75,5 +85,11 @@ export interface ProjectAnalyzer {
 /** El proveedor de IA no está disponible (caída, timeout, cuota): se responde 503 (RF8). */
 export class AnalyzerUnavailableError extends Error {}
 
-/** La salida del modelo no cumple el esquema esperado. */
+/** La salida del modelo no cumple el esquema esperado: el caso de uso la reintenta una vez. */
 export class InvalidAnalysisOutputError extends Error {}
+
+/**
+ * La salida se cortó por el tope de tokens. No se reintenta: con el mismo tope se volvería a
+ * cortar y se cobraría otra vez.
+ */
+export class TruncatedAnalysisOutputError extends InvalidAnalysisOutputError {}

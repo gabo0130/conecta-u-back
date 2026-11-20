@@ -1,9 +1,16 @@
 import { Logger } from '@nestjs/common';
-import { ApiError, GoogleGenAI, ThinkingLevel } from '@google/genai';
+import {
+  ApiError,
+  FinishReason,
+  GoogleGenAI,
+  ThinkingLevel,
+} from '@google/genai';
 import type { GenerateContentResponse } from '@google/genai';
+import type { AnalysisAttempt } from '../../domain/entities/analysis-attempt.type';
 import {
   AnalyzerUnavailableError,
   InvalidAnalysisOutputError,
+  TruncatedAnalysisOutputError,
 } from '../../domain/repositories/project-analyzer.interface';
 import type {
   AnalysisInput,
@@ -29,6 +36,12 @@ export interface GeminiAnalyzerOptions {
   model: string;
   /** Modelo de respaldo si el principal agota su cuota o sigue en alta demanda. */
   fallbackModel?: string;
+  /**
+   * Máximo que se espera al modelo principal cuando hay respaldo (`GEMINI_PRIMARY_TIMEOUT_MS`).
+   * No depende de `AI_TIMEOUT_MS`: con 5 min de presupuesto se esperaban 280 s a un modelo que
+   * no iba a responder.
+   */
+  primaryTimeoutMs?: number;
   /** Se inyecta en las pruebas; por defecto, uno propio con el enfriamiento estándar. */
   quotaBreaker?: QuotaCircuitBreaker;
 }
@@ -43,6 +56,8 @@ const MIN_FALLBACK_MS = 8000;
  * suele responder en segundos, no alcanzaba a correr.
  */
 const FALLBACK_RESERVE_MS = 20_000;
+/** Espera por defecto al principal: responde en 5–15 s cuando está sano. */
+export const DEFAULT_PRIMARY_TIMEOUT_MS = 25_000;
 
 const logger = new Logger('GeminiProjectAnalyzer');
 
@@ -62,17 +77,20 @@ export class GeminiProjectAnalyzer implements ProjectAnalyzer {
   private readonly client: GoogleGenAI;
   private readonly fallbackModel?: string;
   private readonly quotaBreaker: QuotaCircuitBreaker;
+  private readonly primaryTimeoutMs: number;
 
   constructor({
     apiKey,
     model,
     fallbackModel,
     quotaBreaker = new QuotaCircuitBreaker(),
+    primaryTimeoutMs = DEFAULT_PRIMARY_TIMEOUT_MS,
   }: GeminiAnalyzerOptions) {
     this.client = new GoogleGenAI({ apiKey });
     this.model = model;
     this.fallbackModel = fallbackModel;
     this.quotaBreaker = quotaBreaker;
+    this.primaryTimeoutMs = primaryTimeoutMs;
   }
 
   /** Falso si todos los modelos tienen la cuota diaria agotada: no vale la pena llamar. */
@@ -83,7 +101,7 @@ export class GeminiProjectAnalyzer implements ProjectAnalyzer {
   /** `timeoutMs` cubre el modelo principal, sus reintentos y el de respaldo: nunca se excede. */
   async analyze(
     input: AnalysisInput,
-    { timeoutMs }: AnalyzeOptions,
+    { timeoutMs, onAttempt }: AnalyzeOptions,
   ): Promise<AnalyzerResponse> {
     const deadline = Date.now() + timeoutMs;
     const models = this.usableModels();
@@ -96,8 +114,15 @@ export class GeminiProjectAnalyzer implements ProjectAnalyzer {
       models,
       input,
       deadline,
+      onAttempt,
     );
 
+    // Un JSON cortado a la mitad no se arregla repitiendo con el mismo tope: se dice por qué falló.
+    if (isTruncated(response)) {
+      throw new TruncatedAnalysisOutputError(
+        'Gemini cortó la respuesta por longitud',
+      );
+    }
     const text = response.text;
     if (!text) {
       const reason = response.promptFeedback?.blockReason;
@@ -126,6 +151,7 @@ export class GeminiProjectAnalyzer implements ProjectAnalyzer {
     models: string[],
     input: AnalysisInput,
     deadline: number,
+    onAttempt: AnalyzeOptions['onAttempt'],
   ): Promise<[string, GenerateContentResponse]> {
     for (let index = 0; ; index++) {
       const model = models[index];
@@ -134,7 +160,11 @@ export class GeminiProjectAnalyzer implements ProjectAnalyzer {
         const response = await this.generate(
           model,
           input,
-          attemptBudget(deadline - Date.now(), hasNext),
+          attemptBudget(
+            deadline - Date.now(),
+            hasNext ? this.primaryTimeoutMs : null,
+          ),
+          onAttempt,
         );
         return [model, response];
       } catch (error) {
@@ -168,14 +198,26 @@ export class GeminiProjectAnalyzer implements ProjectAnalyzer {
     );
   }
 
+  /** Cada llamada real (también los reintentos internos) se informa con `onAttempt`. */
   private generate(
     model: string,
     input: AnalysisInput,
     timeoutMs: number,
+    onAttempt: AnalyzeOptions['onAttempt'],
   ): Promise<GenerateContentResponse> {
-    return callWithTransientRetry(
-      (signal) =>
-        this.client.models.generateContent({
+    return callWithTransientRetry(async (signal) => {
+      const startedAt = Date.now();
+      const attempt = (fields: Partial<AnalysisAttempt>): AnalysisAttempt => ({
+        provider: this.provider,
+        model,
+        outcome: 'answered',
+        durationMs: Date.now() - startedAt,
+        inputTokens: null,
+        outputTokens: null,
+        ...fields,
+      });
+      try {
+        const response = await this.client.models.generateContent({
           model,
           contents: buildAnalysisPrompt(input),
           config: {
@@ -187,26 +229,52 @@ export class GeminiProjectAnalyzer implements ProjectAnalyzer {
             maxOutputTokens: MAX_OUTPUT_TOKENS,
             abortSignal: signal,
           },
-        }),
-      timeoutMs,
-    );
+        });
+        onAttempt?.(
+          attempt({
+            inputTokens: response.usageMetadata?.promptTokenCount ?? null,
+            outputTokens: toOutputTokens(response.usageMetadata),
+            ...(isTruncated(response) ? { truncated: true } : {}),
+          }),
+        );
+        return response;
+      } catch (error) {
+        onAttempt?.(attempt(failedAttempt(error)));
+        throw error;
+      }
+    }, timeoutMs);
   }
 }
 
 /**
- * Si después viene el respaldo y alcanza el tiempo, el modelo actual deja `FALLBACK_RESERVE_MS`
- * libres; si no, usa todo lo que queda.
+ * Si después viene el respaldo (`capMs` no nulo) y alcanza el tiempo, el modelo actual espera
+ * como mucho `capMs` y siempre deja `FALLBACK_RESERVE_MS` libres; si no, usa todo lo que queda.
  */
-function attemptBudget(remainingMs: number, hasNext: boolean): number {
+function attemptBudget(remainingMs: number, capMs: number | null): number {
   const remaining = Math.max(remainingMs, 1);
-  if (!hasNext || remaining < FALLBACK_RESERVE_MS + MIN_FALLBACK_MS) {
+  if (capMs === null || remaining < FALLBACK_RESERVE_MS + MIN_FALLBACK_MS) {
     return remaining;
   }
-  return remaining - FALLBACK_RESERVE_MS;
+  return Math.min(capMs, remaining - FALLBACK_RESERVE_MS);
 }
 
 const isTimeout = (error: unknown): boolean =>
   error instanceof Error && error.name === 'TimeoutError';
+
+const isTruncated = (response: GenerateContentResponse): boolean =>
+  response.candidates?.[0]?.finishReason === FinishReason.MAX_TOKENS;
+
+/** Resultado y código HTTP de una llamada que falló. */
+function failedAttempt(error: unknown): Partial<AnalysisAttempt> {
+  if (isTimeout(error)) return { outcome: 'timeout' };
+  if (error instanceof ApiError) {
+    return {
+      outcome: error.status === 429 ? 'rate_limited' : 'unavailable',
+      httpStatus: error.status,
+    };
+  }
+  return { outcome: 'unavailable' };
+}
 
 /** Los tokens de "pensamiento" también se facturan: cuentan como salida. */
 function toOutputTokens(

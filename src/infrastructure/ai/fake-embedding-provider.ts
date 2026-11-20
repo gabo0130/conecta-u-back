@@ -1,4 +1,5 @@
 import { createHash } from 'node:crypto';
+import { EMBEDDING_TEXT_VERSION } from '../../domain/entities/embedding-text-version';
 import type { EmbeddingProvider } from '../../domain/repositories/embedding-provider.interface';
 import { normalizeSkillName } from '../../shared/utils/normalize-skill-name';
 
@@ -10,7 +11,7 @@ export class FakeEmbeddingProvider implements EmbeddingProvider {
   readonly model: string;
 
   constructor(readonly dimensions: number) {
-    this.model = `fake/hash-v1@${dimensions}`;
+    this.model = `fake/hash-v1@${dimensions}#${EMBEDDING_TEXT_VERSION}`;
   }
 
   embed(texts: string[]): Promise<number[][]> {

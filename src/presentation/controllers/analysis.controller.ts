@@ -1,6 +1,9 @@
 import {
+  Body,
   Controller,
   Get,
+  HttpCode,
+  HttpStatus,
   Param,
   Post,
   Query,
@@ -8,6 +11,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { PaginationQueryDto } from '../../application/dto/pagination-query.dto';
+import { RequestAnalysisDto } from '../../application/dto/request-analysis.dto';
 import { GetProjectAnalysisUseCase } from '../../application/use-cases/get-project-analysis.use-case';
 import { ListProjectAnalysesUseCase } from '../../application/use-cases/list-project-analyses.use-case';
 import { RequestProjectAnalysisUseCase } from '../../application/use-cases/request-project-analysis.use-case';
@@ -17,7 +21,10 @@ import type { AuthenticatedRequest } from '../guards/jwt-auth.guard';
 import { JwtAuthGuard } from '../guards/jwt-auth.guard';
 import { UuidParamPipe } from '../pipes/uuid-param.pipe';
 
-/** RF8–RF10: análisis de un proyecto con IA. Pedirlo es del líder dueño; verlo, también del ADMIN. */
+/**
+ * RF6: análisis de un proyecto con IA. Lo piden y lo ven su líder dueño y el ADMIN (que también
+ * registra proyectos a nombre de un líder).
+ */
 @UseGuards(JwtAuthGuard, AuthorizationGuard)
 @Controller('projects/:id')
 export class AnalysisController {
@@ -27,13 +34,17 @@ export class AnalysisController {
     private readonly listAnalysesUseCase: ListProjectAnalysesUseCase,
   ) {}
 
+  /** 202: el análisis queda PENDIENTE y corre en segundo plano; se consulta con `analyses/:analysisId`. */
   @Post('analysis')
-  @Authorize({ anyOfRoles: ['LIDER'] })
+  @HttpCode(HttpStatus.ACCEPTED)
+  @Authorize({ anyOfRoles: ['LIDER', 'ADMIN'] })
   request(
     @Req() request: AuthenticatedRequest,
     @Param('id', UuidParamPipe) id: string,
+    @Body() dto: RequestAnalysisDto,
   ) {
-    return this.requestAnalysisUseCase.execute(request.user!.userId, id);
+    const { userId, role } = request.user!;
+    return this.requestAnalysisUseCase.execute({ userId, role }, id, dto);
   }
 
   @Get('analysis')
@@ -44,6 +55,17 @@ export class AnalysisController {
   ) {
     const { userId, role } = request.user!;
     return this.getAnalysisUseCase.execute({ userId, role }, id);
+  }
+
+  @Get('analyses/:analysisId')
+  @Authorize({ anyOfRoles: ['LIDER', 'ADMIN'] })
+  getAttempt(
+    @Req() request: AuthenticatedRequest,
+    @Param('id', UuidParamPipe) id: string,
+    @Param('analysisId', UuidParamPipe) analysisId: string,
+  ) {
+    const { userId, role } = request.user!;
+    return this.getAnalysisUseCase.execute({ userId, role }, id, analysisId);
   }
 
   @Get('analyses')

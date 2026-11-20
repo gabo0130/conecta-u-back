@@ -1,4 +1,5 @@
 import type { Page, PageParams } from '../../shared/pagination/pagination.util';
+import type { AnalysisAttempt } from '../entities/analysis-attempt.type';
 import type { Level } from '../entities/level.type';
 import type { Priority } from '../entities/priority.type';
 import type { ProjectAnalysisEntity } from '../entities/project-analysis.entity';
@@ -36,15 +37,26 @@ export interface NewRequiredProfile {
   embedding: StoredEmbedding | null;
 }
 
-export interface CompleteProjectAnalysisDto {
-  /** Modelo que respondió, si no fue el registrado al reservar el turno (respaldo). */
+/** Consumo de un análisis: totales de tokens y cada llamada real al modelo (RT7, RT12). */
+export interface AnalysisUsage {
+  inputTokens: number | null;
+  outputTokens: number | null;
+  attempts: AnalysisAttempt[];
+}
+
+export interface CompleteProjectAnalysisDto extends AnalysisUsage {
+  /** Proveedor y modelo que respondieron, si no fueron los registrados al reservar (respaldo). */
+  provider?: string;
   model?: string;
   rawOutput: unknown;
   summary: string;
-  inputTokens: number | null;
-  outputTokens: number | null;
   durationMs: number;
   profiles: NewRequiredProfile[];
+}
+
+export interface FailProjectAnalysisDto extends AnalysisUsage {
+  errorMessage: string;
+  durationMs: number;
 }
 
 export interface AnalysisSlotLimits {
@@ -85,9 +97,15 @@ export interface ProjectAnalysisRepository {
   } | null>;
   /**
    * Marca ERROR solo si sigue PENDIENTE y, en la misma transacción, devuelve el proyecto a su
-   * estado real (misma regla que `recoverInterrupted`). `false` si ya había terminado.
+   * estado real (misma regla que `recoverInterrupted`). Guarda también lo que se alcanzó a
+   * consumir. `false` si ya había terminado.
    */
-  fail(id: string, errorMessage: string, durationMs: number): Promise<boolean>;
+  fail(id: string, data: FailProjectAnalysisDto): Promise<boolean>;
+  /**
+   * Guarda lo consumido por un análisis que la recuperación ya cerró (RT12), sin tocar su
+   * estado. Solo si aún no tenía intentos registrados.
+   */
+  recordUsage(id: string, usage: AnalysisUsage): Promise<void>;
   /**
    * Recupera análisis interrumpidos (p. ej. el servidor se reinició a mitad): marca ERROR los
    * PENDIENTE creados antes de `staleBefore` y devuelve a ANALIZADO (si tiene un análisis

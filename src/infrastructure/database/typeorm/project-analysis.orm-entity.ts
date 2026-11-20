@@ -6,6 +6,7 @@ import {
   ManyToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
+import type { AnalysisAttempt } from '../../../domain/entities/analysis-attempt.type';
 import { ProjectOrmEntity } from './project.orm-entity';
 import { UserOrmEntity } from './user.orm-entity';
 
@@ -52,6 +53,10 @@ export class ProjectAnalysisOrmEntity {
 
   @Column({ type: 'jsonb', nullable: true })
   rawOutput: unknown;
+
+  /** Llamadas reales a los modelos (RT7, RT12): proveedor, modelo, resultado, tiempo y tokens. */
+  @Column({ type: 'jsonb', nullable: true })
+  attempts: AnalysisAttempt[] | null;
 
   @Column({ type: 'text', nullable: true })
   summary: string | null;

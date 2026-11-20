@@ -21,12 +21,14 @@ describe('RecommendationsController', () => {
 
   beforeEach(() => jest.clearAllMocks());
 
-  it('delegates generation with the leader id and the options', () => {
+  it('delegates generation with the actor and the options', () => {
     void controller.generate(leader, 'p1', { includeUnavailable: true });
 
-    expect(generate.execute).toHaveBeenCalledWith('leader-1', 'p1', {
-      includeUnavailable: true,
-    });
+    expect(generate.execute).toHaveBeenCalledWith(
+      { userId: 'leader-1', role: 'LIDER' },
+      'p1',
+      { includeUnavailable: true },
+    );
   });
 
   it('passes the actor role when listing', () => {

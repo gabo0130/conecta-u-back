@@ -27,6 +27,7 @@
     "seed": "ts-node src/infrastructure/database/seed.ts"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^1.11.0",
     "@google/genai": "^2.30.0",
     "@nestjs/common": "^11.0.1",
     "@nestjs/config": "^4.0.3",

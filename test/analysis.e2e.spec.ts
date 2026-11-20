@@ -1,5 +1,6 @@
 import type { INestApplication } from '@nestjs/common';
 import request from 'supertest';
+import { RequestProjectAnalysisUseCase } from '../src/application/use-cases/request-project-analysis.use-case';
 import { DataSource } from 'typeorm';
 import { MAX_ANALYSES_PER_DAY } from '../src/domain/entities/analysis-limits';
 import {
@@ -42,6 +43,9 @@ describe('Análisis con IA (integración)', () => {
   let collaborator: string;
   const http = () => request(app.getHttpServer());
   const analysisUrl = () => `/api/projects/${scenario.projectId}/analysis`;
+  /** El análisis corre en segundo plano: se espera a que termine para ver su resultado. */
+  const finishAnalyses = () =>
+    app.get(RequestProjectAnalysisUseCase).whenIdle();
 
   beforeAll(async () => {
     app = await createTestApp();
@@ -72,8 +76,18 @@ describe('Análisis con IA (integración)', () => {
         .auth(otherLeader, { type: 'bearer' })
         .expect(403));
 
-    it('403 al ADMIN: puede ver el análisis pero no pedirlo', () =>
-      http().post(analysisUrl()).auth(admin, { type: 'bearer' }).expect(403));
+    it('el ADMIN también puede pedirlo: pasa la autorización y llega a la validación del proyecto', () =>
+      http()
+        .post(`/api/projects/${scenario.incompleteProjectId}/analysis`)
+        .auth(admin, { type: 'bearer' })
+        .expect(422));
+
+    it('422 si force no es booleano', () =>
+      http()
+        .post(analysisUrl())
+        .auth(owner, { type: 'bearer' })
+        .send({ force: 'sí' })
+        .expect(422));
 
     it('404 si el proyecto no existe', () =>
       http()
@@ -130,11 +144,18 @@ describe('Análisis con IA (integración)', () => {
   describe('flujo completo con el proveedor fake', () => {
     let analysis: AnalysisBody;
 
-    it('201: analiza, propone perfiles del catálogo y deja el proyecto ANALIZADO', async () => {
-      const response = await http()
+    it('202: responde PENDIENTE de inmediato y en segundo plano propone perfiles y deja el proyecto ANALIZADO', async () => {
+      const started = await http()
         .post(analysisUrl())
         .auth(owner, { type: 'bearer' })
-        .expect(201);
+        .expect(202);
+      expect(started.body).toMatchObject({ status: 'PENDIENTE' });
+      await finishAnalyses();
+
+      const response = await http()
+        .get(`/api/projects/${scenario.projectId}/analyses/${started.body.id}`)
+        .auth(owner, { type: 'bearer' })
+        .expect(200);
       analysis = response.body as AnalysisBody;
 
       expect(analysis).toMatchObject({
@@ -273,17 +294,58 @@ describe('Análisis con IA (integración)', () => {
         .expect(404));
   });
 
+  it('guarda cada llamada al modelo y sus tokens en el intento (RT12)', async () => {
+    const [row]: { attempts: { provider: string; outcome: string }[] }[] =
+      await app
+        .get(DataSource)
+        .query(
+          `SELECT attempts FROM project_analyses WHERE "projectId" = $1 AND status = 'COMPLETADO' ORDER BY "createdAt" LIMIT 1`,
+          [scenario.projectId],
+        );
+    expect(row.attempts).toEqual([
+      expect.objectContaining({ provider: 'fake', outcome: 'answered' }),
+    ]);
+  });
+
+  it('409 si el proyecto no cambió desde el último análisis, sin gastar un cupo (IA-11)', async () => {
+    const before = await app
+      .get(DataSource)
+      .query('SELECT count(*)::int AS n FROM project_analyses');
+    const response = await http()
+      .post(analysisUrl())
+      .auth(owner, { type: 'bearer' })
+      .expect(409);
+
+    expect(response.body.message).toMatch(/no cambió desde el último análisis/);
+    const after = await app
+      .get(DataSource)
+      .query('SELECT count(*)::int AS n FROM project_analyses');
+    expect(after).toEqual(before);
+  });
+
+  it('el ADMIN vuelve a analizar el proyecto de un líder con force', async () => {
+    await http()
+      .post(analysisUrl())
+      .auth(admin, { type: 'bearer' })
+      .send({ force: true })
+      .expect(202);
+    await finishAnalyses();
+  });
+
   it(`409 al superar ${MAX_ANALYSES_PER_DAY} análisis por día`, async () => {
-    // Ya hay 1 completado: se completan los que faltan hasta el máximo y el siguiente se rechaza.
-    for (let attempt = 2; attempt <= MAX_ANALYSES_PER_DAY; attempt++) {
+    // Ya hay 2 completados: se completan los que faltan hasta el máximo y el siguiente se rechaza.
+    for (let attempt = 3; attempt <= MAX_ANALYSES_PER_DAY; attempt++) {
       await http()
         .post(analysisUrl())
         .auth(owner, { type: 'bearer' })
-        .expect(201);
+        .send({ force: true })
+        .expect(202);
+      await finishAnalyses();
     }
     const response = await http()
       .post(analysisUrl())
       .auth(owner, { type: 'bearer' })
+      .send({ force: true })
       .expect(409);
     expect(response.body.message).toBe(
       `Alcanzaste el máximo de ${MAX_ANALYSES_PER_DAY} análisis por día para este proyecto. Intenta de nuevo mañana.`,
@@ -331,15 +393,21 @@ describe('Análisis con IA caída (integración, 503)', () => {
 
   afterAll(() => app.close());
 
-  it('503 si la IA falla: mensaje propio, intento en ERROR y el proyecto vuelve a BORRADOR', async () => {
-    const response = await request(app.getHttpServer())
+  it('si la IA falla: el intento queda en ERROR con un mensaje propio y el proyecto vuelve a BORRADOR', async () => {
+    const started = await request(app.getHttpServer())
       .post(`/api/projects/${scenario.projectId}/analysis`)
       .auth(owner, { type: 'bearer' })
-      .expect(503);
+      .expect(202);
+    await app.get(RequestProjectAnalysisUseCase).whenIdle();
 
-    expect(response.body).toEqual({
-      statusCode: 503,
-      message:
+    const attempt = await request(app.getHttpServer())
+      .get(`/api/projects/${scenario.projectId}/analyses/${started.body.id}`)
+      .auth(owner, { type: 'bearer' })
+      .expect(200);
+    expect(attempt.body).toMatchObject({
+      status: 'ERROR',
+      profiles: [],
+      errorMessage:
         'El servicio de análisis no está disponible. Intenta de nuevo en unos minutos.',
     });
     expect(await projectStatus(app, scenario.projectId)).toBe('BORRADOR');

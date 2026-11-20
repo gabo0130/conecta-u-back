@@ -30,7 +30,8 @@ import {
   toProfileSpec,
 } from '../matchmaking/match-input';
 import type { MatchSettings } from '../matchmaking/match-settings';
-import { loadOwnedProject } from '../support/project-access';
+import type { Actor } from '../support/project-access';
+import { loadProjectForAnalysis } from '../support/project-access';
 
 /**
  * Antes de calcular se ponen al día los embeddings que falten, con un tope de personas y de
@@ -69,13 +70,13 @@ export class GenerateRecommendationsUseCase {
   }
 
   async execute(
-    userId: string,
+    actor: Actor,
     projectId: string,
     { includeUnavailable = false }: GenerateRecommendationsDto = {},
   ) {
-    const project = await loadOwnedProject(
+    const project = await loadProjectForAnalysis(
       this.projectRepository,
-      userId,
+      actor,
       projectId,
     );
     const analysis =

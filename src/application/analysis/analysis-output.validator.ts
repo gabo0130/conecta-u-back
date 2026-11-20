@@ -62,12 +62,10 @@ export function parseAnalysisOutput(raw: unknown): AnalysisOutput {
   if (!summary) errors.push('Falta "resumen"');
 
   const rawProfiles = Array.isArray(raw.perfiles) ? raw.perfiles : [];
-  if (
-    rawProfiles.length < PROFILES_PER_ANALYSIS.min ||
-    rawProfiles.length > PROFILES_PER_ANALYSIS.max
-  ) {
+  // De más se recorta (repetir la llamada costaría otra vez); de menos no hay qué usar.
+  if (rawProfiles.length < PROFILES_PER_ANALYSIS.min) {
     errors.push(
-      `"perfiles" debe tener entre ${PROFILES_PER_ANALYSIS.min} y ${PROFILES_PER_ANALYSIS.max} elementos`,
+      `"perfiles" debe tener al menos ${PROFILES_PER_ANALYSIS.min} elemento`,
     );
   }
 
@@ -113,12 +111,9 @@ function parseProfile(
       : null;
 
   const rawSkills = Array.isArray(item.habilidades) ? item.habilidades : [];
-  if (
-    rawSkills.length < SKILLS_PER_PROFILE.min ||
-    rawSkills.length > SKILLS_PER_PROFILE.max
-  ) {
+  if (rawSkills.length < SKILLS_PER_PROFILE.min) {
     errors.push(
-      `${path}.habilidades debe tener entre ${SKILLS_PER_PROFILE.min} y ${SKILLS_PER_PROFILE.max} elementos`,
+      `${path}.habilidades debe tener al menos ${SKILLS_PER_PROFILE.min} elementos`,
     );
   }
 

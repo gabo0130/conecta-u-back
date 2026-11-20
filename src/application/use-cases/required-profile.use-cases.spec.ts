@@ -27,6 +27,13 @@ const react = new SkillEntity(
   'CONOCIMIENTO',
   'FRAMEWORK',
 );
+const typescript = new SkillEntity(
+  'k-ts',
+  'TypeScript',
+  'typescript',
+  'CONOCIMIENTO',
+  'LENGUAJE',
+);
 const pending = new SkillEntity(
   'k-new',
   'Nueva',
@@ -198,7 +205,7 @@ describe('required profile use cases', () => {
       });
     });
 
-    it('replaces the skills and recomputes the embedding', async () => {
+    it('replaces the skills, but keeps the vector when only level or importance changed (IA-06)', async () => {
       await run({
         skills: [
           { skillId: 'k-react', minLevel: 'EXPERTO', importance: 'MEDIA' },
@@ -215,7 +222,28 @@ describe('required profile use cases', () => {
           importance: 'MEDIA',
         },
       ]);
-      expect(embedder.embed).toHaveBeenCalled();
+      expect(embedder.embed).not.toHaveBeenCalled();
+      expect(changes.embedding).toBeUndefined();
+    });
+
+    it('recomputes the embedding when a skill is added', async () => {
+      skillRepository.findByIds.mockResolvedValue([react, typescript]);
+
+      await run({
+        skills: [
+          { skillId: 'k-react', minLevel: 'EXPERTO', importance: 'MEDIA' },
+          { skillId: 'k-ts', minLevel: 'BASICO', importance: 'BAJA' },
+        ],
+      });
+
+      expect(embedder.embed).toHaveBeenCalledWith([
+        expect.objectContaining({
+          skills: [
+            expect.objectContaining({ rawName: 'React' }),
+            expect.objectContaining({ rawName: 'TypeScript' }),
+          ],
+        }),
+      ]);
     });
 
     it('turns an emptied description into an empty string', async () => {

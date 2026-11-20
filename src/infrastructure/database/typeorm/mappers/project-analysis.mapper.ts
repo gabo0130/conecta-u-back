@@ -27,6 +27,7 @@ export function toProjectAnalysisEntity(
     inputTokens: analysis.inputTokens,
     outputTokens: analysis.outputTokens,
     rawOutput: analysis.rawOutput ?? null,
+    attempts: analysis.attempts ?? null,
     summary: analysis.summary,
     errorMessage: analysis.errorMessage,
     durationMs: analysis.durationMs,

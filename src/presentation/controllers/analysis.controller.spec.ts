@@ -25,10 +25,14 @@ describe('AnalysisController', () => {
     jest.clearAllMocks();
   });
 
-  it('delegates the analysis request with the leader id', () => {
-    void controller.request(leader, 'p1');
+  it('delegates the analysis request with the actor and the force flag', () => {
+    void controller.request(admin, 'p1', { force: true });
 
-    expect(requestAnalysis.execute).toHaveBeenCalledWith('leader-1', 'p1');
+    expect(requestAnalysis.execute).toHaveBeenCalledWith(
+      { userId: 'admin-1', role: 'ADMIN' },
+      'p1',
+      { force: true },
+    );
   });
 
   it('passes the actor role when reading the latest analysis', () => {

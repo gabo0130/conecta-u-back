@@ -7,7 +7,13 @@ describe('RebuildEmbeddingsUseCase', () => {
   const service = createMock<CollaboratorEmbeddingService>();
   const profileEmbedder = createMock<ProfileEmbedder>();
   const useCase = new RebuildEmbeddingsUseCase(service, profileEmbedder);
-  const summary = { processed: 3, skipped: 0, failed: 0, remaining: 0 };
+  const summary = {
+    processed: 3,
+    skipped: 0,
+    reused: 0,
+    failed: 0,
+    remaining: 0,
+  };
   const profiles = { processed: 2, failed: 0, remaining: 0 };
 
   beforeEach(() => {
