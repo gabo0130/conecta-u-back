@@ -18,6 +18,7 @@ const analysis = new ProjectAnalysisEntity({
   inputTokens: 10,
   outputTokens: 5,
   rawOutput: null,
+  attempts: null,
   summary: null,
   errorMessage: 'timeout',
   durationMs: 30000,

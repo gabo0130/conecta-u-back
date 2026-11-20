@@ -53,7 +53,8 @@ export class TypeOrmCollaboratorEmbeddingRepository implements CollaboratorEmbed
     await this.repository
       .createQueryBuilder()
       .update(CollaboratorOrmEntity)
-      .set({ embeddingUpdatedAt: null })
+      // Sin huella: `force` recalcula de verdad, no reutiliza los vectores.
+      .set({ embeddingUpdatedAt: null, embeddingTextHash: null })
       .execute();
   }
 
@@ -61,14 +62,33 @@ export class TypeOrmCollaboratorEmbeddingRepository implements CollaboratorEmbed
     collaboratorId: string,
     embedding: number[] | null,
     model: string,
+    textHash: string | null,
   ): Promise<void> {
     await this.repository.update(
       { id: collaboratorId },
       {
         profileEmbedding: embedding,
         embeddingModel: model,
+        embeddingTextHash: textHash,
         embeddingUpdatedAt: new Date(),
       },
     );
+  }
+
+  async reuseIfUnchanged(
+    collaboratorId: string,
+    model: string,
+    textHash: string,
+  ): Promise<boolean> {
+    const result = await this.repository
+      .createQueryBuilder()
+      .update(CollaboratorOrmEntity)
+      .set({ embeddingUpdatedAt: () => 'now()' })
+      .where('id = :id', { id: collaboratorId })
+      .andWhere('"embeddingModel" = :model', { model })
+      .andWhere('"embeddingTextHash" = :textHash', { textHash })
+      .andWhere('"profileEmbedding" IS NOT NULL')
+      .execute();
+    return (result.affected ?? 0) > 0;
   }
 }

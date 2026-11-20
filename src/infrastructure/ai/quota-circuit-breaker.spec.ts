@@ -34,3 +34,16 @@ describe('QuotaCircuitBreaker', () => {
     expect(circuit.isOpen('gemini-3.8-flash')).toBe(true);
   });
 });
+
+describe('QuotaCircuitBreaker custom cooldown', () => {
+  it('uses the cooldown given when tripping instead of the default one', () => {
+    let now = 0;
+    const circuit = new QuotaCircuitBreaker(1000, () => now);
+    circuit.trip('claude-haiku-5-5', 200);
+
+    now = 199;
+    expect(circuit.isOpen('claude-haiku-5-5')).toBe(true);
+    now = 200;
+    expect(circuit.isOpen('claude-haiku-5-5')).toBe(false);
+  });
+});

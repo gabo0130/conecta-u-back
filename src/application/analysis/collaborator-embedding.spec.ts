@@ -5,13 +5,19 @@ import type { AppLoggerService } from '../../shared/logging/logger.service';
 import {
   buildCollaborator,
   buildRequiredProfile,
+  buildSkill,
   buildCollaboratorSkill,
   buildExperience,
   createMock,
 } from '../../testing/test-doubles.testing';
 import { collaboratorEmbeddingText } from './collaborator-embedding-text';
 import { CollaboratorEmbeddingService } from './collaborator-embedding.service';
-import { ProfileEmbedder } from './profile-embedder';
+import { profileEmbeddingText } from './catalog-profile-mapper';
+import {
+  ProfileEmbedder,
+  toEmbeddableNewProfile,
+  toEmbeddableProfile,
+} from './profile-embedder';
 
 const logger = {
   forContext: () => ({
@@ -116,15 +122,56 @@ describe('CollaboratorEmbeddingService.rebuildStale', () => {
       'a',
       [1, 0],
       'gemini/test@768',
+      expect.stringMatching(/^[0-9a-f]{64}$/),
     );
     expect(repository.save).toHaveBeenCalledWith(
       'b',
       [1, 0],
       'gemini/test@768',
+      expect.stringMatching(/^[0-9a-f]{64}$/),
     );
     // "Desactualizado" incluye los vectores de otro modelo: se piden para el actual.
     expect(repository.findStale).toHaveBeenCalledWith('gemini/test@768', 200);
     expect(repository.countStale).toHaveBeenCalledWith('gemini/test@768');
+  });
+
+  it('reuses the vector without calling the API when the embedded text did not change (IA-06)', async () => {
+    repository.findStale.mockResolvedValue([
+      withContent('same'),
+      withContent('changed'),
+    ]);
+    repository.reuseIfUnchanged.mockImplementation((id) =>
+      Promise.resolve(id === 'same'),
+    );
+
+    const result = await service.rebuildStale(200);
+
+    expect(result).toMatchObject({ processed: 1, reused: 1 });
+    expect(provider.embed).toHaveBeenCalledWith(
+      [collaboratorEmbeddingText(withContent('changed'))],
+      {},
+    );
+    expect(repository.reuseIfUnchanged).toHaveBeenCalledWith(
+      'same',
+      'gemini/test@768',
+      expect.stringMatching(/^[0-9a-f]{64}$/),
+    );
+  });
+
+  it('gives the same text the same fingerprint, so an edit outside it reuses the vector', async () => {
+    repository.findStale.mockResolvedValue([withContent('x')]);
+    await service.rebuildStale(200);
+    const [, , , firstHash] = repository.save.mock.calls[0];
+
+    jest.clearAllMocks();
+    repository.findStale.mockResolvedValue([withContent('x')]);
+    await service.rebuildStale(200);
+
+    expect(repository.reuseIfUnchanged).toHaveBeenCalledWith(
+      'x',
+      'gemini/test@768',
+      firstHash,
+    );
   });
 
   it('sends the texts in batches of 50', async () => {
@@ -153,6 +200,7 @@ describe('CollaboratorEmbeddingService.rebuildStale', () => {
       'empty',
       null,
       'gemini/test@768',
+      null,
     );
     expect(provider.embed.mock.calls[0][0]).toHaveLength(1);
     expect(result).toMatchObject({ processed: 1, skipped: 1 });
@@ -233,6 +281,7 @@ describe('CollaboratorEmbeddingService.rebuildStale', () => {
     await expect(leaderRun).resolves.toEqual({
       processed: 0,
       skipped: 0,
+      reused: 0,
       failed: 0,
       remaining: 7,
     });
@@ -250,6 +299,7 @@ describe('CollaboratorEmbeddingService.rebuildStale', () => {
     expect(result).toEqual({
       processed: 0,
       skipped: 0,
+      reused: 0,
       failed: 0,
       remaining: 0,
     });
@@ -280,6 +330,23 @@ describe('ProfileEmbedder', () => {
     expect(provider.embed).toHaveBeenCalledWith(['Frontend. Interfaz. React'], {
       timeoutMs: 5_000,
     });
+  });
+
+  it('shares one rebuild between two simultaneous requests (IA-12)', async () => {
+    profiles.findWithStaleEmbedding.mockResolvedValue([
+      buildRequiredProfile({ id: 'rp1' }),
+    ]);
+    profiles.countWithStaleEmbedding.mockResolvedValue(0);
+    provider.embed.mockResolvedValue([[1, 0]]);
+
+    const [first, second] = await Promise.all([
+      embedder.rebuildStale(100),
+      embedder.rebuildStale(100),
+    ]);
+
+    expect(first).toEqual(second);
+    expect(provider.embed).toHaveBeenCalledTimes(1);
+    expect(profiles.findWithStaleEmbedding).toHaveBeenCalledTimes(1);
   });
 
   it('returns nulls instead of failing when the provider is down', async () => {
@@ -377,5 +444,54 @@ describe('ProfileEmbedder', () => {
     await embedder.markAllStale();
 
     expect(profiles.markAllEmbeddingsStale).toHaveBeenCalled();
+  });
+});
+
+describe('toEmbeddableNewProfile (IA-07)', () => {
+  const react = buildSkill({ id: 's-react', name: 'React' });
+
+  it('uses the catalog name, so the vector is the same as when it is regenerated', () => {
+    const fromAnalysis = toEmbeddableNewProfile(
+      {
+        name: 'Frontend',
+        description: 'Interfaz',
+        justification: '',
+        quantity: 1,
+        priority: 'ALTA',
+        minWeeklyHours: null,
+        position: 0,
+        embedding: null,
+        skills: [
+          {
+            skillId: 's-react',
+            rawName: 'ReactJS',
+            type: 'CONOCIMIENTO',
+            minLevel: 'INTERMEDIO',
+            importance: 'ALTA',
+          },
+          {
+            skillId: null,
+            rawName: 'Vue Nuxt',
+            type: 'CONOCIMIENTO',
+            minLevel: 'BASICO',
+            importance: 'BAJA',
+          },
+        ],
+      },
+      [react],
+    );
+
+    expect(fromAnalysis.skills).toEqual([
+      { rawName: 'React' },
+      { rawName: 'Vue Nuxt' },
+    ]);
+    const stored = buildRequiredProfile({
+      name: 'Frontend',
+      description: 'Interfaz',
+    });
+    expect(profileEmbeddingText(fromAnalysis)).toContain('React, Vue Nuxt');
+    expect(profileEmbeddingText(toEmbeddableProfile(stored))).toContain(
+      'React',
+    );
   });
 });

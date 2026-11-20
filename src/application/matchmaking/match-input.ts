@@ -7,6 +7,7 @@ import type {
 } from '../../domain/services/match-score';
 import { computeDurationMonths } from '../../shared/utils/compute-duration-months';
 import { normalizeSkillName } from '../../shared/utils/normalize-skill-name';
+import { redactContactData } from '../analysis/contact-data';
 
 /** Tipo de experiencia que equivale al tipo de proyecto, para la bonificación (§5 del contrato). */
 const EXPERIENCE_TYPE_BY_PROJECT_TYPE: Record<string, ExperienceType> = {
@@ -55,7 +56,10 @@ export function toPersonSpec(
     })),
     experiences: collaborator.experiences.map((experience) => ({
       type: experience.type,
-      label: `${experience.role} – ${experience.organization}`,
+      // La ve el líder: el texto libre de la persona, sin datos de contacto.
+      label: redactContactData(
+        `${experience.role} – ${experience.organization}`,
+      ),
       months: computeDurationMonths(
         experience.startDate,
         experience.endDate,

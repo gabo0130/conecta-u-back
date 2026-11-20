@@ -1181,6 +1181,58 @@
           ]
         },
         {
+          "name": "Request Analysis (force, RF6)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/projects/{{projectId}}/analysis",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "projects",
+                "{{projectId}}",
+                "analysis"
+              ]
+            },
+            "description": "Vuelve a analizar aunque el proyecto, el catálogo y el prompt no hayan cambiado (sin force responde 409). Lo pueden pedir el líder dueño y el ADMIN.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"force\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Request Analysis responde 201', function () {",
+                  "  pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "if (pm.response.code === 201) {",
+                  "  const profiles = pm.response.json().profiles || [];",
+                  "  if (profiles.length) pm.environment.set('requiredProfileId', profiles[0].id);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
           "name": "Get Latest Analysis (RF13-RF14)",
           "request": {
             "method": "GET",

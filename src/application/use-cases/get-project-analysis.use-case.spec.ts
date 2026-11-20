@@ -18,11 +18,17 @@ const projectInput = {
   type: { name: 'Curso', fields: [] },
   category: 'Desarrollo',
   program: null,
+  durationMonths: null,
   deliverables: [],
   knownSkills: [],
 };
 
-const analysisWith = (fingerprint: string) =>
+const analysisWith = (
+  fingerprint: string,
+  overrides: Partial<
+    ConstructorParameters<typeof ProjectAnalysisEntity>[0]
+  > = {},
+) =>
   new ProjectAnalysisEntity({
     id: 'a1',
     projectId: 'project-1',
@@ -35,11 +41,13 @@ const analysisWith = (fingerprint: string) =>
     inputTokens: null,
     outputTokens: null,
     rawOutput: null,
+    attempts: null,
     summary: 'Resumen del análisis',
     errorMessage: null,
     durationMs: 10,
     createdAt: new Date(),
     completedAt: new Date(),
+    ...overrides,
   });
 
 describe('GetProjectAnalysisUseCase', () => {
@@ -127,5 +135,75 @@ describe('GetProjectAnalysisUseCase', () => {
     await expect(
       useCase.execute({ userId: 'other', role: 'LIDER' }, 'project-1'),
     ).rejects.toBeInstanceOf(ForbiddenException);
+  });
+
+  describe('un intento puntual (análisis en segundo plano)', () => {
+    const leader = { userId: 'leader-1', role: 'LIDER' as const };
+
+    it('returns a PENDING attempt without profiles while the AI is working', async () => {
+      analysisRepository.findById.mockResolvedValue(
+        analysisWith('x', { status: 'PENDIENTE', completedAt: null }),
+      );
+
+      const result = await useCase.execute(leader, 'project-1', 'a1');
+
+      expect(result).toMatchObject({
+        id: 'a1',
+        status: 'PENDIENTE',
+        profiles: [],
+      });
+      expect(
+        requiredProfileRepository.findActiveForProject,
+      ).not.toHaveBeenCalled();
+    });
+
+    it('returns the failed attempt with its safe message', async () => {
+      analysisRepository.findById.mockResolvedValue(
+        analysisWith('x', {
+          status: 'ERROR',
+          errorMessage: 'El servicio de análisis no está disponible.',
+        }),
+      );
+
+      await expect(
+        useCase.execute(leader, 'project-1', 'a1'),
+      ).resolves.toMatchObject({
+        status: 'ERROR',
+        errorMessage: 'El servicio de análisis no está disponible.',
+      });
+    });
+
+    it('returns the completed attempt with its profiles', async () => {
+      analysisRepository.findById.mockResolvedValue(
+        analysisWith(projectFingerprint(projectInput)),
+      );
+
+      const result = await useCase.execute(leader, 'project-1', 'a1');
+
+      expect(result).toMatchObject({ status: 'COMPLETADO', outdated: false });
+      expect(
+        requiredProfileRepository.findActiveForProject,
+      ).toHaveBeenCalledWith('project-1', 'a1');
+    });
+
+    it('recovers an interrupted attempt before reading it (server restarted mid-analysis)', async () => {
+      analysisRepository.findById.mockResolvedValue(analysisWith('x'));
+
+      await useCase.execute(leader, 'project-1', 'a1');
+
+      expect(recovery.recover.mock.invocationCallOrder[0]).toBeLessThan(
+        analysisRepository.findById.mock.invocationCallOrder[0],
+      );
+    });
+
+    it('404 when the attempt belongs to another project', async () => {
+      analysisRepository.findById.mockResolvedValue(
+        analysisWith('x', { projectId: 'otro' }),
+      );
+
+      await expect(useCase.execute(leader, 'project-1', 'a1')).rejects.toThrow(
+        'Análisis no encontrado.',
+      );
+    });
   });
 });

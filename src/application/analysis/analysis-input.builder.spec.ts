@@ -11,6 +11,7 @@ import {
 } from '../../testing/test-doubles.testing';
 import {
   AnalysisInputBuilder,
+  catalogFingerprint,
   projectFingerprint,
 } from './analysis-input.builder';
 import { OMITTED_PERSONAL_DATA } from './contact-data';
@@ -127,5 +128,30 @@ describe('AnalysisInputBuilder template fields (v2.1)', () => {
         'contacto',
       ),
     ).resolves.toBe(`Responsable ${OMITTED_PERSONAL_DATA}`);
+  });
+});
+
+describe('catalogFingerprint', () => {
+  const react = {
+    name: 'React',
+    type: 'CONOCIMIENTO' as const,
+    category: 'FRAMEWORK' as const,
+  };
+  const liderazgo = {
+    name: 'Liderazgo',
+    type: 'HABILIDAD_BLANDA' as const,
+    category: 'LIDERAZGO' as const,
+  };
+
+  it('does not depend on the order of the catalog', () => {
+    expect(catalogFingerprint([react, liderazgo])).toBe(
+      catalogFingerprint([liderazgo, react]),
+    );
+  });
+
+  it('changes when a skill is added', () => {
+    expect(catalogFingerprint([react])).not.toBe(
+      catalogFingerprint([react, liderazgo]),
+    );
   });
 });

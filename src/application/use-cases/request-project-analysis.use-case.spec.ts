@@ -10,6 +10,8 @@ import { RequiredProfileEntity } from '../../domain/entities/required-profile.en
 import type { ProjectAnalysisRepository } from '../../domain/repositories/project-analysis.repository.interface';
 import {
   AnalyzerUnavailableError,
+  InvalidAnalysisOutputError,
+  TruncatedAnalysisOutputError,
   type ProjectAnalyzer,
 } from '../../domain/repositories/project-analyzer.interface';
 import type { ProjectRepository } from '../../domain/repositories/project.repository.interface';
@@ -66,6 +68,7 @@ const analysisOf = (status: 'PENDIENTE' | 'COMPLETADO' = 'PENDIENTE') =>
     inputTokens: null,
     outputTokens: null,
     rawOutput: null,
+    attempts: null,
     summary: null,
     errorMessage: null,
     durationMs: null,
@@ -83,6 +86,9 @@ const logger = {
   }),
 } as unknown as AppLoggerService;
 
+const leader = { userId: 'leader-1', role: 'LIDER' as const };
+const intruder = { userId: 'intruder', role: 'LIDER' as const };
+const admin = { userId: 'admin-1', role: 'ADMIN' as const };
 describe('RequestProjectAnalysisUseCase', () => {
   const projectRepository = createMock<ProjectRepository>();
   const analysisRepository = createMock<ProjectAnalysisRepository>();
@@ -108,6 +114,17 @@ describe('RequestProjectAnalysisUseCase', () => {
       logger,
     );
   const useCase = useCaseWith(timeouts);
+  const UNAVAILABLE =
+    'El servicio de análisis no está disponible. Intenta de nuevo en unos minutos.';
+
+  /** Pide el análisis (responde PENDIENTE) y espera a que termine en segundo plano. */
+  const analyzeAndWait = async (target = useCase) => {
+    const started = await target.execute(leader, 'project-1');
+    await target.whenIdle();
+    return started;
+  };
+  const failureMessage = () =>
+    analysisRepository.fail.mock.calls[0]?.[1].errorMessage;
 
   const completedProfiles = [] as RequiredProfileEntity[];
 
@@ -132,6 +149,7 @@ describe('RequestProjectAnalysisUseCase', () => {
           type: { name: 'Curso', fields: [] },
           category: 'Desarrollo',
           program: null,
+          durationMonths: null,
           deliverables: [],
           knownSkills: [],
         },
@@ -139,7 +157,9 @@ describe('RequestProjectAnalysisUseCase', () => {
       },
       catalog: [buildSkill({ id: 's1', name: 'React' })],
       fingerprint: 'huella-original',
+      catalogFingerprint: 'catalogo-original',
     });
+    analysisRepository.findLatestCompleted.mockResolvedValue(null);
     analyzer.analyze.mockResolvedValue({
       output: validOutput,
       usage: { inputTokens: 100, outputTokens: 50 },
@@ -155,8 +175,30 @@ describe('RequestProjectAnalysisUseCase', () => {
     });
   });
 
+  it('answers right away with the PENDING analysis, before the AI finishes (202)', async () => {
+    let finishAi!: () => void;
+    analyzer.analyze.mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          finishAi = () =>
+            resolve({
+              output: validOutput,
+              usage: { inputTokens: 1, outputTokens: 1 },
+            });
+        }),
+    );
+
+    const started = await useCase.execute(leader, 'project-1');
+
+    expect(started).toMatchObject({ id: 'a1', status: 'PENDIENTE' });
+    expect(analysisRepository.complete).not.toHaveBeenCalled();
+    finishAi();
+    await useCase.whenIdle();
+    expect(analysisRepository.complete).toHaveBeenCalledTimes(1);
+  });
+
   it('analyzes the project and saves the analysis with its profiles', async () => {
-    await useCase.execute('leader-1', 'project-1');
+    await analyzeAndWait();
 
     expect(projectRepository.update).toHaveBeenNthCalledWith(1, 'project-1', {
       status: 'EN_ANALISIS',
@@ -182,7 +224,7 @@ describe('RequestProjectAnalysisUseCase', () => {
       model: 'gemini-3.5-flash',
     });
 
-    await useCase.execute('leader-1', 'project-1');
+    await analyzeAndWait();
 
     expect(analysisRepository.complete.mock.calls[0][1].model).toBe(
       'gemini-3.5-flash',
@@ -190,7 +232,7 @@ describe('RequestProjectAnalysisUseCase', () => {
   });
 
   it('links the profile skills to the catalog', async () => {
-    await useCase.execute('leader-1', 'project-1');
+    await analyzeAndWait();
 
     const [profile] = analysisRepository.complete.mock.calls[0][1].profiles;
     expect(profile.skills[0]).toMatchObject({
@@ -205,7 +247,7 @@ describe('RequestProjectAnalysisUseCase', () => {
       Promise.resolve(profiles.map(() => null)),
     );
 
-    await useCase.execute('leader-1', 'project-1');
+    await analyzeAndWait();
 
     const [profile] = analysisRepository.complete.mock.calls[0][1].profiles;
     expect(profile.embedding).toBeNull();
@@ -222,7 +264,7 @@ describe('RequestProjectAnalysisUseCase', () => {
         usage: { inputTokens: 100, outputTokens: 50 },
       });
 
-    await useCase.execute('leader-1', 'project-1');
+    await analyzeAndWait();
 
     expect(analyzer.analyze).toHaveBeenCalledTimes(2);
     expect(analysisRepository.complete.mock.calls[0][1]).toMatchObject({
@@ -231,55 +273,236 @@ describe('RequestProjectAnalysisUseCase', () => {
     });
   });
 
-  it('fails with 503 after two invalid outputs and restores the status', async () => {
+  it('records the failure after two invalid outputs and restores the status', async () => {
     analyzer.analyze.mockResolvedValue({
       output: { resumen: 'x' },
       usage: { inputTokens: null, outputTokens: null },
     });
 
-    await expect(
-      useCase.execute('leader-1', 'project-1'),
-    ).rejects.toBeInstanceOf(ServiceUnavailableException);
+    await analyzeAndWait();
 
     expect(analyzer.analyze).toHaveBeenCalledTimes(2);
     expect(analysisRepository.fail).toHaveBeenCalledWith(
       'a1',
-      expect.any(String),
-      expect.any(Number),
+      expect.objectContaining({
+        errorMessage: expect.any(String),
+        durationMs: expect.any(Number),
+      }),
     );
     // Devolver el proyecto a su estado lo hace `fail` en su transacción, no el caso de uso.
     expect(projectRepository.update).toHaveBeenCalledTimes(1);
     expect(analysisRepository.complete).not.toHaveBeenCalled();
   });
 
-  it('fails with the contract 503 message when the AI service is unavailable', async () => {
-    analyzer.analyze.mockRejectedValue(new AnalyzerUnavailableError('timeout'));
-
-    const error = await useCase
-      .execute('leader-1', 'project-1')
-      .catch((e: unknown) => e);
-
-    expect(error).toBeInstanceOf(ServiceUnavailableException);
-    expect((error as ServiceUnavailableException).getResponse()).toMatchObject({
-      message:
-        'El servicio de análisis no está disponible. Intenta de nuevo en unos minutos.',
+  it('keeps the tokens of two invalid outputs when the analysis fails (RT12)', async () => {
+    analyzer.analyze.mockResolvedValue({
+      output: { resumen: 'x' },
+      usage: { inputTokens: 900, outputTokens: 300 },
     });
+
+    await analyzeAndWait();
+
+    expect(analysisRepository.fail.mock.calls[0][1]).toMatchObject({
+      inputTokens: 1800,
+      outputTokens: 600,
+      attempts: [
+        { provider: 'fake', model: 'fake-1', outcome: 'answered' },
+        { provider: 'fake', model: 'fake-1', outcome: 'answered' },
+      ],
+    });
+  });
+
+  it('records every call the analyzer reports, failed ones included, without counting them twice', async () => {
+    analyzer.analyze.mockImplementation((_input, options) => {
+      options.onAttempt?.({
+        provider: 'claude',
+        model: 'claude-haiku-5-5',
+        outcome: 'rate_limited',
+        durationMs: 200,
+        inputTokens: null,
+        outputTokens: null,
+        httpStatus: 429,
+      });
+      options.onAttempt?.({
+        provider: 'gemini',
+        model: 'gemini-3.8-flash',
+        outcome: 'answered',
+        durationMs: 9000,
+        inputTokens: 2000,
+        outputTokens: 800,
+      });
+      return Promise.resolve({
+        output: validOutput,
+        usage: { inputTokens: 2000, outputTokens: 800 },
+        provider: 'gemini',
+        model: 'gemini-3.8-flash',
+      });
+    });
+
+    await analyzeAndWait();
+
+    const saved = analysisRepository.complete.mock.calls[0][1];
+    expect(saved).toMatchObject({
+      provider: 'gemini',
+      model: 'gemini-3.8-flash',
+      inputTokens: 2000,
+      outputTokens: 800,
+    });
+    expect(saved.attempts.map((attempt) => attempt.outcome)).toEqual([
+      'rate_limited',
+      'answered',
+    ]);
+  });
+
+  it('retries once when the adapter itself finds the JSON unreadable', async () => {
+    analyzer.analyze
+      .mockRejectedValueOnce(
+        new InvalidAnalysisOutputError('Claude no devolvió un JSON válido'),
+      )
+      .mockResolvedValueOnce({
+        output: validOutput,
+        usage: { inputTokens: 100, outputTokens: 50 },
+      });
+
+    await analyzeAndWait();
+
+    expect(analyzer.analyze).toHaveBeenCalledTimes(2);
+    expect(analysisRepository.complete).toHaveBeenCalled();
+  });
+
+  it('does not repeat an answer cut by length: it would be cut again (IA-03)', async () => {
+    analyzer.analyze.mockRejectedValue(
+      new TruncatedAnalysisOutputError(
+        'Gemini cortó la respuesta por longitud',
+      ),
+    );
+
+    await analyzeAndWait();
+
     expect(analyzer.analyze).toHaveBeenCalledTimes(1);
     expect(analysisRepository.fail).toHaveBeenCalled();
+  });
+
+  it('keeps what was spent even when the recovery already closed the analysis', async () => {
+    analysisRepository.complete.mockResolvedValue(null);
+
+    await analyzeAndWait();
+
+    expect(analysisRepository.recordUsage).toHaveBeenCalledWith('a1', {
+      inputTokens: 100,
+      outputTokens: 50,
+      attempts: [expect.objectContaining({ outcome: 'answered' })],
+    });
+  });
+
+  it('records the contract message when the AI service is unavailable', async () => {
+    analyzer.analyze.mockRejectedValue(new AnalyzerUnavailableError('timeout'));
+
+    await expect(analyzeAndWait()).resolves.toMatchObject({
+      status: 'PENDIENTE',
+    });
+
+    expect(failureMessage()).toBe(UNAVAILABLE);
+    expect(analyzer.analyze).toHaveBeenCalledTimes(1);
   });
 
   it('throws NotFoundException when the project does not exist', async () => {
     projectRepository.findById.mockResolvedValue(null);
 
-    await expect(
-      useCase.execute('leader-1', 'project-1'),
-    ).rejects.toBeInstanceOf(NotFoundException);
+    await expect(useCase.execute(leader, 'project-1')).rejects.toBeInstanceOf(
+      NotFoundException,
+    );
+  });
+
+  describe('nothing changed since the last analysis (IA-11)', () => {
+    const lastCompleted = (
+      input: Record<string, unknown>,
+      promptVersion = 'v1',
+    ) =>
+      new ProjectAnalysisEntity({
+        ...analysisOf('COMPLETADO'),
+        promptVersion,
+        input,
+      });
+    const sameAsNow = {
+      fingerprint: 'huella-original',
+      catalogFingerprint: 'catalogo-original',
+    };
+
+    it('answers 409 without calling the AI nor using a turn of the day', async () => {
+      analysisRepository.findLatestCompleted.mockResolvedValue(
+        lastCompleted(sameAsNow),
+      );
+
+      const error: unknown = await useCase
+        .execute(leader, 'project-1')
+        .catch((e: unknown) => e);
+
+      expect(error).toBeInstanceOf(ConflictException);
+      expect((error as ConflictException).message).toMatch(
+        /no cambió desde el último análisis/,
+      );
+      expect(analysisRepository.claim).not.toHaveBeenCalled();
+      expect(analyzer.analyze).not.toHaveBeenCalled();
+    });
+
+    it('analyzes anyway with force', async () => {
+      analysisRepository.findLatestCompleted.mockResolvedValue(
+        lastCompleted(sameAsNow),
+      );
+
+      await useCase.execute(leader, 'project-1', { force: true });
+      await useCase.whenIdle();
+
+      expect(analyzer.analyze).toHaveBeenCalledTimes(1);
+    });
+
+    it.each([
+      ['the project', { ...sameAsNow, fingerprint: 'otra' }, 'v1'],
+      ['the catalog', { ...sameAsNow, catalogFingerprint: 'otro' }, 'v1'],
+      ['the prompt', sameAsNow, 'v0'],
+      [
+        'an older analysis without catalog fingerprint',
+        { fingerprint: 'huella-original' },
+        'v1',
+      ],
+    ])(
+      'analyzes again when %s changed',
+      async (_what, input, promptVersion) => {
+        analysisRepository.findLatestCompleted.mockResolvedValue(
+          lastCompleted(input, promptVersion),
+        );
+
+        await useCase.execute(leader, 'project-1');
+        await useCase.whenIdle();
+
+        expect(analyzer.analyze).toHaveBeenCalledTimes(1);
+      },
+    );
+
+    it('stores both fingerprints with the new analysis', async () => {
+      await useCase.execute(leader, 'project-1');
+
+      expect(analysisRepository.claim.mock.calls[0][0].input).toMatchObject(
+        sameAsNow,
+      );
+    });
+  });
+
+  it('lets the ADMIN analyze a project registered for a leader, recording who asked', async () => {
+    const started = await useCase.execute(admin, 'project-1');
+    await useCase.whenIdle();
+
+    expect(started).toMatchObject({ status: 'PENDIENTE' });
+    expect(analysisRepository.claim.mock.calls[0][0]).toMatchObject({
+      requestedById: 'admin-1',
+    });
   });
 
   it('throws ForbiddenException when the project belongs to another leader', async () => {
-    await expect(
-      useCase.execute('intruder', 'project-1'),
-    ).rejects.toBeInstanceOf(ForbiddenException);
+    await expect(useCase.execute(intruder, 'project-1')).rejects.toBeInstanceOf(
+      ForbiddenException,
+    );
     expect(analyzer.analyze).not.toHaveBeenCalled();
   });
 
@@ -288,18 +511,18 @@ describe('RequestProjectAnalysisUseCase', () => {
       buildProject({ objectives: '  ' }),
     );
 
-    await expect(
-      useCase.execute('leader-1', 'project-1'),
-    ).rejects.toBeInstanceOf(UnprocessableEntityException);
+    await expect(useCase.execute(leader, 'project-1')).rejects.toBeInstanceOf(
+      UnprocessableEntityException,
+    );
     expect(analysisRepository.claim).not.toHaveBeenCalled();
   });
 
   it('throws ConflictException when an analysis is already in progress', async () => {
     analysisRepository.claim.mockResolvedValue({ status: 'IN_PROGRESS' });
 
-    await expect(
-      useCase.execute('leader-1', 'project-1'),
-    ).rejects.toBeInstanceOf(ConflictException);
+    await expect(useCase.execute(leader, 'project-1')).rejects.toBeInstanceOf(
+      ConflictException,
+    );
     expect(analyzer.analyze).not.toHaveBeenCalled();
   });
 
@@ -307,7 +530,7 @@ describe('RequestProjectAnalysisUseCase', () => {
     analyzer.isAvailable.mockReturnValue(false);
 
     const error: unknown = await useCase
-      .execute('leader-1', 'project-1')
+      .execute(leader, 'project-1')
       .catch((e: unknown) => e);
 
     expect(error).toBeInstanceOf(ServiceUnavailableException);
@@ -321,14 +544,14 @@ describe('RequestProjectAnalysisUseCase', () => {
   it('throws ConflictException when the daily limit is reached', async () => {
     analysisRepository.claim.mockResolvedValue({ status: 'DAILY_LIMIT' });
 
-    await expect(useCase.execute('leader-1', 'project-1')).rejects.toThrow(
+    await expect(useCase.execute(leader, 'project-1')).rejects.toThrow(
       /máximo de 5 análisis/,
     );
     expect(analyzer.analyze).not.toHaveBeenCalled();
   });
 
   it('asks the repository to claim the turn with the contract limits', async () => {
-    await useCase.execute('leader-1', 'project-1');
+    await useCase.execute(leader, 'project-1');
 
     const [data, limits] = analysisRepository.claim.mock.calls[0];
     expect(data).toMatchObject({
@@ -344,7 +567,7 @@ describe('RequestProjectAnalysisUseCase', () => {
   });
 
   it('recovers an interrupted analysis of the project before claiming the turn', async () => {
-    await useCase.execute('leader-1', 'project-1');
+    await useCase.execute(leader, 'project-1');
 
     expect(recovery.recover).toHaveBeenCalledWith('project-1');
     expect(recovery.recover.mock.invocationCallOrder[0]).toBeLessThan(
@@ -359,15 +582,10 @@ describe('RequestProjectAnalysisUseCase', () => {
       ),
     );
 
-    await expect(
-      useCase.execute('leader-1', 'project-1'),
-    ).rejects.toBeInstanceOf(ServiceUnavailableException);
+    await analyzeAndWait();
 
-    const [, message] = analysisRepository.fail.mock.calls[0];
-    expect(message).toBe(
-      'El servicio de análisis no está disponible. Intenta de nuevo en unos minutos.',
-    );
-    expect(message).not.toContain('secreto');
+    expect(failureMessage()).toBe(UNAVAILABLE);
+    expect(failureMessage()).not.toContain('secreto');
   });
 
   it('hides unexpected errors behind a generic message', async () => {
@@ -375,9 +593,9 @@ describe('RequestProjectAnalysisUseCase', () => {
       new Error('duplicate key value violates…'),
     );
 
-    await expect(useCase.execute('leader-1', 'project-1')).rejects.toThrow();
+    await analyzeAndWait();
 
-    expect(analysisRepository.fail.mock.calls[0][1]).toBe(
+    expect(failureMessage()).toBe(
       'Ocurrió un error inesperado durante el análisis.',
     );
   });
@@ -395,15 +613,16 @@ describe('RequestProjectAnalysisUseCase', () => {
     });
 
     it('gives the analyzer only the time left in the budget', async () => {
-      await useCase.execute('leader-1', 'project-1');
+      await analyzeAndWait();
 
       expect(analyzer.analyze).toHaveBeenCalledWith(expect.anything(), {
         timeoutMs: 55_000,
+        onAttempt: expect.any(Function),
       });
     });
 
     it('caps the embeddings with their own short timeout', async () => {
-      await useCase.execute('leader-1', 'project-1');
+      await analyzeAndWait();
 
       expect(profileEmbedder.embed).toHaveBeenCalledWith(expect.any(Array), {
         timeoutMs: 10_000,
@@ -419,7 +638,7 @@ describe('RequestProjectAnalysisUseCase', () => {
         });
       });
 
-      await useCase.execute('leader-1', 'project-1');
+      await analyzeAndWait();
 
       expect(profileEmbedder.embed).toHaveBeenCalledWith(expect.any(Array), {
         timeoutMs: 5_000,
@@ -435,7 +654,7 @@ describe('RequestProjectAnalysisUseCase', () => {
         });
       });
 
-      await useCase.execute('leader-1', 'project-1');
+      await analyzeAndWait();
 
       expect(profileEmbedder.embed).not.toHaveBeenCalled();
       const [, completed] = analysisRepository.complete.mock.calls[0];
@@ -451,10 +670,10 @@ describe('RequestProjectAnalysisUseCase', () => {
         });
       });
 
-      await expect(
-        useCase.execute('leader-1', 'project-1'),
-      ).rejects.toBeInstanceOf(ServiceUnavailableException);
+      await analyzeAndWait();
+
       expect(analyzer.analyze).toHaveBeenCalledTimes(1);
+      expect(analysisRepository.fail).toHaveBeenCalled();
     });
 
     it('splits the budget between the first call and the retry', async () => {
@@ -471,21 +690,22 @@ describe('RequestProjectAnalysisUseCase', () => {
           usage: { inputTokens: 1, outputTokens: 1 },
         });
 
-      await useCase.execute('leader-1', 'project-1');
+      await analyzeAndWait();
 
       expect(analyzer.analyze).toHaveBeenNthCalledWith(2, expect.anything(), {
         timeoutMs: 35_000,
+        onAttempt: expect.any(Function),
       });
     });
   });
 
-  it('answers 503 without touching the project when the analysis was closed while the AI answered', async () => {
+  it('does not touch the project when the analysis was closed while the AI answered', async () => {
     analysisRepository.complete.mockResolvedValue(null);
     analysisRepository.fail.mockResolvedValue(false);
 
-    await expect(useCase.execute('leader-1', 'project-1')).rejects.toThrow(
-      'El análisis tardó demasiado y se canceló. Intenta de nuevo.',
-    );
+    await analyzeAndWait();
+
+    expect(analysisRepository.fail).not.toHaveBeenCalled();
     // Solo el paso a EN_ANALISIS: la recuperación ya dejó el proyecto en su estado.
     expect(projectRepository.update).toHaveBeenCalledTimes(1);
   });
@@ -493,7 +713,7 @@ describe('RequestProjectAnalysisUseCase', () => {
   it('records the failure and restores the status when marking EN_ANALISIS fails', async () => {
     projectRepository.update.mockRejectedValueOnce(new Error('db caída'));
 
-    await expect(useCase.execute('leader-1', 'project-1')).rejects.toThrow();
+    await expect(useCase.execute(leader, 'project-1')).rejects.toThrow();
 
     expect(analyzer.analyze).not.toHaveBeenCalled();
     expect(analysisRepository.fail).toHaveBeenCalled();

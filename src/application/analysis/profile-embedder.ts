@@ -1,11 +1,13 @@
 import { EMBEDDING_BATCH_SIZE } from './collaborator-embedding.service';
 import { Inject, Injectable } from '@nestjs/common';
 import type { RequiredProfileEntity } from '../../domain/entities/required-profile.entity';
+import type { SkillEntity } from '../../domain/entities/skill.entity';
 import type { StoredEmbedding } from '../../domain/entities/stored-embedding';
 import type {
   EmbedOptions,
   EmbeddingProvider,
 } from '../../domain/repositories/embedding-provider.interface';
+import type { NewRequiredProfile } from '../../domain/repositories/project-analysis.repository.interface';
 import type { RequiredProfileRepository } from '../../domain/repositories/required-profile.repository.interface';
 import {
   EMBEDDING_PROVIDER,
@@ -40,12 +42,33 @@ export function toEmbeddableProfile(
 }
 
 /**
+ * Lo que describe a un perfil recién propuesto por la IA, con el mismo texto que tendrá al
+ * regenerarse (`toEmbeddableProfile`): el nombre del catálogo de cada habilidad ("React") y no
+ * el que escribió la IA ("ReactJS"); las no catalogadas, con el nombre de la IA.
+ */
+export function toEmbeddableNewProfile(
+  profile: NewRequiredProfile,
+  catalog: SkillEntity[],
+): EmbeddableProfile {
+  const names = new Map(catalog.map((skill) => [skill.id, skill.name]));
+  return {
+    name: profile.name,
+    description: profile.description,
+    skills: profile.skills.map((skill) => ({
+      rawName: (skill.skillId && names.get(skill.skillId)) || skill.rawName,
+    })),
+  };
+}
+
+/**
  * Calcula el embedding de perfiles requeridos. La parte semántica es opcional: si el
  * proveedor falla, el perfil se guarda igual con `null` y el matchmaking reparte su peso.
  */
 @Injectable()
 export class ProfileEmbedder {
   private readonly logger: ReturnType<AppLoggerService['forContext']>;
+  /** Reconstrucción en curso: dos pedidos simultáneos comparten la misma (IA-12). */
+  private inFlight: Promise<ProfileRebuildSummary> | null = null;
 
   constructor(
     @Inject(EMBEDDING_PROVIDER)
@@ -115,7 +138,14 @@ export class ProfileEmbedder {
    * ADMIN: regenera los perfiles activos sin embedding del modelo actual, en lotes (como las
    * personas). Si un lote falla entero se detiene: el proveedor probablemente está caído.
    */
-  async rebuildStale(limit: number): Promise<ProfileRebuildSummary> {
+  rebuildStale(limit: number): Promise<ProfileRebuildSummary> {
+    this.inFlight ??= this.runRebuild(limit).finally(() => {
+      this.inFlight = null;
+    });
+    return this.inFlight;
+  }
+
+  private async runRebuild(limit: number): Promise<ProfileRebuildSummary> {
     const stale = await this.requiredProfileRepository.findWithStaleEmbedding(
       this.model,
       limit,

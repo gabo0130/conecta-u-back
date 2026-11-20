@@ -13,15 +13,26 @@ export interface CollaboratorEmbeddingRepository {
    */
   findStale(model: string, limit: number): Promise<CollaboratorEntity[]>;
   countStale(model: string): Promise<number>;
-  /** Marca todos los embeddings como desactualizados (`force`). */
+  /** Marca todos los embeddings como desactualizados (`force`): se recalculan, no se reutilizan. */
   markAllStale(): Promise<void>;
   /**
-   * Guarda el embedding y el modelo con que se evaluó; `null` registra que no había
-   * contenido que representar con ese modelo.
+   * Guarda el embedding, el modelo con que se evaluó y la huella del texto embebido; `null`
+   * registra que no había contenido que representar con ese modelo.
    */
   save(
     collaboratorId: string,
     embedding: number[] | null,
     model: string,
+    textHash: string | null,
   ): Promise<void>;
+  /**
+   * Si la persona ya tiene un vector de `model` calculado sobre un texto con esta huella, lo
+   * marca al día sin recalcularlo (p. ej. cambió el año de último uso de una habilidad, que no
+   * va en el texto). `false` si hay que calcularlo.
+   */
+  reuseIfUnchanged(
+    collaboratorId: string,
+    model: string,
+    textHash: string,
+  ): Promise<boolean>;
 }

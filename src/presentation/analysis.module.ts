@@ -13,10 +13,22 @@ import { UpdateRequiredProfileUseCase } from '../application/use-cases/update-re
 import { GetProjectAnalysisUseCase } from '../application/use-cases/get-project-analysis.use-case';
 import { ListProjectAnalysesUseCase } from '../application/use-cases/list-project-analyses.use-case';
 import { RequestProjectAnalysisUseCase } from '../application/use-cases/request-project-analysis.use-case';
+import {
+  ClaudeProjectAnalyzer,
+  DEFAULT_CLAUDE_MODEL,
+} from '../infrastructure/ai/claude-project-analyzer';
 import { FakeEmbeddingProvider } from '../infrastructure/ai/fake-embedding-provider';
 import { FakeProjectAnalyzer } from '../infrastructure/ai/fake-project-analyzer';
+import {
+  DEFAULT_PRIMARY_ANALYZER_TIMEOUT_MS,
+  FallbackProjectAnalyzer,
+} from '../infrastructure/ai/fallback-project-analyzer';
 import { GeminiEmbeddingProvider } from '../infrastructure/ai/gemini-embedding-provider';
-import { GeminiProjectAnalyzer } from '../infrastructure/ai/gemini-project-analyzer';
+import {
+  GeminiProjectAnalyzer,
+  DEFAULT_PRIMARY_TIMEOUT_MS,
+} from '../infrastructure/ai/gemini-project-analyzer';
+import type { ProjectAnalyzer } from '../domain/repositories/project-analyzer.interface';
 import {
   ANALYSIS_TIMEOUTS,
   EMBEDDING_PROVIDER,
@@ -34,14 +46,58 @@ const DEFAULT_EMBEDDING_MODEL = 'gemini-embedding-001';
 
 const logger = new Logger('AnalysisModule');
 
-function useGemini(config: ConfigService): boolean {
+type AiProvider = 'claude' | 'gemini' | 'fake';
+const AI_PROVIDERS: readonly AiProvider[] = ['claude', 'gemini', 'fake'];
+
+function aiProviderOf(config: ConfigService): AiProvider {
   const provider = config.get<string>('AI_PROVIDER') ?? 'fake';
-  if (provider !== 'gemini' && provider !== 'fake') {
-    logger.warn(
-      `AI_PROVIDER="${provider}" no es válido (gemini|fake): se usa el proveedor fake.`,
-    );
+  if (AI_PROVIDERS.includes(provider as AiProvider)) {
+    return provider as AiProvider;
   }
-  return provider === 'gemini';
+  logger.warn(
+    `AI_PROVIDER="${provider}" no es válido (claude|gemini|fake): se usa el proveedor fake.`,
+  );
+  return 'fake';
+}
+
+/**
+ * Gemini da los embeddings con `gemini` y también con `claude` (Anthropic no ofrece embeddings):
+ * los dos exigen `GEMINI_API_KEY`.
+ */
+const useGemini = (config: ConfigService): boolean =>
+  aiProviderOf(config) !== 'fake';
+
+function geminiAnalyzer(config: ConfigService): GeminiProjectAnalyzer {
+  return new GeminiProjectAnalyzer({
+    apiKey: config.getOrThrow<string>('GEMINI_API_KEY'),
+    model: config.get<string>('GEMINI_MODEL') ?? DEFAULT_MODEL,
+    fallbackModel: fallbackModelOf(config),
+    primaryTimeoutMs: numberOf(
+      config,
+      'GEMINI_PRIMARY_TIMEOUT_MS',
+      DEFAULT_PRIMARY_TIMEOUT_MS,
+    ),
+  });
+}
+
+/**
+ * `claude`: Claude (Haiku por defecto) con Gemini de respaldo.
+ * `gemini`: solo Gemini (con su modelo de respaldo). `fake`: sin red.
+ */
+function analyzerOf(config: ConfigService): ProjectAnalyzer {
+  const provider = aiProviderOf(config);
+  if (provider === 'gemini') return geminiAnalyzer(config);
+  if (provider === 'fake') return new FakeProjectAnalyzer();
+
+  const claude = new ClaudeProjectAnalyzer({
+    apiKey: config.getOrThrow<string>('ANTHROPIC_API_KEY'),
+    model: config.get<string>('CLAUDE_MODEL') || DEFAULT_CLAUDE_MODEL,
+  });
+  return new FallbackProjectAnalyzer(
+    claude,
+    geminiAnalyzer(config),
+    numberOf(config, 'CLAUDE_TIMEOUT_MS', DEFAULT_PRIMARY_ANALYZER_TIMEOUT_MS),
+  );
 }
 
 const numberOf = (config: ConfigService, key: string, fallback: number) =>
@@ -70,9 +126,10 @@ function embeddingDimensions(config: ConfigService): number {
 }
 
 /**
- * Análisis de proyectos con IA (RF8–RF10). `AI_PROVIDER=gemini` usa la API real (exige
- * `GEMINI_API_KEY`); cualquier otro valor, o ninguno, usa los adaptadores deterministas
- * sin red, útiles en desarrollo y como respaldo en una demostración.
+ * Análisis de proyectos con IA (RF8–RF10). `AI_PROVIDER=claude` usa Claude con Gemini de
+ * respaldo (exige `ANTHROPIC_API_KEY` y `GEMINI_API_KEY`, que también da los embeddings);
+ * `gemini`, solo Gemini; cualquier otro valor, o ninguno, los adaptadores deterministas sin red,
+ * útiles en desarrollo y como respaldo en una demostración.
  */
 @Module({
   imports: [PersistenceModule, SecurityModule],
@@ -81,14 +138,7 @@ function embeddingDimensions(config: ConfigService): number {
     {
       provide: PROJECT_ANALYZER,
       inject: [ConfigService],
-      useFactory: (config: ConfigService) =>
-        useGemini(config)
-          ? new GeminiProjectAnalyzer({
-              apiKey: config.getOrThrow<string>('GEMINI_API_KEY'),
-              model: config.get<string>('GEMINI_MODEL') ?? DEFAULT_MODEL,
-              fallbackModel: fallbackModelOf(config),
-            })
-          : new FakeProjectAnalyzer(),
+      useFactory: analyzerOf,
     },
     {
       provide: EMBEDDING_PROVIDER,

@@ -12,7 +12,9 @@ import type {
   AnalysisSlotLimits,
   ClaimAnalysisResult,
   CompleteProjectAnalysisDto,
+  AnalysisUsage,
   CreateProjectAnalysisDto,
+  FailProjectAnalysisDto,
   ProjectAnalysisRepository,
 } from '../../../domain/repositories/project-analysis.repository.interface';
 import type {
@@ -20,6 +22,7 @@ import type {
   PageParams,
 } from '../../../shared/pagination/pagination.util';
 import { toSkip } from '../../../shared/pagination/pagination.util';
+import { pickDefined } from '../../../shared/utils/pick-defined';
 import { embeddingColumns } from './mappers/embedding-columns';
 import {
   toProjectAnalysisEntity,
@@ -94,8 +97,9 @@ export class TypeOrmProjectAnalysisRepository implements ProjectAnalysisReposito
       if (analysis?.status !== 'PENDIENTE') return null;
       Object.assign(analysis, {
         status: 'COMPLETADO',
-        ...(data.model ? { model: data.model } : {}),
+        ...pickDefined({ provider: data.provider, model: data.model }),
         rawOutput: data.rawOutput,
+        attempts: data.attempts,
         summary: data.summary,
         inputTokens: data.inputTokens,
         outputTokens: data.outputTokens,
@@ -149,11 +153,20 @@ export class TypeOrmProjectAnalysisRepository implements ProjectAnalysisReposito
     });
   }
 
-  async fail(
-    id: string,
-    errorMessage: string,
-    durationMs: number,
-  ): Promise<boolean> {
+  async recordUsage(id: string, usage: AnalysisUsage): Promise<void> {
+    await this.dataSource
+      .createQueryBuilder()
+      .update(ProjectAnalysisOrmEntity)
+      .set({
+        inputTokens: usage.inputTokens,
+        outputTokens: usage.outputTokens,
+        attempts: usage.attempts,
+      })
+      .where('id = :id AND attempts IS NULL', { id })
+      .execute();
+  }
+
+  async fail(id: string, data: FailProjectAnalysisDto): Promise<boolean> {
     return this.dataSource.transaction(async (manager) => {
       // Condicional: un análisis que ya terminó (o que la recuperación cerró) no se pisa.
       const result = await manager
@@ -161,8 +174,11 @@ export class TypeOrmProjectAnalysisRepository implements ProjectAnalysisReposito
         .update(ProjectAnalysisOrmEntity)
         .set({
           status: 'ERROR',
-          errorMessage,
-          durationMs,
+          errorMessage: data.errorMessage,
+          durationMs: data.durationMs,
+          inputTokens: data.inputTokens,
+          outputTokens: data.outputTokens,
+          attempts: data.attempts,
           completedAt: () => 'now()',
         })
         .where('id = :id AND status = :pending', { id, pending: 'PENDIENTE' })
