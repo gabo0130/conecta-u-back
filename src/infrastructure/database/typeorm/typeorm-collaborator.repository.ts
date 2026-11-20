@@ -158,5 +158,6 @@ export class TypeOrmCollaboratorRepository implements CollaboratorRepository {
 function clearEmbedding(collaborator: CollaboratorOrmEntity): void {
   collaborator.profileEmbedding = null;
   collaborator.embeddingModel = null;
+  collaborator.embeddingTextHash = null;
   collaborator.embeddingUpdatedAt = null;
 }

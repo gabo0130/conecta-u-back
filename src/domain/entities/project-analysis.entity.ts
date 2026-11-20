@@ -1,3 +1,4 @@
+import type { AnalysisAttempt } from './analysis-attempt.type';
 import type { AnalysisStatus } from './analysis-status.type';
 
 export interface ProjectAnalysisProps {
@@ -14,6 +15,8 @@ export interface ProjectAnalysisProps {
   inputTokens: number | null;
   outputTokens: number | null;
   rawOutput: unknown;
+  /** Cada llamada real al modelo, con su resultado y sus tokens; null en análisis anteriores. */
+  attempts: AnalysisAttempt[] | null;
   summary: string | null;
   errorMessage: string | null;
   durationMs: number | null;
@@ -34,6 +37,7 @@ export class ProjectAnalysisEntity implements ProjectAnalysisProps {
   readonly inputTokens: number | null;
   readonly outputTokens: number | null;
   readonly rawOutput: unknown;
+  readonly attempts: AnalysisAttempt[] | null;
   readonly summary: string | null;
   readonly errorMessage: string | null;
   readonly durationMs: number | null;

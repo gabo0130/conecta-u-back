@@ -34,13 +34,14 @@ export class RecommendationsController {
 
   @Post()
   @HttpCode(200)
-  @Authorize({ anyOfRoles: ['LIDER'] })
+  @Authorize({ anyOfRoles: ['LIDER', 'ADMIN'] })
   generate(
     @Req() request: AuthenticatedRequest,
     @Param('id', UuidParamPipe) id: string,
     @Body() dto: GenerateRecommendationsDto,
   ) {
-    return this.generateUseCase.execute(request.user!.userId, id, dto);
+    const { userId, role } = request.user!;
+    return this.generateUseCase.execute({ userId, role }, id, dto);
   }
 
   @Get()

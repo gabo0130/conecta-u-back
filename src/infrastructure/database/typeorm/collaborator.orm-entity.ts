@@ -137,6 +137,10 @@ export class CollaboratorOrmEntity {
   @Column({ type: 'varchar', length: 80, nullable: true })
   embeddingModel: string | null;
 
+  /** sha256 del texto con que se calculó `profileEmbedding`: si no cambió, se reutiliza. */
+  @Column({ type: 'varchar', length: 64, nullable: true })
+  embeddingTextHash: string | null;
+
   @OneToMany(() => CollaboratorSkillOrmEntity, (skill) => skill.collaborator, {
     cascade: true,
   })

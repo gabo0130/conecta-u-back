@@ -99,6 +99,26 @@ describe('match input mappers', () => {
     expect(spec.embedding).toEqual([1, 0]);
   });
 
+  it('removes contact data from the experience label the leader sees (IA-18)', () => {
+    const collaborator = buildCollaborator({
+      experiences: [
+        buildExperience({
+          role: 'Monitora (ana@ufps.edu.co)',
+          organization: 'Laboratorio, cel. 3001234567',
+        }),
+      ],
+    });
+
+    const [experience] = toPersonSpec(
+      collaborator,
+      null,
+      new Date('2026-01-01'),
+    ).experiences;
+
+    expect(experience.label).not.toMatch(/@|3001234567/);
+    expect(experience.label).toContain('Monitora');
+  });
+
   it('builds the profile spec using the canonical skill name', () => {
     const profile = new RequiredProfileEntity({
       id: 'rp1',

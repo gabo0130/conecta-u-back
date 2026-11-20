@@ -57,6 +57,21 @@ export function mapProfilesToCatalog(
 const importanceWeight = (skill: NewRequiredProfileSkill) =>
   PRIORITY_WEIGHT[skill.importance];
 
+/**
+ * Perfiles que quedaron sin competencia blanda: el prompt la pide en todos, pero el catálogo
+ * puede reclasificar una habilidad o el modelo omitirla. Se informa, no se rechaza (IA-04).
+ */
+export function profilesWithoutSoftSkill(
+  profiles: NewRequiredProfile[],
+): string[] {
+  return profiles
+    .filter(
+      (profile) =>
+        !profile.skills.some((skill) => skill.type === 'HABILIDAD_BLANDA'),
+    )
+    .map((profile) => profile.name);
+}
+
 /** Texto que se convierte en embedding para comparar un perfil con las personas. */
 export function profileEmbeddingText(profile: {
   name: string;

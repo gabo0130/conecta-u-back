@@ -15,6 +15,7 @@ const input: AnalysisInput = {
     },
     category: 'Desarrollo de software',
     program: 'Ingeniería de Sistemas',
+    durationMonths: null,
     deliverables: [{ name: 'PMV', scope: 'Reserva básica' }],
     knownSkills: [{ name: 'React', type: 'CONOCIMIENTO' }],
   },
@@ -61,7 +62,7 @@ describe('FakeEmbeddingProvider', () => {
   const provider = new FakeEmbeddingProvider(64);
 
   it('identifies its vector space so it is never compared with Gemini vectors', () => {
-    expect(provider.model).toBe('fake/hash-v1@64');
+    expect(provider.model).toBe('fake/hash-v1@64#t2');
   });
 
   it('returns unit vectors of the configured size', async () => {
@@ -94,6 +95,6 @@ describe('buildAnalysisPrompt', () => {
     expect(prompt).toContain('Plataforma de laboratorios');
     expect(prompt).toContain('- Asignatura: Seminario III');
     expect(prompt).toContain('PMV: Reserva básica');
-    expect(prompt).toContain('React | CONOCIMIENTO | FRAMEWORK');
+    expect(prompt).toMatch(/^CONOCIMIENTO: .*React/m);
   });
 });

@@ -5,8 +5,9 @@
 export const DAILY_QUOTA_COOLDOWN_MS = 30 * 60 * 1000;
 
 /**
- * Cortacircuitos en memoria por modelo (RT7): tras un 429 por cuota diaria, el modelo no se
- * vuelve a llamar hasta que pase el enfriamiento, y el análisis responde 503 sin gastar cuota.
+ * Cortacircuitos en memoria por modelo (RT7): tras agotar su cuota (o su límite de uso), el
+ * modelo no se vuelve a llamar hasta que pase el enfriamiento, y el análisis responde 503 sin
+ * gastar cuota.
  * Vive en el proceso: al reiniciar el servidor se pierde y la primera llamada vuelve a probar.
  */
 export class QuotaCircuitBreaker {
@@ -25,7 +26,8 @@ export class QuotaCircuitBreaker {
     return false;
   }
 
-  trip(model: string): void {
-    this.openUntil.set(model, this.now() + this.cooldownMs);
+  /** `cooldownMs` reemplaza al enfriamiento por defecto (p. ej. el `retry-after` del proveedor). */
+  trip(model: string, cooldownMs = this.cooldownMs): void {
+    this.openUntil.set(model, this.now() + cooldownMs);
   }
 }

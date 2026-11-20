@@ -11,11 +11,18 @@ import {
   AnalysisInputBuilder,
   projectFingerprint,
 } from '../analysis/analysis-input.builder';
-import { toProjectAnalysisResponse } from '../mappers/analysis-response.mapper';
+import {
+  toAnalysisSummary,
+  toProjectAnalysisResponse,
+} from '../mappers/analysis-response.mapper';
 import { AnalysisRecoveryService } from '../analysis/analysis-recovery.service';
 import { type Actor, loadProjectForViewer } from '../support/project-access';
 
-/** RF9–RF10: el último análisis completado de un proyecto, con sus perfiles y justificaciones. */
+/**
+ * RF6–RF7: el último análisis completado de un proyecto, con sus perfiles y justificaciones.
+ * Con `analysisId`, ese intento en cualquier estado: el front lo consulta mientras corre en
+ * segundo plano (PENDIENTE → COMPLETADO o ERROR).
+ */
 @Injectable()
 export class GetProjectAnalysisUseCase {
   constructor(
@@ -29,7 +36,7 @@ export class GetProjectAnalysisUseCase {
     private readonly recovery: AnalysisRecoveryService,
   ) {}
 
-  async execute(actor: Actor, projectId: string) {
+  async execute(actor: Actor, projectId: string, analysisId?: string) {
     const project = await loadProjectForViewer(
       this.projectRepository,
       actor,
@@ -37,12 +44,19 @@ export class GetProjectAnalysisUseCase {
     );
     // Si un análisis quedó colgado, el proyecto deja EN_ANALISIS antes de mostrarse.
     await this.recovery.recover(projectId);
-    const analysis =
-      await this.analysisRepository.findLatestCompleted(projectId);
+    const analysis = analysisId
+      ? await this.findAttempt(projectId, analysisId)
+      : await this.analysisRepository.findLatestCompleted(projectId);
     if (!analysis) {
       throw new NotFoundException({
-        message: 'Este proyecto aún no tiene un análisis.',
+        message: analysisId
+          ? 'Análisis no encontrado.'
+          : 'Este proyecto aún no tiene un análisis.',
       });
+    }
+    // En curso o fallido: aún no tiene perfiles que mostrar.
+    if (analysis.status !== 'COMPLETADO') {
+      return { ...toAnalysisSummary(analysis), outdated: false, profiles: [] };
     }
 
     const profiles = await this.requiredProfileRepository.findActiveForProject(
@@ -55,5 +69,10 @@ export class GetProjectAnalysisUseCase {
     const outdated = analysis.input.fingerprint !== current;
 
     return toProjectAnalysisResponse(analysis, profiles, outdated);
+  }
+
+  private async findAttempt(projectId: string, analysisId: string) {
+    const analysis = await this.analysisRepository.findById(analysisId);
+    return analysis?.projectId === projectId ? analysis : null;
   }
 }

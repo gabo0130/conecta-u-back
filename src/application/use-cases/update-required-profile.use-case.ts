@@ -15,6 +15,7 @@ import {
   toEmbeddableProfile,
 } from '../analysis/profile-embedder';
 import type { UpdateRequiredProfileDto } from '../dto/required-profile.dto';
+import { profileEmbeddingText } from '../analysis/catalog-profile-mapper';
 import { toRequiredProfileResponse } from '../mappers/analysis-response.mapper';
 import { loadOwnedProject } from '../support/project-access';
 import { resolveProfileSkills } from '../support/required-profile-skills';
@@ -66,18 +67,15 @@ export class UpdateRequiredProfileUseCase {
       );
     }
 
-    if (
-      changes.name !== undefined ||
-      changes.description !== undefined ||
-      changes.skills !== undefined
-    ) {
-      const [embedding] = await this.profileEmbedder.embed([
-        {
-          name: changes.name ?? profile.name,
-          description: changes.description ?? profile.description,
-          skills: changes.skills ?? toEmbeddableProfile(profile).skills,
-        },
-      ]);
+    const before = toEmbeddableProfile(profile);
+    const after = {
+      name: changes.name ?? before.name,
+      description: changes.description ?? before.description,
+      skills: changes.skills ?? before.skills,
+    };
+    // Cambiar nivel, importancia, prioridad u horas no cambia el texto: el vector sigue sirviendo.
+    if (profileEmbeddingText(after) !== profileEmbeddingText(before)) {
+      const [embedding] = await this.profileEmbedder.embed([after]);
       changes.embedding = embedding;
     }
 

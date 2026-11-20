@@ -1,4 +1,5 @@
 import { GoogleGenAI } from '@google/genai';
+import { EMBEDDING_TEXT_VERSION } from '../../domain/entities/embedding-text-version';
 import type {
   EmbedOptions,
   EmbeddingProvider,
@@ -37,7 +38,7 @@ export class GeminiEmbeddingProvider implements EmbeddingProvider {
   }: GeminiEmbeddingOptions) {
     this.client = new GoogleGenAI({ apiKey });
     this.modelName = model;
-    this.model = `gemini/${model}@${dimensions}`;
+    this.model = `gemini/${model}@${dimensions}#${EMBEDDING_TEXT_VERSION}`;
     this.dimensions = dimensions;
     this.timeoutMs = timeoutMs;
   }
